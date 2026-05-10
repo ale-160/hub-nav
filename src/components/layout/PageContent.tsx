@@ -40,7 +40,6 @@ export function PageContent({
   icons,
   folders,
   config,
-  searchedFolderIds,
   overId,
   readyToDropFolderId, // 新增
   onIconEdit,
@@ -78,10 +77,10 @@ export function PageContent({
 
   // 根据 page.iconIds 决定渲染顺序
   const iconIds = page.iconIds || [];
-  
+
   // 构建有序的根级元素列表（严格按 page.iconIds 过滤）
   const orderedRootItems: Array<{ type: 'icon' | 'folder'; id: string }> = [];
-  
+
   // 只渲染 page.iconIds 中的元素
   iconIds.forEach(id => {
     const icon = icons.find(i => i.id === id && !i.folderId);
@@ -98,7 +97,7 @@ export function PageContent({
 
   return (
     <SortableContext items={allRootItemIds} strategy={rectSortingStrategy}>
-      <div 
+      <div
         className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5"
         style={{ gap: `${config.theme.gridSpacing}px` }}
       >

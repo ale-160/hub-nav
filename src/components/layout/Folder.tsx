@@ -440,6 +440,7 @@ export function Folder({
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">{STRINGS.apps}</h4>
               <DndContext
+                id={`folder-dnd-${folder.id}`}
                 sensors={sensors}
                 onDragEnd={handleFolderIconDragEnd}
               >

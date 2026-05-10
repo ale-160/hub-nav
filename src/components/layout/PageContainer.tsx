@@ -499,6 +499,7 @@ export function PageContainer({
 
   return (
     <DndContext
+      id="page-container-dnd"
       sensors={sensors}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
@@ -728,7 +729,7 @@ function PageDroppable({
   return (
     <div
       ref={setNodeRef}
-      className="flex-shrink-0 w-screen snap-start p-4 md:p-6"
+      className="shrink-0 w-screen snap-start p-4 md:p-6"
     >
       <div className="max-w-7xl mx-auto h-full">
         <PageContent

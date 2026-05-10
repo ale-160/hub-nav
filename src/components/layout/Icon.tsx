@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useCallback, useEffect, useRef, useMemo} from 'react';
+import React, {useState, useCallback, useRef, useMemo} from 'react';
 import { createPortal } from 'react-dom';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -305,13 +305,13 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
       longPressTriggeredRef.current = false;
       return;
     }
-    
+
     // 如果菜单已打开，先关闭菜单
     if (isMenuOpen) {
       setIsMenuOpen(false);
       return;
     }
-    
+
     const operationMode = config?.operationMode || {
       mode: 'hybrid' as const,
       openMethod: 'click' as const,
@@ -400,14 +400,14 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
       </div>
 
       {/* 右键菜单 - 通过 onContextMenu 触发 */}
-      <DropdownMenu 
-        open={shouldDisableMenu ? false : isMenuOpen} 
+      <DropdownMenu
+        open={shouldDisableMenu ? false : isMenuOpen}
         onOpenChange={setIsMenuOpen}
       >
         <DropdownMenuTrigger asChild>
           <span className="hidden" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent 
+        <DropdownMenuContent
           align="start"
           style={{
             position: 'fixed',
@@ -448,7 +448,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
 
       {/* 删除确认对话框 - 使用 Portal 渲染到 body */}
       {showDeleteConfirm && createPortal(
-        <div 
+        <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30"
           style={{ pointerEvents: 'auto' }}
           onPointerDown={(e) => e.stopPropagation()}
@@ -488,7 +488,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
 
       {/* 文件夹选择器 - 使用 Portal 渲染到 body */}
       {showFolderSelector && folders && createPortal(
-        <div 
+        <div
           className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30"
           style={{ pointerEvents: 'auto' }}
           onPointerDown={(e) => e.stopPropagation()}
