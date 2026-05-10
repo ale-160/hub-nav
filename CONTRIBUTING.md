@@ -82,7 +82,7 @@ interface ButtonProps {
 }
 
 // ❌ 避免
-function Button(props: any) { ... }
+// function Button(props: any) { ... }
 ```
 
 ### ESLint 检查
