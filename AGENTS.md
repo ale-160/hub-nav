@@ -28,8 +28,8 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 | 目录 | 核心职责 | 关键文件说明 |
 | :--- | :--- | :--- |
 | `src/app/` | 页面入口与根布局 | `page.tsx`: 全局状态中心，处理添加/删除/移动等核心逻辑。<br>`layout.tsx`: 根布局，集成 ThemeProvider 与 ErrorBoundary。 |
-| `src/components/layout/` | 核心业务组件 | `PageContainer.tsx`: 多页容器，管理全局拖拽上下文。<br>`AppGrid.tsx`: 网格布局，实现流式排列与拖拽交互。<br>`Folder.tsx`: 文件夹组件，处理嵌套逻辑与搜索联动。 |
-| `src/components/ui/` | 基础 UI 组件 | 基于 shadcn/ui 封装的 Modal, Button, Input, DropdownMenu 等。 |
+| `src/components/layout/` | 核心业务组件 | `PageContainer.tsx`: 多页容器，管理全局拖拽上下文。<br>`PageContent.tsx`: 单页内容渲染，负责网格布局。<br>`Folder.tsx`: 文件夹组件，处理嵌套逻辑与搜索联动。 |
+| `src/components/ui/` | 基础 UI 组件 | 基于 shadcn/ui 封装的 Modal, Button, Input, DropdownMenu 等。**注意：文件命名使用 kebab-case**（如 `icon-selector.tsx`, `settings-modal.tsx`）。 |
 | `src/hooks/` | 自定义 Hooks | `useTheme.ts`: 主题切换与壁纸应用。<br>`useLocalStorage.ts`: 跨标签页同步的配置持久化。 |
 | `src/lib/` | 工具与配置管理 | `configManager.ts`: 配置读写中心，处理数据迁移与结构化存储。<br>`builtinIcons.ts`: 常用网站内置图标集合。 |
 
@@ -52,8 +52,15 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 - **语义化类名**：优先使用 `bg-background`, `text-foreground` 等 CSS 变量类名，以支持主题自动适配。
 - **禁止硬编码**：严禁在代码中写死颜色值（如 `#ffffff`），必须通过 Tailwind 配置或 CSS 变量管理。
 - **变体管理**：复杂组件的样式变体建议使用 `class-variance-authority` (CVA) 进行管理。
+- **CSS 变量语法**：项目使用 Tailwind CSS v4，支持 `bg-(--variable)` 简写语法（会自动编译为 `background-color: var(--variable)`）。
 
-### 4.4 拖拽交互 (@dnd-kit)
+### 4.4 文件命名规范
+- **组件文件**：使用 **kebab-case**（短横线分隔），如 `icon-selector.tsx`, `settings-modal.tsx`
+- **组件函数**：使用 **PascalCase**，如 `export function IconSelector()`
+- **导入路径**：使用别名 `@/components/ui/icon-selector`
+- **原因**：符合 Next.js App Router 和 shadcn/ui 生态约定，避免文件系统大小写敏感问题
+
+### 4.5 拖拽交互 (@dnd-kit)
 - **传感器配置**：为兼顾移动端长按与桌面端拖拽，需合理配置 `MouseSensor` 和 `TouchSensor` 的激活约束（如 `delay: 250ms`）。
 - **性能优化**：拖拽过程中应避免频繁触发重渲染，合理使用 `useMemo` 缓存列表数据。
 
@@ -68,7 +75,8 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 1. **修改前确认**：涉及核心数据结构（如 `pages`, `icons`）变更时，请先查阅 `src/lib/configManager.ts` 的定义。
 2. **构建验证**：每次修改完成后，请运行 `npm run build` 确保无 TypeScript 错误且静态导出成功。
 3. **一致性检查**：新增功能时，请确保同时适配亮色与暗色模式，并检查移动端视图的响应式表现。
+4. **文件命名**：新增组件文件时使用 kebab-case 命名（如 `my-component.tsx`），导出函数使用 PascalCase（如 `export function MyComponent()`）。
 
 ---
-**最后更新**：2026-05-10  
+**最后更新**：2026-05-11  
 **维护说明**：本文档随项目架构演进同步更新，是外部协作者理解本项目的第一入口。

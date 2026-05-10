@@ -15,6 +15,7 @@ interface PageContentProps {
   config: UserConfig;
   searchedFolderIds: string[];
   overId?: string | null; // 拖拽悬停目标
+  activeId?: string | null; // 正在拖拽的元素ID
   readyToDropFolderId?: string | null; // 准备好放入的文件夹ID
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
@@ -41,6 +42,7 @@ export function PageContent({
   folders,
   config,
   overId,
+  activeId, // 新增
   readyToDropFolderId, // 新增
   onIconEdit,
   onIconDelete,
@@ -116,7 +118,7 @@ export function PageContent({
                   onMoveToFolder={onMoveIconToFolder} // 新增
                   folders={folders.map(f => ({ id: f.id, name: f.name }))} // 新增：传递文件夹列表
                   config={config}
-                  isDragging={false}
+                  isDragging={icon.id === activeId} // 修复：动态判断拖拽状态
                 />
               </div>
             );
@@ -141,7 +143,7 @@ export function PageContent({
                   onReorderIcons={onReorderIconsInFolder} // 新增：传递文件夹内图标排序回调
                   onMoveToRoot={onMoveToRoot} // 新增：传递移动到根级回调
                   onMoveToFolder={onMoveIconToFolder} // 新增：传递移动到文件夹回调
-                  isDragging={false}
+                  isDragging={folder.id === activeId} // 修复：动态判断拖拽状态
                   isOver={overId === folder.id}
                   isDropTarget={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否准备好放入
                   isReadyToDrop={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否可松开放入

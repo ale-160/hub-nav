@@ -547,6 +547,7 @@ export function PageContainer({
             config={config}
             searchedFolderIds={searchedFolderIds}
             overId={overId}
+            activeId={activeId} // 新增：传递正在拖拽的元素ID
             readyToDropFolderId={readyToDropFolderId} // 新增：传递准备好放入的文件夹ID
             onIconEdit={onIconEdit}
             onIconDelete={onIconDelete}
@@ -676,6 +677,7 @@ interface PageDroppableProps {
   config: UserConfig;
   searchedFolderIds: string[];
   overId?: string | null; // 拖拽悬停目标
+  activeId?: string | null; // 正在拖拽的元素ID
   readyToDropFolderId?: string | null; // 准备好放入的文件夹ID
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
@@ -699,6 +701,7 @@ function PageDroppable({
   config,
   searchedFolderIds,
   overId,
+  activeId, // 新增
   readyToDropFolderId, // 新增
   onIconEdit,
   onIconDelete,
@@ -739,6 +742,7 @@ function PageDroppable({
           config={config}
           searchedFolderIds={searchedFolderIds}
           overId={overId}
+          activeId={activeId} // 新增：传递正在拖拽的元素ID
           readyToDropFolderId={readyToDropFolderId} // 新增：传递准备好放入的文件夹ID
           onIconEdit={onIconEdit}
           onIconDelete={onIconDelete}

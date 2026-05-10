@@ -93,15 +93,23 @@ function Button(props: any) { ... }
 npm run lint
 ```
 
-### 组件命名规范
+### 文件命名规范
+
+项目采用 **kebab-case**（短横线分隔）命名组件文件，符合 Next.js App Router 和 shadcn/ui 生态约定。
 
 | 类型 | 命名规范 | 示例 |
 |-----|---------|------|
-| 组件文件 | PascalCase | `SettingsModal.tsx` |
-| 组件函数 | PascalCase | `function SettingsModal()` |
+| 组件文件 | kebab-case | `icon-selector.tsx`, `settings-modal.tsx` |
+| 组件函数 | PascalCase | `export function IconSelector()` |
 | Hook 文件 | camelCase，use 前缀 | `useLocalStorage.ts` |
 | 工具函数 | camelCase | `extractDomain()` |
 | 常量 | UPPER_SNAKE_CASE | `MAX_PAGE_COUNT` |
+
+**重要说明**：
+- 组件文件名使用 kebab-case（如 `icon-selector.tsx`）
+- 组件导出函数使用 PascalCase（如 `export function IconSelector()`）
+- 导入时使用别名路径（如 `import { IconSelector } from '@/components/ui/icon-selector'`）
+- 此规范与 Next.js App Router 官方推荐一致，避免大小写敏感问题
 
 ### 文件组织规范
 
@@ -254,4 +262,4 @@ npm run dev
 
 ---
 
-**最后更新**：2026-05-10
+**最后更新**：2026-05-11
