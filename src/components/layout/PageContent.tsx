@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import { useCallback } from 'react';
 import {
   SortableContext,
   rectSortingStrategy,
@@ -53,11 +53,7 @@ export function PageContent({
   onFolderDelete,
   onAddIconToFolder,
   onDeleteAllIconsInFolder,
-  onAddIcon,
-  onAddFolder,
-  onRefresh,
 }: PageContentProps) {
-  const [isDragging, setIsDragging] = useState(false);
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config.theme.language || 'zh';
@@ -121,7 +117,7 @@ export function PageContent({
                   onMoveToFolder={onMoveIconToFolder} // 新增
                   folders={folders.map(f => ({ id: f.id, name: f.name }))} // 新增：传递文件夹列表
                   config={config}
-                  isDragging={isDragging}
+                  isDragging={false}
                 />
               </div>
             );
@@ -147,7 +143,7 @@ export function PageContent({
                   onReorderIcons={onReorderIconsInFolder} // 新增：传递文件夹内图标排序回调
                   onMoveToRoot={onMoveToRoot} // 新增：传递移动到根级回调
                   onMoveToFolder={onMoveIconToFolder} // 新增：传递移动到文件夹回调
-                  isDragging={isDragging}
+                  isDragging={false}
                   isOver={overId === folder.id}
                   isDropTarget={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否准备好放入
                   isReadyToDrop={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否可松开放入

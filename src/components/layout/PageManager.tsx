@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Settings, Pencil, Trash2, Plus, Check, X, MoreHorizontal } from 'lucide-react';
+import { Pencil, Trash2, Plus, Check, X, MoreHorizontal } from 'lucide-react';
 
 interface PageManagerProps {
   pages: Page[];
@@ -82,8 +82,6 @@ export function PageManager({
     const updatedPages = pages.filter(page => page.id !== pageId);
 
     // 获取该页面的所有图标和文件夹 ID
-    const deletedPage = pages.find(p => p.id === pageId);
-    const deletedIconIds = deletedPage?.iconIds || [];
 
     // 删除该页面中引用的文件夹（不在其他页面中的文件夹）
     const remainingFolderIds = updatedPages.flatMap(p => p.iconIds);

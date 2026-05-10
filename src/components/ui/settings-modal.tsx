@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { UserConfig, OperationModeSettings } from '../../lib/configManager';
+import { UserConfig, OperationModeSettings } from '@/lib/configManager';
 import { Modal } from './modal';
 import { Button } from './button';
 import { Slider } from './slider';
@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from './select';
-import { OperationModeSelector } from './OperationModeSelector';
-import { getStrings } from '../../lib/strings';
+import { OperationModeSelector } from './operation-mode-selector';
+import { getStrings } from '@/lib/strings';
 
 interface SettingsModalProps {
   isOpen: boolean;

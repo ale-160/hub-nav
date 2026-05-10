@@ -11,7 +11,7 @@ export function ThemeToggleIcon() {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // 确保只在客户端渲染
+  // 确保只在客户端渲染（这是安全的初始化模式）
   useEffect(() => {
     setMounted(true);
   }, []);

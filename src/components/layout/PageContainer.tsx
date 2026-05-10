@@ -77,7 +77,6 @@ export function PageContainer({
   onRefresh,
   onPageChange, // 新增
 }: PageContainerProps) {
-  const [isDragging, setIsDragging] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [activeType, setActiveType] = useState<'icon' | 'folder' | null>(null);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -232,30 +231,9 @@ export function PageContainer({
   }, []);
 
   /**
-   * 处理新建页面
-   */
-  const handleAddPage = useCallback(() => {
-    const newConfig = ConfigManager.addPage(config);
-    onUpdate(newConfig);
-    
-    // 滚动到新页面
-    setTimeout(() => {
-      const container = scrollContainerRef.current;
-      if (container) {
-        const pageWidth = container.clientWidth;
-        container.scrollTo({
-          left: pageWidth * (pages.length), // 新页面是最后一个
-          behavior: 'smooth'
-        });
-      }
-    }, 100);
-  }, [config, pages.length, onUpdate]);
-
-  /**
    * 处理拖拽开始
    */
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setIsDragging(true);
     setActiveId(event.active.id as string);
     
     // 判断拖拽元素类型
@@ -309,7 +287,6 @@ export function PageContainer({
    * 处理拖拽结束 - 支持跨页拖拽和拖入文件夹
    */
   const handleDragEnd = useCallback((event: DragEndEvent) => {
-    setIsDragging(false);
     setActiveId(null);
     setActiveType(null);
     setOverId(null); // 清除悬停状态
@@ -372,7 +349,7 @@ export function PageContainer({
         return;
       }
 
-      const { page: sourcePage, index: sourcePageIndex } = sourcePageInfo;
+      const { page: sourcePage } = sourcePageInfo;
 
       // 如果找到了源页面且目标页面不同，执行跨页移动
       if (sourcePage.id !== targetPage.id) {
@@ -561,7 +538,7 @@ export function PageContainer({
             }
           `
         }} />
-        {pages.map((page, index) => (
+        {pages.map((page) => (
           <PageDroppable
             key={page.id}
             page={page}

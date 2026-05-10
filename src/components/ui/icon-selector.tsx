@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react';
-import { BUILTIN_ICONS, BuiltinIcon } from '../../lib/builtinIcons';
-import { ConfigManager } from '../../lib/configManager';
-import { extractDomain, getFaviconUrls, getFallbackIcon } from '../../lib/urlUtils';
-import { getStrings } from '../../lib/strings';
+import { useState, useCallback, useEffect, useMemo } from 'react';
+import { BUILTIN_ICONS, type BuiltinIcon } from '@/lib/builtinIcons';
+import { ConfigManager } from '@/lib/configManager';
+import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/lib/urlUtils';
+import { getStrings } from '@/lib/strings';
 import {
   Command,
   CommandEmpty,
@@ -35,10 +35,8 @@ function FaviconPreview({ src, alt, className = '', appName = '' }: FaviconPrevi
         if (cachedIcon) {
           setCachedSrc(cachedIcon);
         }
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('检查缓存失败:', error);
-        }
+      } catch {
+        // 检查缓存失败，忽略错误
       }
     }
   }, [src]);
@@ -50,10 +48,8 @@ function FaviconPreview({ src, alt, className = '', appName = '' }: FaviconPrevi
         const domain = extractDomain(src);
         // 直接写入缓存，不再需要异步处理
         ConfigManager.setIconCache(domain, src);
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('缓存写入失败，但不影响图片显示:', error);
-        }
+      } catch {
+        // 忽略缓存写入错误
       }
     }
   }, [src, cachedSrc]);
@@ -73,6 +69,7 @@ function FaviconPreview({ src, alt, className = '', appName = '' }: FaviconPrevi
   }
 
   // 显示图片（优先使用缓存）
+  // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
       src={cachedSrc || src}
@@ -109,8 +106,7 @@ export function IconSelector({
   language = 'zh',
   onIconTypeChange,
   onBuiltinIconChange,
-  onCustomIconUrlChange,
-  onWebsiteUrlChange
+  onCustomIconUrlChange
 }: IconSelectorProps) {
   const STRINGS = getStrings(language);
   const [customIconError, setCustomIconError] = useState(false);
@@ -130,12 +126,6 @@ export function IconSelector({
         return customColor ? STRINGS.customColor : '调色盘';
       }
       // 纯色图标没有映射，使用默认名称
-      const solidColors = [
-        '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-        '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
-        '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
-        '#6b7280', '#000000'
-      ];
       return language === 'en' ? `Color ${colorIndex + 1}` : `颜色${colorIndex + 1}`;
     }
 
@@ -147,7 +137,7 @@ export function IconSelector({
 
     // 处理普通图标
     return STRINGS.iconNames[iconId as keyof typeof STRINGS.iconNames] || iconId;
-  }, [language, customColor]);
+  }, [language, customColor, STRINGS]);
 
   // 初始化时根据 builtinIcon 设置选中状态
   // useEffect(() => {
@@ -218,12 +208,10 @@ export function IconSelector({
     if (iconType === 'favicon' && websiteUrl) {
       const previewUrl = getWebsiteIconPreviewUrl(websiteUrl);
       setWebsiteIconPreview(previewUrl);
+    } else if (iconType !== 'favicon') {
+      setWebsiteIconPreview('');
     }
   }, [iconType, websiteUrl, getWebsiteIconPreviewUrl]);
-
-  /**
-   * 获取选中的内置图标
-   */
   const getSelectedBuiltinIcon = useCallback(() => {
     if (!builtinIcon) return BUILTIN_ICONS[0];
     

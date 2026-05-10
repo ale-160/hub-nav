@@ -4,12 +4,12 @@ import { useState, useCallback, useRef } from 'react';
 import { useSortable, SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
-import { FolderItem, IconItem } from '../../lib/configManager';
+import { FolderItem, IconItem } from '@/lib/configManager';
 import { Icon } from './Icon';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '@/hooks/useTheme';
 import { Modal } from '../ui/modal';
 import { Button } from '../ui/button';
-import { getStrings } from '../../lib/strings';
+import { getStrings } from '@/lib/strings';
 import {
   DropdownMenu,
   DropdownMenuContent,

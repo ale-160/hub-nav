@@ -7,10 +7,10 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { useTheme } from '@/hooks/useTheme';
 import { Modal } from '@/components/ui/modal';
 import { Button } from '@/components/ui/button';
-import { IconSelector } from '@/components/ui/IconSelector';
-import { SettingsModal } from '@/components/ui/SettingsModal';
-import { ThemeToggleIcon } from '@/components/ui/ThemeToggleIcon';
-import { OnboardingGuide } from '@/components/ui/OnboardingGuide';
+import { IconSelector } from '@/components/ui/icon-selector';
+import { SettingsModal } from '@/components/ui/settings-modal';
+import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
+import { OnboardingGuide } from '@/components/ui/onboarding-guide';
 import { STRINGS, getStrings } from '@/lib/strings';
 import { validateUrl } from '@/lib/urlUtils';
 
@@ -68,12 +68,12 @@ export default function Home() {
   const [editItem, setEditItem] = useState<IconItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 客户端挂载后设置 isMounted
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  // 搜索防抖：延迟 300ms 更新实际搜索词
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -447,19 +447,6 @@ export default function Home() {
   }, [config.icons]);
 
   /**
-   * 处理文件夹编辑
-   */
-  const handleFolderEdit = useCallback((folderId: string) => {
-    const folder = config.folders.find(f => f.id === folderId);
-    if (folder) {
-      // 创建一个临时的 IconItem 结构来复用编辑逻辑，或者单独处理
-      // 这里为了简化，我们让 editItem 支持 FolderItem 或者扩展状态
-      // 但根据要求，我们先专注于图标编辑。文件夹编辑保持简单或后续扩展。
-      // 暂时不修改文件夹编辑逻辑，只改图标
-    }
-  }, [config.folders]);
-
-  /**
    * 处理图标删除
    */
   const handleIconDelete = useCallback((iconId: string) => {
@@ -491,13 +478,6 @@ export default function Home() {
     );
     handleConfigUpdate({ folders: updatedFolders });
   }, [config.folders, handleConfigUpdate]);
-
-  /**
-   * 处理文件夹导航（打开模态框）
-   */
-  const handleFolderNavigate = useCallback((folderId: string | null) => {
-    // 这个功能已由 Folder 组件的模态框实现
-  }, []);
 
   /**
    * 处理文件夹删除

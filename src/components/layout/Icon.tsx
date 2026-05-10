@@ -4,10 +4,10 @@ import React, {useState, useCallback, useEffect, useRef} from 'react';
 import { createPortal } from 'react-dom';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { IconItem, ConfigManager } from '../../lib/configManager';
-import { BuiltinIcon, getBuiltinIconById, getDefaultIcon } from '../../lib/builtinIcons';
-import { extractDomain, getFaviconUrls, getFallbackIcon } from '../../lib/urlUtils';
-import { getStrings } from '../../lib/strings';
+import { IconItem, ConfigManager } from '@/lib/configManager';
+import { BuiltinIcon, getBuiltinIconById, getDefaultIcon } from '@/lib/builtinIcons';
+import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/lib/urlUtils';
+import { getStrings } from '@/lib/strings';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -114,7 +114,7 @@ interface IconProps {
  * 图标组件 - 渲染单个图标项
  * @param props - 组件属性
  */
-export function Icon({ item, onEdit, onDelete, onHide, onMoveToFolder, onMoveToRoot, folders, onDragStart, isDragging: globalIsDragging, config }: IconProps) {
+export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, folders, config }: IconProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
@@ -123,21 +123,19 @@ export function Icon({ item, onEdit, onDelete, onHide, onMoveToFolder, onMoveToR
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [showFolderSelector, setShowFolderSelector] = useState(false); // 新增：文件夹选择器
-  const dragRef = useRef<HTMLDivElement>(null);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartPosRef = useRef({ x: 0, y: 0 });
   const longPressTriggeredRef = useRef(false);
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config?.theme?.language || 'zh';
   const STRINGS = getStrings(currentLanguage);
 
-  // 拖拽样式（优先使用全局状态）
-  const shouldDisableMenu = globalIsDragging || isDragging;
+  // 拖拽样式
+  const shouldDisableMenu = isDragging;
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: (globalIsDragging || isDragging) ? 0.5 : 1,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   /**
@@ -265,7 +263,7 @@ export function Icon({ item, onEdit, onDelete, onHide, onMoveToFolder, onMoveToR
           };
         }
     }
-  }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url]);
+  }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.name]);
 
   /**
    * 处理指针按下捕获 - 长按触发菜单（仅触摸）
