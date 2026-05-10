@@ -1,9 +1,8 @@
-# .github/workflows/deploy.yml
 name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [dev]  # 改成 dev分支
 
 permissions:
   contents: read
