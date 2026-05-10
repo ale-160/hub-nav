@@ -2,7 +2,8 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [dev]  # 改成 dev分支
+    branches: [ main, dev ]
+  workflow_dispatch:
 
 permissions:
   contents: read
