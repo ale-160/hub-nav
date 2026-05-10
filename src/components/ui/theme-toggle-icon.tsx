@@ -12,7 +12,7 @@ export function ThemeToggleIcon() {
   const [mounted, setMounted] = useState(false);
 
   // 确保只在客户端渲染（这是安全的初始化模式）
-  useEffect(() => {
+  useEffect(() => {// eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

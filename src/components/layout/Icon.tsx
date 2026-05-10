@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState, useCallback, useEffect, useRef} from 'react';
+import React, {useState, useCallback, useEffect, useRef, useMemo} from 'react';
 import { createPortal } from 'react-dom';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -27,26 +27,22 @@ interface FaviconProps {
 
 function Favicon({ src, alt, className = '', appName = '' }: FaviconProps) {
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
-  const [cachedSrc, setCachedSrc] = useState<string | null>(null);
 
-  // 初始化时检查缓存
-  useEffect(() => {
-    if (src) {
-      try {
-        const domain = extractDomain(src);
-        const cachedIcon = ConfigManager.getCachedIcon(domain);
-        if (cachedIcon) {
-          setCachedSrc(cachedIcon);
-        }
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('检查缓存失败:', error);
-        }
+  // 直接从缓存读取（派生状态，无需 useEffect + setState）
+  const cachedSrc = useMemo(() => {
+    if (!src) return null;
+    try {
+      const domain = extractDomain(src);
+      return ConfigManager.getCachedIcon(domain);
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('检查缓存失败:', error);
       }
+      return null;
     }
   }, [src]);
 
-  // 处理图片加载成功
+  // 处理图片加载成功 - 写入缓存
   const handleImageLoad = useCallback(() => {
     if (src && !cachedSrc) {
       try {

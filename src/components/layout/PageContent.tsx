@@ -134,7 +134,6 @@ export function PageContent({
                   onDelete={onFolderDelete || (() => {})}
                   onAddIcon={onAddIconToFolder || (() => {})}
                   onNavigate={() => {}}
-                  forceExpandIds={searchedFolderIds}
                   config={config}
                   onDeleteAll={onDeleteAllIconsInFolder}
                   onIconEdit={onIconEdit}

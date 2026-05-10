@@ -14,7 +14,7 @@ import {
 import {
   arrayMove,
 } from '@dnd-kit/sortable';
-import { IconItem, FolderItem, UserConfig, Page, ConfigManager } from '@/lib/configManager';
+import { IconItem, FolderItem, UserConfig, Page } from '@/lib/configManager';
 import { PageContent } from './PageContent';
 import { PageIndicator } from './PageIndicator';
 import { PageManager } from './PageManager';
@@ -161,10 +161,10 @@ export function PageContainer({
       const scrollLeft = container.scrollLeft;
       const pageWidth = container.clientWidth;
       const newIndex = Math.round(scrollLeft / pageWidth);
-      
+
       if (newIndex !== currentPageIndex && newIndex >= 0 && newIndex < pages.length) {
         setCurrentPageIndex(newIndex);
-        
+
         // 通知父组件页面切换
         if (onPageChange) {
           onPageChange(newIndex);
@@ -189,7 +189,7 @@ export function PageContainer({
       behavior: 'smooth'
     });
     setCurrentPageIndex(index);
-    
+
     // 通知父组件页面切换
     if (onPageChange) {
       onPageChange(index);
@@ -223,7 +223,7 @@ export function PageContainer({
     if (target.closest('[data-icon-item]') || target.closest('[data-folder-item]')) {
       return; // 让子组件处理
     }
-    
+
     // 阻止浏览器默认菜单
     e.preventDefault();
     setBlankMenuPosition({ x: e.clientX, y: e.clientY });
@@ -235,7 +235,7 @@ export function PageContainer({
    */
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-    
+
     // 判断拖拽元素类型
     const isIcon = icons.some(icon => icon.id === event.active.id);
     const isFolder = folders.some(folder => folder.id === event.active.id);
@@ -247,26 +247,26 @@ export function PageContainer({
    */
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { over } = event;
-    
+
     if (over) {
       const newOverId = over.id as string;
       setOverId(newOverId);
-      
+
       // 检查是否悬停在文件夹上
       const targetFolder = folders.find(folder => folder.id === newOverId);
-      
+
       if (targetFolder) {
         // 清除该文件夹之前的计时器
         const existingTimer = folderHoverTimersRef.current.get(newOverId);
         if (existingTimer) {
           clearTimeout(existingTimer);
         }
-        
+
         // 启动新的 600ms 计时器
         const timer = setTimeout(() => {
           setReadyToDropFolderId(newOverId);
         }, 600);
-        
+
         folderHoverTimersRef.current.set(newOverId, timer);
       } else {
         // 如果悬停的不是文件夹，清除所有计时器并重置 readyToDropFolderId
@@ -290,7 +290,7 @@ export function PageContainer({
     setActiveId(null);
     setActiveType(null);
     setOverId(null); // 清除悬停状态
-    
+
     // 清除所有计时器
     folderHoverTimersRef.current.forEach((timer) => clearTimeout(timer));
     folderHoverTimersRef.current.clear();
@@ -313,35 +313,35 @@ export function PageContainer({
     // 检查 over 是否是文件夹（拖入文件夹）
     // 关键：仅当 readyToDropFolderId 有效且与目标文件夹匹配时，才执行移入逻辑
     const targetFolder = folders.find(folder => folder.id === overId);
-    
+
     if (targetFolder && draggedIcon && readyToDropFolderId === targetFolder.id) {
       // 拖拽图标到文件夹上：将图标移入文件夹
       const updatedIcons = icons.map(icon =>
         icon.id === activeId ? { ...icon, folderId: targetFolder.id } : icon
       );
-      
+
       // 关键修复：从所有页面的 iconIds 中移除该图标（防止数据污染）
       const updatedPages = pages.map(page => ({
         ...page,
         iconIds: page.iconIds.filter(id => id !== activeId)
       }));
-      
+
       onUpdate({ icons: updatedIcons, pages: updatedPages });
       return;
     }
 
     // 检查 over 是否是页面 droppable 区域（页面 ID 格式为 page-*）
     const isOverPage = overId.startsWith('page-');
-    
+
     if (isOverPage && (draggedIcon || draggedFolder)) {
       // 找到目标页面
       const targetPage = pages.find(page => page.id === overId);
-      
+
       if (!targetPage) return;
 
       // 使用辅助函数查找源页面
       const sourcePageInfo = findPageByItemId(activeId);
-      
+
       if (!sourcePageInfo) {
         if (process.env.NODE_ENV === 'development') {
           console.error('[handleDragEnd] 未找到拖拽元素所在的页面:', activeId);
@@ -354,14 +354,14 @@ export function PageContainer({
       // 如果找到了源页面且目标页面不同，执行跨页移动
       if (sourcePage.id !== targetPage.id) {
         let updatedIcons = icons;
-        
+
         // 如果是文件夹内的图标，先移出文件夹
         if (draggedIcon && draggedIcon.folderId) {
           updatedIcons = icons.map(icon =>
             icon.id === activeId ? { ...icon, folderId: undefined } : icon
           );
         }
-        
+
         // 关键修复：确保图标不在任何其他页面的 iconIds 中（防止数据污染）
         const cleanedPages = pages.map(page => ({
           ...page,
@@ -383,20 +383,20 @@ export function PageContainer({
         onUpdate({ pages: finalPages, icons: updatedIcons });
         return;
       }
-      
+
       // 如果是文件夹内的图标，拖到同一页面的根级
       if (draggedIcon && draggedIcon.folderId) {
         // 将图标移出文件夹
         const updatedIcons = icons.map(icon =>
           icon.id === activeId ? { ...icon, folderId: undefined } : icon
         );
-        
+
         // 从所有页面清理图标 ID
         const cleanedPages = pages.map(page => ({
           ...page,
           iconIds: page.iconIds.filter(id => id !== activeId)
         }));
-        
+
         // 添加到目标页面末尾
         const finalPages = cleanedPages.map(page => {
           if (page.id === targetPage.id) {
@@ -407,7 +407,7 @@ export function PageContainer({
           }
           return page;
         });
-        
+
         onUpdate({ pages: finalPages, icons: updatedIcons });
         return;
       }
@@ -415,24 +415,24 @@ export function PageContainer({
 
     // 页面内拖拽排序：查找 active 和 over 所在的页面
     const sourcePageInfo = findPageByItemId(activeId);
-    
+
     if (!sourcePageInfo) {
       if (process.env.NODE_ENV === 'development') {
         console.error('[handleDragEnd] 未找到拖拽元素所在的页面:', activeId);
       }
       return;
     }
-    
+
     const { page: sourcePage, index: sourcePageIndex } = sourcePageInfo;
-    
+
     // 检查 over 是否在同一页面的 iconIds 中（仅根级元素支持排序）
     const overIndex = sourcePage.iconIds.indexOf(overId);
     const activeIndex = sourcePage.iconIds.indexOf(activeId);
-    
+
     if (overIndex !== -1 && activeIndex !== -1 && activeIndex !== overIndex) {
       // 执行页面内重排序
       const newIconIds = arrayMove(sourcePage.iconIds, activeIndex, overIndex);
-      
+
       const updatedPages = pages.map((page, index) => {
         if (index === sourcePageIndex) {
           return {
@@ -442,7 +442,7 @@ export function PageContainer({
         }
         return page;
       });
-      
+
       onUpdate({ pages: updatedPages });
       return;
     }
@@ -457,7 +457,7 @@ export function PageContainer({
     if (activeType === 'icon') {
       const icon = icons.find(i => i.id === activeId);
       if (!icon) return null;
-      
+
       return (
         <Icon
           item={icon}
@@ -473,7 +473,7 @@ export function PageContainer({
     if (activeType === 'folder') {
       const folder = folders.find(f => f.id === activeId);
       if (!folder) return null;
-      
+
       return (
         <Folder
           folder={folder}
@@ -483,7 +483,6 @@ export function PageContainer({
           onDelete={() => {}}
           onAddIcon={() => {}}
           onNavigate={() => {}}
-          forceExpandIds={[]}
           config={config}
           onDeleteAll={() => {}}
           onIconEdit={() => {}}
@@ -520,7 +519,7 @@ export function PageContainer({
       )}
 
       {/* 横向滚动容器 - 隐藏滚动条 */}
-      <div 
+      <div
         ref={scrollContainerRef}
         data-scroll-container
         className="flex overflow-x-auto snap-x snap-mandatory min-h-screen"
@@ -587,7 +586,7 @@ export function PageContainer({
           onPageChange={handlePageChange}
           language={currentLanguage}
         />
-        
+
         {/* 页面管理器 */}
         <PageManager
           pages={pages}
@@ -621,14 +620,14 @@ export function PageContainer({
       </DragOverlay>
 
       {/* 空白处右键菜单 */}
-      <DropdownMenu 
-        open={isBlankMenuOpen} 
+      <DropdownMenu
+        open={isBlankMenuOpen}
         onOpenChange={setIsBlankMenuOpen}
       >
         <DropdownMenuTrigger asChild>
           <span className="hidden" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent 
+        <DropdownMenuContent
           align="start"
           style={{
             position: 'fixed',

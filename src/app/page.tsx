@@ -33,20 +33,16 @@ interface AddItemForm {
 }
 
 export default function Home() {
-  // 配置状态管理
-  const [config, setConfig] = useState<UserConfig>(ConfigManager.getDefaultConfig());
+  // 配置状态管理 - 使用惰性初始化避免 useEffect 中的 setState
+  const [config, setConfig] = useState<UserConfig>(() => {
+    return ConfigManager.loadConfig() || ConfigManager.getDefaultConfig();
+  });
 
   // 根据当前语言获取字符串
   const S = getStrings(config.theme.language);
 
-  // 客户端挂载后异步加载本地配置和清理缓存
+  // 客户端挂载后清理过期缓存
   useEffect(() => {
-    const saved = ConfigManager.loadConfig();
-    if (saved) {
-      setConfig(saved);
-    }
-
-    // 清理过期缓存
     ConfigManager.cleanExpiredCache();
   }, []);
   // 主题管理
@@ -59,7 +55,6 @@ export default function Home() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [currentPageIndex, setCurrentPageIndex] = useState(0); // 跟踪当前活跃页面索引
-  const [isMounted, setIsMounted] = useState(false); // 用于避免 hydration mismatch
   const [addForm, setAddForm] = useState<AddItemForm>({
     type: 'icon',
     name: '',
@@ -68,12 +63,7 @@ export default function Home() {
   const [editItem, setEditItem] = useState<IconItem | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchQuery(searchQuery);
@@ -274,7 +264,7 @@ export default function Home() {
 
     if (addForm.type === 'icon') {
       const urlToValidate = addForm.url.trim();
-      
+
       if (!urlToValidate) {
         toast.error(STRINGS.urlRequired);
         return;
@@ -317,13 +307,13 @@ export default function Home() {
           builtinIcon: addForm.builtinIcon,
           customIconUrl: addForm.customIconUrl
         };
-        
+
         let newPages = config.pages;
-        
+
         // 如果是根级图标，添加到当前活跃页面的 iconIds
         if (!addForm.folderId) {
           const targetPageIndex = currentPageIndex >= 0 && currentPageIndex < config.pages.length ? currentPageIndex : 0;
-          
+
           // 关键修复：先从所有页面移除新图标 ID（防止数据污染），再添加到目标页面
           newPages = config.pages.map((page, index) => {
             if (index === targetPageIndex) {
@@ -340,7 +330,7 @@ export default function Home() {
           });
         }
         // 如果在文件夹内添加，不需要添加到任何页面的 iconIds（因为文件夹本身已在某个页面中）
-        
+
         handleConfigUpdate({
           icons: [...config.icons, newIcon],
           pages: newPages
@@ -352,7 +342,7 @@ export default function Home() {
           name: addForm.name.trim(),
           order: config.folders.length
         };
-        
+
         // 添加到当前活跃页面的 iconIds
         const targetPageIndex = currentPageIndex >= 0 && currentPageIndex < config.pages.length ? currentPageIndex : 0;
         const newPages = config.pages.map((page, index) => {
@@ -364,7 +354,7 @@ export default function Home() {
           }
           return page;
         });
-        
+
         handleConfigUpdate({
           folders: [...config.folders, newFolder],
           pages: newPages
@@ -542,13 +532,13 @@ export default function Home() {
     const updatedIcons = config.icons.map(icon =>
       icon.id === iconId ? { ...icon, folderId } : icon
     );
-    
+
     // 从所有页面的 iconIds 中移除该图标（因为现在它在文件夹内）
     const updatedPages = config.pages.map(page => ({
       ...page,
       iconIds: page.iconIds.filter(id => id !== iconId)
     }));
-    
+
     handleConfigUpdate({ icons: updatedIcons, pages: updatedPages });
   }, [config.icons, config.folders, config.pages, handleConfigUpdate]);
 
@@ -558,21 +548,21 @@ export default function Home() {
   const handleReorderIconsInFolder = useCallback((folderId: string, orderedIconIds: string[]) => {
     // 获取当前文件夹内的所有图标
     const folderIcons = config.icons.filter(icon => icon.folderId === folderId);
-    
+
     // 创建一个映射，将图标 ID 映射到图标对象
     const iconMap = new Map(folderIcons.map(icon => [icon.id, icon]));
-    
+
     // 按照新的顺序重新排列图标
     const reorderedIcons = orderedIconIds
       .map(id => iconMap.get(id))
       .filter((icon): icon is IconItem => icon !== undefined);
-    
+
     // 其他不在排序列表中的图标保持不变
     const otherIcons = config.icons.filter(icon => icon.folderId !== folderId);
-    
+
     // 合并并更新
     const updatedIcons = [...otherIcons, ...reorderedIcons];
-    
+
     handleConfigUpdate({ icons: updatedIcons });
   }, [config.icons, handleConfigUpdate]);
 
@@ -627,7 +617,7 @@ export default function Home() {
       }}
     >
       {/* 顶部栏 */}
-            <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 ${config.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-[var(--bg-secondary)]'}`}>
+            <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 ${config.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-(--bg-secondary)'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between h-16 gap-4">
             {/* 左侧：Logo */}
@@ -686,8 +676,7 @@ export default function Home() {
 
       {/* 主体区域 */}
       <main className="flex-1">
-        {isMounted ? (
-          <PageContainer
+        <PageContainer
             icons={filteredIcons}
             folders={filteredFolders}
             pages={config.pages}
@@ -712,12 +701,6 @@ export default function Home() {
             }}
             onPageChange={setCurrentPageIndex} // 新增：跟踪当前页面索引
           />
-        ) : (
-          // 服务端渲染时显示占位符，避免 hydration mismatch
-          <div className="min-h-[400px] flex items-center justify-center">
-            <div className="text-muted-foreground">{S.loading}</div>
-          </div>
-        )}
       </main>
 
       {/* 添加项目模态框 */}

@@ -6,9 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { FolderItem, IconItem } from '@/lib/configManager';
 import { Icon } from './Icon';
-import { useTheme } from '@/hooks/useTheme';
 import { Modal } from '../ui/modal';
-import { Button } from '../ui/button';
 import { getStrings } from '@/lib/strings';
 import {
   DropdownMenu,
@@ -28,7 +26,6 @@ interface FolderProps {
   onNavigate: (folderId: string | null) => void;
   onDropOnFolder?: (iconId: string, folderId: string) => void;
   currentPath?: string[];
-  forceExpandIds?: string[]; // 强制展开的文件夹ID列表
   isDragging?: boolean; // 全局拖拽状态
   isOver?: boolean; // 是否有元素悬停在上方
   isDropTarget?: boolean; // 当前是否被拖拽悬停（计时中）
@@ -58,22 +55,18 @@ interface FolderProps {
  * 文件夹组件 - 渲染文件夹及其内容
  * @param props - 组件属性
  */
-export function Folder({ 
-  folder, 
-  icons, 
-  folders, 
+export function Folder({
+  folder,
+  icons,
+  folders,
   onRename,
   onDelete,
   onAddIcon,
-  onNavigate,
-  currentPath = [],
-  forceExpandIds = [],
   isDragging: isDraggingProp,
   isOver = false,
   isDropTarget = false,
   isReadyToDrop = false,
   config,
-  onDeleteAll,
   onIconEdit,
   onIconDelete,
   onIconHide,
@@ -90,18 +83,11 @@ export function Folder({
   const touchSensor = useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } });
   const sensors = useSensors(mouseSensor, touchSensor);
 
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  // 如果文件夹在强制展开列表中，则自动展开
-  const shouldForceExpand = forceExpandIds.includes(folder.id);
-  const effectiveIsExpanded = shouldForceExpand || isExpanded;
-  const { theme } = useTheme();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const touchStartPosRef = useRef({ x: 0, y: 0 });
   const longPressTriggeredRef = useRef(false);
 
   // 根据当前配置的语言获取文案
@@ -140,19 +126,19 @@ export function Folder({
    */
   const handleFolderIconDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
-    
+
     if (!over || active.id === over.id) return;
-    
+
     const folderIcons = getFolderIcons();
     const oldIndex = folderIcons.findIndex(icon => icon.id === active.id);
     const newIndex = folderIcons.findIndex(icon => icon.id === over.id);
-    
+
     if (oldIndex === -1 || newIndex === -1) return;
-    
+
     // 重新排序
     const reorderedIcons = arrayMove(folderIcons, oldIndex, newIndex);
     const orderedIconIds = reorderedIcons.map(icon => icon.id);
-    
+
     // 调用回调函数更新父组件
     if (onReorderIcons) {
       onReorderIcons(folder.id, orderedIconIds);
@@ -210,20 +196,20 @@ export function Folder({
       longPressTriggeredRef.current = false;
       return;
     }
-    
+
     // 如果菜单已打开，先关闭菜单
     if (isMenuOpen) {
       setIsMenuOpen(false);
       return;
     }
-    
+
     const operationMode = config?.operationMode || {
       mode: 'hybrid' as const,
       openMethod: 'click' as const,
       menuTrigger: 'both' as const,
       showAddButton: true
     };
-    
+
     // 只有在点击打开方式为单击时，才打开文件夹
     if (operationMode.openMethod === 'click') {
       setIsModalOpen(true);
@@ -241,7 +227,7 @@ export function Folder({
       menuTrigger: 'both' as const,
       showAddButton: true
     };
-    
+
     // 只有在双击打开方式为双击时，才打开文件夹
     if (operationMode.openMethod === 'doubleClick') {
       setIsModalOpen(true);
@@ -258,7 +244,7 @@ export function Folder({
   const getIconSizeClass = useCallback(() => {
     const defaultSize = 'w-12 h-12';
     if (!config?.theme?.iconSize) return defaultSize;
-    
+
     switch (config.theme.iconSize) {
       case 'small':
         return 'w-10 h-10';
@@ -269,11 +255,11 @@ export function Folder({
       default:
         return defaultSize;
     }
-  }, [config?.theme?.iconSize]);
+  }, [config]);
 
   // 计算文件夹的视觉样式
   let folderClassName = 'group relative flex flex-col items-center p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50 hover:shadow-md';
-  
+
   if (isReadyToDrop) {
     // 准备放入状态（悬停超过600ms）：深蓝色边框 + 105%缩放 + 蓝色阴影
     folderClassName += ' scale-105 ring-4 ring-blue-600 bg-blue-100 dark:bg-blue-900/50 shadow-lg shadow-blue-500/50';
@@ -286,9 +272,9 @@ export function Folder({
   }
 
   return (
-    <div 
+    <div
       className={folderClassName}
-      data-folder-item 
+      data-folder-item
       data-id={folder.id}
     >
       {/* 文件夹头部 - 可拖拽区域 */}
@@ -313,15 +299,15 @@ export function Folder({
       >
         {/* 文件夹图标 */}
         <div className={`${getIconSizeClass()} mb-2 rounded-lg overflow-hidden bg-transparent flex items-center justify-center`}>
-          <svg 
-            className="w-2/3 h-2/3 transition-transform duration-200 text-yellow-500 dark:text-yellow-400" 
-            fill="currentColor" 
+          <svg
+            className="w-2/3 h-2/3 transition-transform duration-200 text-yellow-500 dark:text-yellow-400"
+            fill="currentColor"
             viewBox="0 0 20 20"
           >
             <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
           </svg>
         </div>
-    
+
         {/* 文件夹名称 */}
         <div className="w-full text-center">
           <span className="text-xs text-center text-muted-foreground font-medium truncate max-w-full px-1">
@@ -331,14 +317,14 @@ export function Folder({
       </div>
 
       {/* 右键菜单 - 通过 onContextMenu 触发 */}
-      <DropdownMenu 
-        open={shouldDisableMenu ? false : isMenuOpen} 
+      <DropdownMenu
+        open={shouldDisableMenu ? false : isMenuOpen}
         onOpenChange={setIsMenuOpen}
       >
         <DropdownMenuTrigger asChild>
           <span className="hidden" />
         </DropdownMenuTrigger>
-        <DropdownMenuContent 
+        <DropdownMenuContent
           align="start"
           style={{
             position: 'fixed',
@@ -370,7 +356,7 @@ export function Folder({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-  
+
       {/* 删除确认对话框 */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -404,7 +390,7 @@ export function Folder({
           </div>
         </div>
       )}
-  
+
       {/* 文件夹内容模态框 */}
       <Modal
         isOpen={isModalOpen}
@@ -413,8 +399,8 @@ export function Folder({
         description={`包含 ${folderIcons.length} 个应用`}
         size="xl"
       >
-        <div 
-          className="space-y-4 min-h-[200px]" // 添加最小高度确保始终有可点击区域
+        <div
+          className="space-y-4 min-h-50" // 添加最小高度确保始终有可点击区域
           onContextMenu={(e) => {
             // 阻止浏览器默认菜单
             e.preventDefault();
@@ -435,9 +421,9 @@ export function Folder({
                       // 可以导航到子文件夹
                     }}
                   >
-                    <svg 
-                      className="w-8 h-8 text-yellow-500 dark:text-yellow-400" 
-                      fill="currentColor" 
+                    <svg
+                      className="w-8 h-8 text-yellow-500 dark:text-yellow-400"
+                      fill="currentColor"
                       viewBox="0 0 20 20"
                     >
                       <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
@@ -448,12 +434,12 @@ export function Folder({
               </div>
             </div>
           )}
-  
+
           {/* 渲染图标网格 */}
           {folderIcons.length > 0 && (
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-2">{STRINGS.apps}</h4>
-              <DndContext 
+              <DndContext
                 sensors={sensors}
                 onDragEnd={handleFolderIconDragEnd}
               >
@@ -499,7 +485,7 @@ export function Folder({
               </DndContext>
             </div>
           )}
-  
+
           {/* 空文件夹提示 */}
           {!hasContent && (
             <div className="text-center py-8">

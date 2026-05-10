@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
   {
     rules: {
       'react-hooks/set-state-in-effect': 'warn',
+      // 静态导出模式下必须使用原生 img 标签，禁用 next/image 警告
+      '@next/next/no-img-element': 'off',
     },
   },
 ]);

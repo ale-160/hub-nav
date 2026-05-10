@@ -24,29 +24,23 @@ interface FaviconPreviewProps {
 
 function FaviconPreview({ src, alt, className = '', appName = '' }: FaviconPreviewProps) {
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
-  const [cachedSrc, setCachedSrc] = useState<string | null>(null);
 
-  // 初始化时检查缓存
-  useEffect(() => {
-    if (src) {
-      try {
-        const domain = extractDomain(src);
-        const cachedIcon = ConfigManager.getCachedIcon(domain);
-        if (cachedIcon) {
-          setCachedSrc(cachedIcon);
-        }
-      } catch {
-        // 检查缓存失败，忽略错误
-      }
+  // 直接从缓存读取（派生状态，无需 useEffect + setState）
+  const cachedSrc = useMemo(() => {
+    if (!src) return null;
+    try {
+      const domain = extractDomain(src);
+      return ConfigManager.getCachedIcon(domain);
+    } catch {
+      return null;
     }
   }, [src]);
 
-  // 处理图片加载成功
+  // 处理图片加载成功 - 写入缓存
   const handleImageLoad = useCallback(() => {
     if (src && !cachedSrc) {
       try {
         const domain = extractDomain(src);
-        // 直接写入缓存，不再需要异步处理
         ConfigManager.setIconCache(domain, src);
       } catch {
         // 忽略缓存写入错误
@@ -69,7 +63,6 @@ function FaviconPreview({ src, alt, className = '', appName = '' }: FaviconPrevi
   }
 
   // 显示图片（优先使用缓存）
-  // eslint-disable-next-line @next/next/no-img-element
   return (
     <img
       src={cachedSrc || src}
@@ -151,7 +144,7 @@ export function IconSelector({
    */
   const getCategorizedIcons = useCallback(() => {
     const emojiIcons = BUILTIN_ICONS.filter(icon => icon.type === 'emoji');
-    
+
     // 纯色图标：17个常用颜色 + 1个调色盘
     const solidColors = [
       '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
@@ -159,7 +152,7 @@ export function IconSelector({
       '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
       '#6b7280', '#000000', customColor || '#ffffff'
     ];
-    
+
     const solidIcons = solidColors.map((color, index) => ({
       id: `solid-color-${index}`,
       name: index === 17 ? (customColor ? '自定义颜色' : '调色盘') : `颜色${index + 1}`,
@@ -167,7 +160,7 @@ export function IconSelector({
       type: 'solid' as const,
       color: color
     }));
-    
+
     return { emojiIcons, solidIcons };
   }, [customColor]);
 
@@ -191,7 +184,7 @@ export function IconSelector({
    */
   const getWebsiteIconPreviewUrl = useCallback((url: string) => {
     if (!url) return '';
-    
+
     try {
       const domain = extractDomain(url);
       const faviconUrls = getFaviconUrls(domain);
@@ -207,6 +200,7 @@ export function IconSelector({
   useEffect(() => {
     if (iconType === 'favicon' && websiteUrl) {
       const previewUrl = getWebsiteIconPreviewUrl(websiteUrl);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setWebsiteIconPreview(previewUrl);
     } else if (iconType !== 'favicon') {
       setWebsiteIconPreview('');
@@ -214,7 +208,7 @@ export function IconSelector({
   }, [iconType, websiteUrl, getWebsiteIconPreviewUrl]);
   const getSelectedBuiltinIcon = useCallback(() => {
     if (!builtinIcon) return BUILTIN_ICONS[0];
-    
+
     // 如果是纯色图标，构造对应的 BuiltinIcon 对象
     if (builtinIcon.startsWith('solid-color-')) {
       const colorIndex = parseInt(builtinIcon.replace('solid-color-', ''));
@@ -224,7 +218,7 @@ export function IconSelector({
         '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
         '#6b7280', '#000000', customColor || '#ffffff'
       ];
-      
+
       return {
         id: builtinIcon,
         name: getIconName(builtinIcon),
@@ -233,7 +227,7 @@ export function IconSelector({
         color: solidColors[colorIndex] || '#ffffff'
       };
     }
-    
+
     // 否则从 BUILTIN_ICONS 中查找并返回国际化名称
     const originalIcon = BUILTIN_ICONS.find(icon => icon.id === builtinIcon) || BUILTIN_ICONS[0];
     return {
@@ -249,7 +243,7 @@ export function IconSelector({
     // 提取应用名称的第一个字符
     const getFirstChar = (name: string): string => {
       if (!name || name.trim().length === 0) return '?';
-      
+
       const firstChar = name.trim().charAt(0);
       // 如果是中文，直接返回第一个汉字
       if (/[\u4e00-\u9fa5]/.test(firstChar)) {
@@ -266,7 +260,7 @@ export function IconSelector({
     const displayChar = appName ? getFirstChar(appName) : getFirstChar(icon.name);
 
     return (
-      <div 
+      <div
         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
         style={{ backgroundColor: icon.color }}
       >
@@ -283,7 +277,7 @@ export function IconSelector({
     : solidIcons;
 
   const filteredEmojiIcons = searchQuery
-    ? emojiIcons.filter(icon => 
+    ? emojiIcons.filter(icon =>
         getIconName(icon.id).toLowerCase().includes(searchQuery.toLowerCase()) ||
         icon.emoji.includes(searchQuery)
       )
@@ -356,7 +350,7 @@ export function IconSelector({
               </div>
             </div>
           )}
-          
+
           {!websiteUrl && (
             <div className="text-center py-4 bg-muted rounded-lg">
               <p className="text-sm text-muted-foreground">
@@ -364,7 +358,7 @@ export function IconSelector({
               </p>
             </div>
           )}
-          
+
           {websiteUrl && !websiteIconPreview && (
             <div className="text-center py-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <p className="text-sm text-yellow-700 dark:text-yellow-300">
@@ -382,7 +376,7 @@ export function IconSelector({
             <label className="block text-sm font-medium text-foreground mb-2">
               {STRINGS.selectIcon}
             </label>
-            
+
             {/* 图标类型标签 */}
             <div className="flex gap-2 mb-3">
               <button
@@ -411,7 +405,7 @@ export function IconSelector({
 
             {/* 搜索框 */}
             <Command className="border border-border rounded-lg mb-3">
-              <CommandInput 
+              <CommandInput
                 placeholder={language === 'zh' ? '搜索图标...' : 'Search icons...'}
                 value={searchQuery}
                 onValueChange={setSearchQuery}
@@ -425,7 +419,7 @@ export function IconSelector({
                     {(activeTab === 'solid' ? filteredSolidIcons : filteredEmojiIcons).map((icon) => {
                       const isPalette = icon.id.includes('color-17') && !customColor;
                       const isCustomColor = icon.id.includes('color-17') && customColor;
-                      
+
                       return (
                         <CommandItem
                           key={icon.id}
@@ -467,7 +461,7 @@ export function IconSelector({
                 </CommandGroup>
               </CommandList>
             </Command>
-            
+
             {/* 隐藏的颜色选择器 */}
             <input
               id="custom-color-picker"
@@ -481,7 +475,7 @@ export function IconSelector({
               }}
             />
           </div>
-          
+
           {builtinIcon && (
             <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
               <div className="w-12 h-12 rounded-lg bg-background flex items-center justify-center border border-border">
@@ -520,7 +514,7 @@ export function IconSelector({
               className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
             />
           </div>
-          
+
           {customIconUrl && (
             <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <div className="w-12 h-12 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 overflow-hidden">
