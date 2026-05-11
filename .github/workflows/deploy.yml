@@ -30,9 +30,10 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Install dependencies
-        run: |
-          rm -rf node_modules .next package-lock.json
-          npm install
+        run: npm ci
+
+      - name: Install Linux native modules
+        run: npm install --no-save lightningcss-linux-x64-gnu @tailwindcss/oxide-linux-x64-gnu
 
       - name: Build with Next.js
         env:
