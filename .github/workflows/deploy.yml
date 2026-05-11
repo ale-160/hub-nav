@@ -60,15 +60,13 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json', '**/yarn.lock') }}-
 
       - name: Install dependencies
-        run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
-
-      - name: Install lightningcss native dependency
-        run: npm install --no-save lightningcss-linux-x64-gnu
+        run: |
+          rm -rf node_modules .next
+          ${{ steps.detect-package-manager.outputs.manager }} install --force
 
       - name: Build with Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          NEXT_TURBOPACK: 0
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
 
       - name: Upload artifact
