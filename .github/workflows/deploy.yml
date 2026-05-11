@@ -31,12 +31,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm ci
+          rm -rf node_modules .next package-lock.json
+          npm install
 
       - name: Build with Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
-        run: npx next build
+        run: npx next build --webpack
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
