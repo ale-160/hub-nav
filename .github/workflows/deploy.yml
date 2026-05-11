@@ -66,6 +66,9 @@ jobs:
         run: npm install --no-save @next/swc-linux-x64-gnu @next/swc-linux-x64-musl lightningcss-linux-x64-gnu lightningcss-linux-x64-musl
 
       - name: Build with Next.js
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          DISABLE_EXPERIMENTAL_TURBOPACK: 1
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
 
       - name: Upload artifact
