@@ -4,7 +4,7 @@ import path from 'path';
 
 const baseConfig: NextConfig = {
     output: 'export',
-    basePath: '/hub-nav',
+    basePath: '',
     trailingSlash: true,
     images: {
         unoptimized: true,
