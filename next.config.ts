@@ -6,6 +6,13 @@ const baseConfig: NextConfig = {
     output: 'export',
     basePath: '',
     trailingSlash: true,
+    // 强制使用 webpack 替代 turbopack（CI 环境更稳定）
+    webpack: (config) => {
+        config.infrastructureLogging = {
+            level: 'error',
+        };
+        return config;
+    },
     images: {
         unoptimized: true,
     },

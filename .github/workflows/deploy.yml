@@ -62,12 +62,13 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
 
+      - name: Install lightningcss native dependency
+        run: npm install --no-save lightningcss-linux-x64-gnu
+
       - name: Build with Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
-          # Disable Turbopack, use Webpack (more stable in CI)
-          DISABLE_EXPERIMENTAL_TURBOPACK: 1
-        run: ${{ steps.detect-package-manager.outputs.runner }} next build
+        run: ${{ steps.detect-package-manager.outputs.runner }} next build --no-turbopack
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
