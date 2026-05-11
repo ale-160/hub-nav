@@ -68,7 +68,8 @@ jobs:
       - name: Build with Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
-        run: ${{ steps.detect-package-manager.outputs.runner }} next build --no-turbopack
+          NEXT_TURBOPACK: 0
+        run: ${{ steps.detect-package-manager.outputs.runner }} next build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
