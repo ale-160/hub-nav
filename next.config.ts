@@ -6,13 +6,10 @@ const baseConfig: NextConfig = {
     output: 'export',
     basePath: '',
     trailingSlash: true,
-    // CI 环境使用 webpack（避免 Turbopack native 依赖问题）
+    // 禁用 Turbopack，使用 webpack
     experimental: {
-        // 禁用 Turbopack
-        turbo: undefined,
+        turbo: false,
     },
-    // 强制使用 webpack
-    webpack: (config) => config,
     images: {
         unoptimized: true,
     },
