@@ -62,9 +62,6 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.detect-package-manager.outputs.manager }} ${{ steps.detect-package-manager.outputs.command }}
 
-      - name: Install missing native dependencies
-        run: npm install --no-save @next/swc-linux-x64-gnu @next/swc-linux-x64-musl lightningcss-linux-x64-gnu lightningcss-linux-x64-musl
-
       - name: Build with Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
