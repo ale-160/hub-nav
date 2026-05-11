@@ -6,10 +6,6 @@ const baseConfig: NextConfig = {
     output: 'export',
     basePath: '',
     trailingSlash: true,
-    // 禁用 Turbopack，使用 webpack
-    experimental: {
-        turbo: false,
-    },
     images: {
         unoptimized: true,
     },
