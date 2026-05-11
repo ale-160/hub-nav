@@ -65,6 +65,7 @@ jobs:
       - name: Build with Next.js
         env:
           NEXT_TELEMETRY_DISABLED: 1
+          # Disable Turbopack, use Webpack (more stable in CI)
           DISABLE_EXPERIMENTAL_TURBOPACK: 1
         run: ${{ steps.detect-package-manager.outputs.runner }} next build
 
