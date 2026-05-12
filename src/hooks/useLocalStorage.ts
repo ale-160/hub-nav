@@ -21,7 +21,12 @@ export function useLocalStorage<T>(
     try {
       const item = window.localStorage.getItem(key);
       if (item) {
-        return JSON.parse(item) as T;
+        try {
+          return JSON.parse(item) as T;
+        } catch {
+          // 如果 JSON 解析失败，说明存储的是普通字符串，直接返回
+          return item as unknown as T;
+        }
       }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -43,7 +48,12 @@ export function useLocalStorage<T>(
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === key && event.newValue !== null) {
         try {
-          setStoredValue(JSON.parse(event.newValue) as T);
+          try {
+            setStoredValue(JSON.parse(event.newValue) as T);
+          } catch {
+            // 如果 JSON 解析失败，说明存储的是普通字符串，直接返回
+            setStoredValue(event.newValue as unknown as T);
+          }
         } catch (error) {
           if (process.env.NODE_ENV === 'development') {
             console.error(`解析 localStorage 变化失败:`, error);

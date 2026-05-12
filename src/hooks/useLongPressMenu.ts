@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 
 interface UseLongPressMenuOptions {
   /** 菜单打开回调，接收坐标位置 */
@@ -15,15 +15,17 @@ interface UseLongPressMenuResult {
   /** 指针按下事件处理函数 */
   handlePointerDownCapture: (e: React.PointerEvent) => void;
   /** 长按触发标记 ref（用于区分长按和点击） */
-  longPressTriggeredRef: React.MutableRefObject<boolean>;
+  longPressTriggeredRef: React.RefObject<boolean>;
+  /** 重置长按触发状态 */
+  resetLongPressState: () => void;
 }
 
 /**
  * 长按触发菜单 Hook
- * 
+ *
  * 用于移动端触摸交互，长按 500ms 触发右键菜单
  * 如果移动超过阈值则取消长按，避免与拖拽冲突
- * 
+ *
  * 使用方式：
  * const { handlePointerDownCapture, longPressTriggeredRef } = useLongPressMenu({
  *   onMenuOpen: (pos) => { setMenuPosition(pos); setIsMenuOpen(true); }
@@ -53,7 +55,7 @@ export function useLongPressMenu({
 
     // 移动处理 - 超过阈值则取消长按
     const handleMove = (moveE: PointerEvent) => {
-      if (Math.abs(moveE.clientX - startX) > moveThreshold || 
+      if (Math.abs(moveE.clientX - startX) > moveThreshold ||
           Math.abs(moveE.clientY - startY) > moveThreshold) {
         clearTimeout(longPressTimerRef.current!);
         longPressTriggeredRef.current = false;
@@ -74,8 +76,16 @@ export function useLongPressMenu({
     document.addEventListener('pointerup', handleUp);
   }, [onMenuOpen, delay, moveThreshold, disabled]);
 
+  /**
+   * 重置长按触发状态
+   */
+  const resetLongPressState = useCallback(() => {
+    longPressTriggeredRef.current = false;
+  }, []);
+
   return {
     handlePointerDownCapture,
     longPressTriggeredRef,
+    resetLongPressState,
   };
 }
