@@ -1,7 +1,7 @@
 'use client';
 
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { getStrings, Language } from '@/lib/strings';
+import { getStrings, Language } from '@/data/i18n';
 
 interface ErrorBoundaryProps {
   children: ReactNode;

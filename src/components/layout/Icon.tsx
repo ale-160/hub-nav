@@ -1,15 +1,17 @@
 'use client';
 
 import React, {useState, useCallback, useMemo} from 'react';
-import { createPortal } from 'react-dom';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { IconItem, ConfigManager } from '@/lib/configManager';
-import { getBuiltinIconById, getDefaultIcon } from '@/lib/builtinIcons';
-import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/lib/urlUtils';
-import { renderSolidIcon } from '@/lib/iconUtils';
-import { getStrings } from '@/lib/strings';
-import { useLongPressMenu } from '@/hooks/useLongPressMenu';
+import { getBuiltinIconById, getDefaultIcon } from '@/data/icons';
+import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/utils/url';
+import { renderSolidIcon } from '@/utils/icon';
+import { getStrings } from '@/data/i18n';
+import { useContextMenu } from '@/hooks/useContextMenu';
+import { useConfirmDialog } from '@/hooks/useConfirmDialog';
+import { useFolderSelector } from '@/hooks/useFolderSelector';
+import { getIconSizeClass } from '@/utils/ui';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -118,21 +120,30 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
   });
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const [showFolderSelector, setShowFolderSelector] = useState(false); // 新增：文件夹选择器
-
-  // 使用长按 Hook 处理触摸菜单
-  const { handlePointerDownCapture, longPressTriggeredRef } = useLongPressMenu({
-    onMenuOpen: ({ x, y }) => {
-      setMenuPosition({ x, y });
-      setIsMenuOpen(true);
-    }
-  });
+  const [showFolderSelector, setShowFolderSelector] = useState(false);
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config?.theme?.language || 'zh';
   const STRINGS = getStrings(currentLanguage);
+
+  // 使用统一菜单 Hook
+  const {
+    isOpen: isMenuOpen,
+    position: menuPosition,
+    close: closeMenu,
+    handleContextMenu,
+    longPressHandlers
+  } = useContextMenu({
+    disabled: isDragging,
+    onOpen: () => {},
+    onClose: () => {}
+  });
+
+  // 使用确认对话框 Hook
+  const { renderIconDeleteConfirm } = useConfirmDialog({ language: currentLanguage });
+
+  // 使用文件夹选择器 Hook
+  const { renderFolderSelector } = useFolderSelector({ language: currentLanguage });
 
   // 拖拽样式
   const shouldDisableMenu = isDragging;
@@ -141,25 +152,6 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
-  /**
-   * 获取图标大小类名
-   */
-  const getIconSizeClass = useCallback(() => {
-    const defaultSize = 'w-12 h-12';
-    if (!config?.theme?.iconSize) return defaultSize;
-
-    switch (config.theme.iconSize) {
-      case 'small':
-        return 'w-10 h-10';
-      case 'medium':
-        return 'w-12 h-12';
-      case 'large':
-        return 'w-16 h-16';
-      default:
-        return defaultSize;
-    }
-  }, [config]);
 
   /**
    * 获取图标内容
@@ -240,17 +232,16 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
    * 处理点击事件
    */
   /* eslint-disable react-hooks/exhaustive-deps */
-  // longPressTriggeredRef 是稳定引用，不需要加入依赖数组
   const handleClick = useCallback(() => {
     // 如果刚刚触发了长按，跳过点击逻辑
-    if (longPressTriggeredRef.current) {
-      longPressTriggeredRef.current = false;
+    if (longPressHandlers.longPressTriggeredRef.current) {
+      longPressHandlers.longPressTriggeredRef.current = false;
       return;
     }
 
     // 如果菜单已打开，先关闭菜单
     if (isMenuOpen) {
-      setIsMenuOpen(false);
+      closeMenu();
       return;
     }
 
@@ -265,7 +256,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
     if (operationMode.openMethod === 'click' && !item.isHidden) {
       window.open(item.url, '_blank');
     }
-  }, [item.url, item.isHidden, config?.operationMode, isMenuOpen]);
+  }, [item.url, item.isHidden, config?.operationMode, isMenuOpen, closeMenu]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /**
@@ -299,20 +290,14 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         {...attributes}
         {...listeners}
         className="group relative flex flex-col items-center p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50 hover:shadow-md active:scale-95 active:opacity-50"
-        onPointerDownCapture={handlePointerDownCapture}
+        onPointerDownCapture={longPressHandlers.handlePointerDownCapture}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          if (!shouldDisableMenu) {
-            setMenuPosition({ x: e.clientX, y: e.clientY });
-            setIsMenuOpen(true);
-          }
-        }}
+        onContextMenu={handleContextMenu}
       >
         {/* 图标内容 */}
         <div
-          className={`${getIconSizeClass()} mb-2 rounded-lg overflow-hidden bg-transparent flex items-center justify-center`}
+          className={`${getIconSizeClass(config)} mb-2 rounded-lg overflow-hidden bg-transparent flex items-center justify-center`}
           suppressHydrationWarning
         >
           {(() => {
@@ -345,10 +330,10 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         </span>
       </div>
 
-      {/* 右键菜单 - 通过 onContextMenu 触发 */}
+      {/* 右键菜单 - 通过 useContextMenu 管理 */}
       <DropdownMenu
-        open={shouldDisableMenu ? false : isMenuOpen}
-        onOpenChange={setIsMenuOpen}
+        open={isMenuOpen}
+        onOpenChange={(open) => !open && closeMenu()}
       >
         <DropdownMenuTrigger asChild id={`icon-menu-${item.id}`}>
           <span className="hidden" />
@@ -357,20 +342,20 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           align="start"
           style={{
             position: 'fixed',
-            left: Math.min(menuPosition.x, typeof window !== 'undefined' ? window.innerWidth - 180 : menuPosition.x),
-            top: Math.min(menuPosition.y, typeof window !== 'undefined' ? window.innerHeight - 150 : menuPosition.y),
+            left: menuPosition.x,
+            top: menuPosition.y,
           }}
         >
           <DropdownMenuItem onClick={() => {
             onEdit(item.id);
-            setIsMenuOpen(false);
+            closeMenu();
           }}>
             {STRINGS.modify}
           </DropdownMenuItem>
           {onMoveToFolder && folders && folders.length > 0 && (
             <DropdownMenuItem onClick={() => {
               setShowFolderSelector(true);
-              setIsMenuOpen(false);
+              closeMenu();
             }}>
               {STRINGS.moveToFolder || '放入文件夹'}
             </DropdownMenuItem>
@@ -378,107 +363,41 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           {item.folderId && onMoveToRoot && (
             <DropdownMenuItem onClick={() => {
               onMoveToRoot(item.id);
-              setIsMenuOpen(false);
+              closeMenu();
             }}>
               {STRINGS.moveToRoot || '移动到根级'}
             </DropdownMenuItem>
           )}
           <DropdownMenuItem onClick={() => {
             setShowDeleteConfirm(true);
-            setIsMenuOpen(false);
+            closeMenu();
           }} className="text-red-600 dark:text-red-400">
             {STRINGS.delete}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* 删除确认对话框 - 使用 Portal 渲染到 body */}
-      {showDeleteConfirm && createPortal(
-        <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30"
-          style={{ pointerEvents: 'auto' }}
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <div className="bg-card rounded-lg shadow-lg p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-medium text-card-foreground mb-4">
-              {STRINGS.confirmDelete}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-6">
-              {STRINGS.confirmDeleteIcon.replace('{name}', item.name)}
-            </p>
-            <div className="flex gap-3 justify-end">
-              <button
-                draggable={false}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
-              >
-                {STRINGS.cancel}
-              </button>
-              <button
-                draggable={false}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => {
-                  onDelete(item.id);
-                  setShowDeleteConfirm(false);
-                }}
-                className="px-4 py-2 text-sm font-medium text-white bg-destructive rounded-lg hover:bg-destructive/90 transition-colors"
-              >
-                {STRINGS.confirmDeleteButton}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* 删除确认对话框 - 使用 Hook 渲染 */}
+      {showDeleteConfirm && renderIconDeleteConfirm({
+        iconName: item.name,
+        onConfirm: () => {
+          onDelete(item.id);
+          setShowDeleteConfirm(false);
+        },
+        onCancel: () => setShowDeleteConfirm(false)
+      })}
 
-      {/* 文件夹选择器 - 使用 Portal 渲染到 body */}
-      {showFolderSelector && folders && createPortal(
-        <div
-          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/30"
-          style={{ pointerEvents: 'auto' }}
-          onPointerDown={(e) => e.stopPropagation()}
-          onContextMenu={(e) => e.stopPropagation()}
-        >
-          <div className="bg-card rounded-lg shadow-lg p-6 max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <h3 className="text-lg font-medium text-card-foreground mb-4">
-              {STRINGS.moveToFolder || '放入文件夹'}
-            </h3>
-            <div className="space-y-2">
-              {folders.map(folder => (
-                <button
-                  key={folder.id}
-                  draggable={false}
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onClick={() => {
-                    if (onMoveToFolder) {
-                      onMoveToFolder(item.id, folder.id);
-                    }
-                    setShowFolderSelector(false);
-                  }}
-                  className="w-full px-4 py-3 text-left rounded-lg hover:bg-accent transition-colors flex items-center gap-3"
-                >
-                  <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-                  </svg>
-                  <span className="text-sm font-medium text-card-foreground">{folder.name}</span>
-                </button>
-              ))}
-            </div>
-            <div className="flex justify-end mt-4">
-              <button
-                draggable={false}
-                onPointerDown={(e) => e.stopPropagation()}
-                onClick={() => setShowFolderSelector(false)}
-                className="px-4 py-2 text-sm font-medium text-secondary-foreground bg-secondary rounded-lg hover:bg-secondary/80 transition-colors"
-              >
-                {STRINGS.cancel}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* 文件夹选择器 - 使用 Hook 渲染 */}
+      {showFolderSelector && folders && renderFolderSelector({
+        folders: folders.map(f => ({ id: f.id, name: f.name })),
+        onSelect: (folderId) => {
+          if (onMoveToFolder) {
+            onMoveToFolder(item.id, folderId);
+          }
+          setShowFolderSelector(false);
+        },
+        onCancel: () => setShowFolderSelector(false)
+      })}
     </div>
   );
 }

@@ -20,7 +20,7 @@ import { PageIndicator } from './PageIndicator';
 import { PageManager } from './PageManager';
 import { Icon } from './Icon';
 import { Folder } from './Folder';
-import { getStrings } from '@/lib/strings';
+import { getStrings } from '@/data/i18n';
 import {
   DropdownMenu,
   DropdownMenuTrigger,

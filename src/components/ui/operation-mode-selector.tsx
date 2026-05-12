@@ -1,7 +1,7 @@
 'use client';
 
 import { OperationModeSettings } from '@/lib/configManager';
-import { STRINGS } from '@/lib/strings';
+import { STRINGS } from '@/data/i18n';
 
 interface OperationModeSelectorProps {
   operationMode: OperationModeSettings;

@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { BUILTIN_ICONS } from '@/lib/builtinIcons';
+import { BUILTIN_ICONS } from '@/data/icons';
 import { ConfigManager } from '@/lib/configManager';
-import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/lib/urlUtils';
-import { renderSolidIcon } from '@/lib/iconUtils';
-import { getStrings } from '@/lib/strings';
+import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/utils/url';
+import { renderSolidIcon } from '@/utils/icon';
+import { getStrings } from '@/data/i18n';
 import {
   Command,
   CommandEmpty,

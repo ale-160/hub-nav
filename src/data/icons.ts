@@ -13,7 +13,7 @@ export interface BuiltinIcon {
 /**
  * 内置图标库 - Emoji 图标
  */
-const EMOJI_ICONS: BuiltinIcon[] = [
+export const EMOJI_ICONS: BuiltinIcon[] = [
   { id: 'home', name: '首页', emoji: '🏠', type: 'emoji' },
   { id: 'folder', name: '文件夹', emoji: '📁', type: 'emoji' },
   { id: 'game', name: '游戏', emoji: '🎮', type: 'emoji' },
@@ -44,7 +44,7 @@ const EMOJI_ICONS: BuiltinIcon[] = [
 /**
  * 内置图标库 - 纯色图标
  */
-const SOLID_ICONS: BuiltinIcon[] = [
+export const SOLID_ICONS: BuiltinIcon[] = [
   { id: 'solid-home', name: '首页', emoji: '🏠', type: 'solid', color: '#3b82f6' },
   { id: 'solid-folder', name: '文件夹', emoji: '📁', type: 'solid', color: '#10b981' },
   { id: 'solid-game', name: '游戏', emoji: '🎮', type: 'solid', color: '#f59e0b' },

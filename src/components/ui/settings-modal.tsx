@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from './select';
 import { OperationModeSelector } from './operation-mode-selector';
-import { getStrings } from '@/lib/strings';
+import { getStrings } from '@/data/i18n';
 
 interface SettingsModalProps {
   isOpen: boolean;

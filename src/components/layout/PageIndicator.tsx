@@ -1,6 +1,6 @@
 import React from 'react';
 import { Page } from '@/lib/configManager';
-import { getStrings } from '@/lib/strings';
+import { getStrings } from '@/data/i18n';
 
 interface PageIndicatorProps {
   pages: Page[];

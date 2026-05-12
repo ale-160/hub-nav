@@ -7,8 +7,8 @@ import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, TouchSe
 import { FolderItem, IconItem } from '@/lib/configManager';
 import { Icon } from './Icon';
 import { Modal } from '../ui/modal';
-import { getStrings } from '@/lib/strings';
-import { useLongPressMenu } from '@/hooks/useLongPressMenu';
+import { getStrings } from '@/data/i18n';
+import { useContextMenu } from '@/hooks/useContextMenu';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,20 +87,23 @@ export function Folder({
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-
-  // 使用长按 Hook 处理触摸菜单
-  const { handlePointerDownCapture, longPressTriggeredRef } = useLongPressMenu({
-    onMenuOpen: ({ x, y }) => {
-      setMenuPosition({ x, y });
-      setIsMenuOpen(true);
-    }
-  });
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config?.theme?.language || 'zh';
   const STRINGS = getStrings(currentLanguage);
+
+  // 使用统一菜单 Hook（整合右键和长按）
+  const {
+    isOpen: isMenuOpen,
+    position: menuPosition,
+    close: closeMenu,
+    handleContextMenu,
+    longPressHandlers
+  } = useContextMenu({
+    disabled: isDraggingProp || isDragging,
+    onOpen: () => {},
+    onClose: () => {}
+  });
 
   // 拖拽样式（优先使用全局状态）
   const shouldDisableMenu = isDraggingProp || isDragging;
@@ -164,17 +167,16 @@ export function Folder({
    * 处理单击事件
    */
   /* eslint-disable react-hooks/exhaustive-deps */
-  // longPressTriggeredRef 是稳定引用，不需要加入依赖数组
   const handleClick = useCallback(() => {
     // 如果刚刚触发了长按，跳过点击逻辑
-    if (longPressTriggeredRef.current) {
-      longPressTriggeredRef.current = false;
+    if (longPressHandlers.longPressTriggeredRef.current) {
+      longPressHandlers.longPressTriggeredRef.current = false;
       return;
     }
 
     // 如果菜单已打开，先关闭菜单
     if (isMenuOpen) {
-      setIsMenuOpen(false);
+      closeMenu();
       return;
     }
 
@@ -189,7 +191,7 @@ export function Folder({
     if (operationMode.openMethod === 'click') {
       setIsModalOpen(true);
     }
-  }, [config?.operationMode, isMenuOpen]);
+  }, [config?.operationMode, isMenuOpen, closeMenu]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /**
@@ -252,17 +254,10 @@ export function Folder({
         {...attributes}
         {...listeners}
         className="flex flex-col items-center"
-        onPointerDownCapture={handlePointerDownCapture}
+        onPointerDownCapture={longPressHandlers.handlePointerDownCapture}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
-        onContextMenu={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!shouldDisableMenu) {
-            setMenuPosition({ x: e.clientX, y: e.clientY });
-            setIsMenuOpen(true);
-          }
-        }}
+        onContextMenu={handleContextMenu}
         draggable="false"
       >
         {/* 文件夹图标 */}
@@ -284,10 +279,10 @@ export function Folder({
         </div>
       </div>
 
-      {/* 右键菜单 - 通过 onContextMenu 触发 */}
+      {/* 右键菜单 - 通过 useContextMenu 管理 */}
       <DropdownMenu
-        open={shouldDisableMenu ? false : isMenuOpen}
-        onOpenChange={setIsMenuOpen}
+        open={isMenuOpen}
+        onOpenChange={(open) => !open && closeMenu()}
       >
         <DropdownMenuTrigger asChild id={`folder-menu-${folder.id}`}>
           <span className="hidden" />
@@ -296,13 +291,13 @@ export function Folder({
           align="start"
           style={{
             position: 'fixed',
-            left: Math.min(menuPosition.x, typeof window !== 'undefined' ? window.innerWidth - 180 : menuPosition.x),
-            top: Math.min(menuPosition.y, typeof window !== 'undefined' ? window.innerHeight - 150 : menuPosition.y),
+            left: menuPosition.x,
+            top: menuPosition.y,
           }}
         >
           <DropdownMenuItem onClick={() => {
             onAddIcon(folder.id);
-            setIsMenuOpen(false);
+            closeMenu();
           }}>
             {STRINGS.addApp}
           </DropdownMenuItem>
@@ -312,13 +307,13 @@ export function Folder({
             if (newName && newName.trim()) {
               onRename(folder.id, newName.trim());
             }
-            setIsMenuOpen(false);
+            closeMenu();
           }}>
             {STRINGS.modify}
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => {
             setShowDeleteConfirm(true);
-            setIsMenuOpen(false);
+            closeMenu();
           }} className="text-red-600 dark:text-red-400">
             {STRINGS.delete}
           </DropdownMenuItem>

@@ -1,7 +1,5 @@
-'use client';
-
-import type { JSX } from 'react';
-import { BuiltinIcon } from '@/lib/builtinIcons';
+import React from 'react';
+import { BuiltinIcon } from '@/data/icons';
 
 /**
  * 提取应用名称的第一个字符
@@ -33,7 +31,7 @@ export function getFirstChar(name: string): string {
  * @param appName - 应用名称（可选，如果不提供则使用图标名称）
  * @returns React 元素
  */
-export function renderSolidIcon(icon: BuiltinIcon, appName?: string): JSX.Element {
+export function renderSolidIcon(icon: BuiltinIcon, appName?: string): React.JSX.Element {
   const displayChar = appName ? getFirstChar(appName) : getFirstChar(icon.name);
 
   return (

@@ -7,6 +7,8 @@ interface UseLongPressMenuOptions {
   delay?: number;
   /** 移动取消阈值（像素），默认 5px */
   moveThreshold?: number;
+  /** 是否禁用长按 */
+  disabled?: boolean;
 }
 
 interface UseLongPressMenuResult {
@@ -30,14 +32,15 @@ interface UseLongPressMenuResult {
 export function useLongPressMenu({
   onMenuOpen,
   delay = 500,
-  moveThreshold = 5
+  moveThreshold = 5,
+  disabled = false
 }: UseLongPressMenuOptions): UseLongPressMenuResult {
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTriggeredRef = useRef(false);
 
   const handlePointerDownCapture = useCallback((e: React.PointerEvent) => {
-    // 忽略触控笔
-    if (e.pointerType === 'pen') return;
+    // 如果禁用或忽略触控笔
+    if (disabled || e.pointerType === 'pen') return;
 
     const startX = e.clientX;
     const startY = e.clientY;
@@ -69,7 +72,7 @@ export function useLongPressMenu({
 
     document.addEventListener('pointermove', handleMove);
     document.addEventListener('pointerup', handleUp);
-  }, [onMenuOpen, delay, moveThreshold]);
+  }, [onMenuOpen, delay, moveThreshold, disabled]);
 
   return {
     handlePointerDownCapture,

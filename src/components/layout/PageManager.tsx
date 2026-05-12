@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Page, UserConfig, ConfigManager } from '@/lib/configManager';
-import { getStrings } from '@/lib/strings';
+import { getStrings } from '@/data/i18n';
 import {
   DropdownMenu,
   DropdownMenuTrigger,

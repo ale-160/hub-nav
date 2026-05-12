@@ -6,7 +6,7 @@ import {
 import { IconItem, FolderItem, UserConfig, Page } from '@/lib/configManager';
 import { Icon } from './Icon';
 import { Folder } from './Folder';
-import { getStrings } from '@/lib/strings';
+import { getStrings } from '@/data/i18n';
 
 interface PageContentProps {
   page: Page;
