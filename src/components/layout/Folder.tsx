@@ -321,7 +321,7 @@ export function Folder({
         open={shouldDisableMenu ? false : isMenuOpen}
         onOpenChange={setIsMenuOpen}
       >
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild id={`folder-menu-${folder.id}`}>
           <span className="hidden" />
         </DropdownMenuTrigger>
         <DropdownMenuContent

@@ -404,7 +404,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         open={shouldDisableMenu ? false : isMenuOpen}
         onOpenChange={setIsMenuOpen}
       >
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild id={`icon-menu-${item.id}`}>
           <span className="hidden" />
         </DropdownMenuTrigger>
         <DropdownMenuContent

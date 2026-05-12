@@ -626,7 +626,7 @@ export function PageContainer({
         open={isBlankMenuOpen}
         onOpenChange={setIsBlankMenuOpen}
       >
-        <DropdownMenuTrigger asChild>
+        <DropdownMenuTrigger asChild id="page-blank-menu">
           <span className="hidden" />
         </DropdownMenuTrigger>
         <DropdownMenuContent

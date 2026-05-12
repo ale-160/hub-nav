@@ -506,7 +506,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                   value={config.searchEngine}
                   onValueChange={handleSearchEngineChange}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" id="search-engine-select">
                     <SelectValue placeholder={STRINGS.searchEngine} />
                   </SelectTrigger>
                   <SelectContent>

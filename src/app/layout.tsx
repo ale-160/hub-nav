@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { ThemeProvider } from "@wrksz/themes/next";
 import { ErrorBoundary } from "@/components/providers/ErrorBoundary";
 import { Toaster } from "sonner";
 
@@ -24,6 +24,7 @@ export default function RootLayout({
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
+            storageKey="hub-nav-theme"
           >
             <TooltipProvider>{children}</TooltipProvider>
           </ThemeProvider>

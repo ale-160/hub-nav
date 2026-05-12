@@ -131,7 +131,7 @@ export function PageManager({
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild id="page-manager-menu">
         <button
           className="w-8 h-8 bg-background/80 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
           title={STRINGS.pageManager}

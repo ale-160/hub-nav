@@ -1,10 +1,10 @@
 import { useCallback, useEffect } from 'react';
-import { useTheme as useNextTheme } from 'next-themes';
+import { useTheme as useWrkszTheme } from '@wrksz/themes/client';
 import { useLocalStorage } from './useLocalStorage';
 import { ConfigManager, ThemeSettings } from '../lib/configManager';
 
 /**
- * 自定义 Hook：用于管理主题设置（基于 next-themes）
+ * 自定义 Hook：用于管理主题设置（基于 @wrksz/themes）
  * @returns 包含主题状态和操作方法的对象
  */
 export function useTheme() {
@@ -14,11 +14,11 @@ export function useTheme() {
   // 使用 useLocalStorage Hook 管理主题配置（仅存储配置，不操作 DOM）
   const [theme, setTheme] = useLocalStorage<ThemeSettings>('hub-nav-theme', defaultTheme);
 
-  // 使用 next-themes 管理实际的暗色/亮色模式
-  const { setTheme: setResolvedTheme } = useNextTheme();
+  // 使用 @wrksz/themes 管理实际的暗色/亮色模式
+  const { setTheme: setResolvedTheme, resolvedTheme } = useWrkszTheme();
 
   /**
-   * 切换亮暗模式（使用 next-themes）
+   * 切换亮暗模式（使用 @wrksz/themes）
    */
   const toggleMode = useCallback(() => {
     const newMode = theme.mode === 'light' ? 'dark' : 'light';
@@ -29,12 +29,12 @@ export function useTheme() {
       mode: newMode
     }));
     
-    // 使用 next-themes 切换实际的主题类
+    // 使用 @wrksz/themes 切换实际的主题类
     setResolvedTheme(newMode);
   }, [theme.mode, setTheme, setResolvedTheme]);
 
   /**
-   * 设置主题配置（不直接操作 DOM，由 next-themes 处理）
+   * 设置主题配置（不直接操作 DOM，由 @wrksz/themes 处理）
    * @param partial - 部分主题设置对象
    */
   const updateTheme = useCallback((partial: Partial<ThemeSettings>) => {
@@ -43,7 +43,7 @@ export function useTheme() {
       ...partial
     }));
     
-    // 如果更新了 mode，同步到 next-themes
+    // 如果更新了 mode，同步到 @wrksz/themes
     if (partial.mode) {
       setResolvedTheme(partial.mode);
     }
@@ -53,8 +53,8 @@ export function useTheme() {
    * 监听 fontColor 变化，实时应用到全局 CSS 变量
    * 
    * 注意：此处直接操作 DOM 是为了覆盖 Tailwind 文字类的 !important 优先级。
-   * next-themes 仅管理暗色/亮色模式的 class 切换，不管理自定义 CSS 变量。
-   * 因此必须在 next-themes 之外手动处理字体颜色注入，通过动态创建 <style> 标签
+   * @wrksz/themes 仅管理暗色/亮色模式的 class 切换，不管理自定义 CSS 变量。
+   * 因此必须在 @wrksz/themes 之外手动处理字体颜色注入，通过动态创建 <style> 标签
    * 并使用 !important 提升优先级，确保用户自定义字体颜色能够生效。
    */
   useEffect(() => {
