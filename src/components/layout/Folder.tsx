@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useSortable, SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
@@ -8,6 +8,7 @@ import { FolderItem, IconItem } from '@/lib/configManager';
 import { Icon } from './Icon';
 import { Modal } from '../ui/modal';
 import { getStrings } from '@/lib/strings';
+import { useLongPressMenu } from '@/hooks/useLongPressMenu';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,6 +27,7 @@ interface FolderProps {
   onNavigate: (folderId: string | null) => void;
   onDropOnFolder?: (iconId: string, folderId: string) => void;
   currentPath?: string[];
+  searchedFolderIds?: string[]; // 搜索时自动展开的文件夹ID列表（内联展开，非模态框）
   isDragging?: boolean; // 全局拖拽状态
   isOver?: boolean; // 是否有元素悬停在上方
   isDropTarget?: boolean; // 当前是否被拖拽悬停（计时中）
@@ -87,8 +89,14 @@ export function Folder({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressTriggeredRef = useRef(false);
+
+  // 使用长按 Hook 处理触摸菜单
+  const { handlePointerDownCapture, longPressTriggeredRef } = useLongPressMenu({
+    onMenuOpen: ({ x, y }) => {
+      setMenuPosition({ x, y });
+      setIsMenuOpen(true);
+    }
+  });
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config?.theme?.language || 'zh';
@@ -153,43 +161,10 @@ export function Folder({
   }, [folders, folder.id]);
 
   /**
-   * 处理指针按下捕获 - 长按触发菜单（仅触摸）
-   */
-  const handlePointerDownCapture = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === 'pen') return;
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true;
-      setMenuPosition({ x: startX, y: startY });
-      setIsMenuOpen(true);
-    }, 500);
-
-    const handleMove = (moveE: PointerEvent) => {
-      if (Math.abs(moveE.clientX - startX) > 5 || Math.abs(moveE.clientY - startY) > 5) {
-        clearTimeout(longPressTimerRef.current!);
-        longPressTriggeredRef.current = false;
-        document.removeEventListener('pointermove', handleMove);
-        document.removeEventListener('pointerup', handleUp);
-      }
-    };
-
-    const handleUp = () => {
-      clearTimeout(longPressTimerRef.current!);
-      longPressTriggeredRef.current = false;
-      document.removeEventListener('pointermove', handleMove);
-      document.removeEventListener('pointerup', handleUp);
-    };
-
-    document.addEventListener('pointermove', handleMove);
-    document.addEventListener('pointerup', handleUp);
-  }, []);
-
-  /**
    * 处理单击事件
    */
+  /* eslint-disable react-hooks/exhaustive-deps */
+  // longPressTriggeredRef 是稳定引用，不需要加入依赖数组
   const handleClick = useCallback(() => {
     // 如果刚刚触发了长按，跳过点击逻辑
     if (longPressTriggeredRef.current) {
@@ -215,6 +190,7 @@ export function Folder({
       setIsModalOpen(true);
     }
   }, [config?.operationMode, isMenuOpen]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   /**
    * 处理双击事件
@@ -257,25 +233,17 @@ export function Folder({
     }
   }, [config]);
 
-  // 计算文件夹的视觉样式
-  let folderClassName = 'group relative flex flex-col items-center p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50 hover:shadow-md';
-
-  if (isReadyToDrop) {
-    // 准备放入状态（悬停超过600ms）：深蓝色边框 + 105%缩放 + 蓝色阴影
-    folderClassName += ' scale-105 ring-4 ring-blue-600 bg-blue-100 dark:bg-blue-900/50 shadow-lg shadow-blue-500/50';
-  } else if (isDropTarget) {
-    // 悬停计时中（未满600ms）：浅蓝色边框 + 轻微缩放
-    folderClassName += ' scale-105 ring-2 ring-blue-400 bg-blue-50 dark:bg-blue-900/30';
-  } else if (isOver) {
-    // 简单悬停状态：轻微高亮
-    folderClassName += ' ring-2 ring-blue-300 bg-blue-50/50 dark:bg-blue-900/20';
-  }
+  // 固定的基础类名（避免 hydration 不匹配）
+  const folderClassName = 'group relative flex flex-col items-center p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50 hover:shadow-md';
 
   return (
     <div
       className={folderClassName}
       data-folder-item
       data-id={folder.id}
+      data-ready-to-drop={isReadyToDrop || undefined}
+      data-drop-target={isDropTarget || undefined}
+      data-over={isOver || undefined}
     >
       {/* 文件夹头部 - 可拖拽区域 */}
       <div

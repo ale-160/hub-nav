@@ -41,6 +41,7 @@ export function PageContent({
   icons,
   folders,
   config,
+  searchedFolderIds = [], // 搜索时自动展开的文件夹ID列表（内联展开，非模态框）
   overId,
   activeId, // 新增
   readyToDropFolderId, // 新增
@@ -87,6 +88,7 @@ export function PageContent({
   iconIds.forEach(id => {
     const icon = icons.find(i => i.id === id && !i.folderId);
     const folder = folders.find(f => f.id === id && !f.parentId);
+    
     if (icon) {
       orderedRootItems.push({ type: 'icon', id });
     } else if (folder) {
@@ -147,6 +149,7 @@ export function PageContent({
                   isOver={overId === folder.id}
                   isDropTarget={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否准备好放入
                   isReadyToDrop={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否可松开放入
+                  searchedFolderIds={searchedFolderIds}
                 />
               </div>
             );

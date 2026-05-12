@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { BUILTIN_ICONS, type BuiltinIcon } from '@/lib/builtinIcons';
+import { BUILTIN_ICONS } from '@/lib/builtinIcons';
 import { ConfigManager } from '@/lib/configManager';
 import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/lib/urlUtils';
+import { renderSolidIcon } from '@/lib/iconUtils';
 import { getStrings } from '@/lib/strings';
 import {
   Command,
@@ -235,39 +236,6 @@ export function IconSelector({
       name: getIconName(builtinIcon)
     };
   }, [builtinIcon, customColor, getIconName]);
-
-  /**
-   * 渲染纯色图标（首字+背景色）
-   */
-  const renderSolidIcon = useCallback((icon: BuiltinIcon, appName?: string) => {
-    // 提取应用名称的第一个字符
-    const getFirstChar = (name: string): string => {
-      if (!name || name.trim().length === 0) return '?';
-
-      const firstChar = name.trim().charAt(0);
-      // 如果是中文，直接返回第一个汉字
-      if (/[\u4e00-\u9fa5]/.test(firstChar)) {
-        return firstChar;
-      }
-      // 如果是英文，返回大写字母
-      if (/[a-zA-Z]/.test(firstChar)) {
-        return firstChar.toUpperCase();
-      }
-      // 其他情况返回原字符或 ?
-      return firstChar || '?';
-    };
-
-    const displayChar = appName ? getFirstChar(appName) : getFirstChar(icon.name);
-
-    return (
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-        style={{ backgroundColor: icon.color }}
-      >
-        {displayChar}
-      </div>
-    );
-  }, []);
 
   const { emojiIcons, solidIcons } = getCategorizedIcons();
 

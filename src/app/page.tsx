@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { ConfigManager, UserConfig, IconItem, FolderItem, ThemeSettings } from '@/lib/configManager';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -33,12 +33,18 @@ interface AddItemForm {
 }
 
 export default function Home() {
-  // 配置状态管理 - 使用惰性初始化避免 useEffect 中的 setState
-  const [config, setConfig] = useState<UserConfig>(() => {
-    return ConfigManager.loadConfig() || ConfigManager.getDefaultConfig();
-  });
+  // 配置状态管理 - 初始使用默认配置
+  const [config, setConfig] = useState<UserConfig>(ConfigManager.getDefaultConfig());
+  const [isMounted, setIsMounted] = useState(false); // 用于避免 hydration mismatch
 
-  // 根据当前语言获取字符串
+  // 客户端挂载后从 localStorage 加载配置并设置 isMounted
+  useEffect(() => {
+    const loadedConfig = ConfigManager.loadConfig();
+    if (loadedConfig) {
+      setConfig(loadedConfig);
+    }
+    setIsMounted(true); // 标记客户端已挂载
+  }, []);
   const S = getStrings(config.theme.language);
 
   // 客户端挂载后清理过期缓存
@@ -94,22 +100,18 @@ export default function Home() {
   }, [config, saveConfig, setTheme]);
 
   /**
-   * 过滤图标和文件夹
+   * 检查图标是否匹配搜索关键词
+   * 注意：仅匹配应用名称，不匹配 URL
+   * @param icon - 图标对象
+   * @param query - 搜索关键词
+   * @returns 是否匹配
    */
-  const filteredIcons = config.icons.filter(icon =>
-    icon.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-    icon.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase())
-  );
-
-  const filteredFolders = config.folders.filter(folder =>
-    folder.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-    // 如果文件夹内包含匹配的图标，也应该保留
-    config.icons.some(icon =>
-      icon.folderId === folder.id &&
-      (icon.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-       icon.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase()))
-    )
-  );
+  const isIconMatch = useCallback((icon: IconItem, query: string): boolean => {
+    const lowerQuery = query.toLowerCase();
+    
+    // 仅匹配应用名称
+    return icon.name.toLowerCase().includes(lowerQuery);
+  }, []);
 
   /**
    * 计算需要展开的文件夹ID（包含匹配的图标或文件夹）
@@ -123,8 +125,7 @@ export default function Home() {
 
     // 查找包含匹配图标的文件夹
     config.icons.forEach(icon => {
-      if (icon.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase()) ||
-          icon.url.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) {
+      if (isIconMatch(icon, debouncedSearchQuery)) {
         if (icon.folderId) {
           matchingFolderIds.add(icon.folderId);
           // 同时展开所有父文件夹
@@ -157,7 +158,63 @@ export default function Home() {
     });
 
     return Array.from(matchingFolderIds);
-  }, [debouncedSearchQuery, config.icons, config.folders]);
+  }, [debouncedSearchQuery, config.icons, config.folders, isIconMatch]);
+
+  /**
+   * 过滤当前页面的图标和文件夹 ID（基于搜索查询）
+   * 注意：只搜索根级元素，文件夹内匹配时显示文件夹
+   */
+  const filteredPageIconIds = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return config.pages[currentPageIndex]?.iconIds || [];
+    }
+
+    const currentPage = config.pages[currentPageIndex];
+    if (!currentPage) return [];
+
+    // 收集所有匹配的 ID
+    const matchingIds = new Set<string>();
+
+    // 遍历当前页面的所有根级元素 ID
+    currentPage.iconIds.forEach(id => {
+      // 检查是否是根级图标（folderId 为 undefined）
+      const rootIcon = config.icons.find(i => i.id === id && !i.folderId);
+      if (rootIcon) {
+        if (isIconMatch(rootIcon, debouncedSearchQuery)) {
+          matchingIds.add(id);
+        }
+        return; // 已处理，跳过后续检查
+      }
+
+      // 检查是否是根级文件夹（parentId 为 undefined）
+      const rootFolder = config.folders.find(f => f.id === id && !f.parentId);
+      if (rootFolder) {
+        let shouldInclude = false;
+
+        // 1. 文件夹名称匹配
+        if (rootFolder.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) {
+          shouldInclude = true;
+        }
+
+        // 2. 文件夹内包含匹配的图标
+        if (!shouldInclude) {
+          const hasMatchingIcon = config.icons.some(icon =>
+            icon.folderId === rootFolder.id &&
+            isIconMatch(icon, debouncedSearchQuery)
+          );
+          if (hasMatchingIcon) {
+            shouldInclude = true;
+          }
+        }
+
+        if (shouldInclude) {
+          matchingIds.add(id);
+        }
+      }
+    });
+
+    return Array.from(matchingIds);
+  }, [debouncedSearchQuery, config.pages, currentPageIndex, config.icons, config.folders, isIconMatch]);
 
   /**
    * 导出配置
@@ -676,31 +733,39 @@ export default function Home() {
 
       {/* 主体区域 */}
       <main className="flex-1">
-        <PageContainer
-            icons={config.icons}
-            folders={config.folders}
-            pages={config.pages}
-            config={config}
-            onUpdate={handleConfigUpdate}
-            searchedFolderIds={searchedFolderIds}
-            onIconEdit={handleIconEdit}
-            onIconDelete={handleIconDelete}
-            onIconHide={handleIconHide}
-            onMoveIconToFolder={handleMoveIconToFolder}
-            onReorderIconsInFolder={handleReorderIconsInFolder} // 新增：文件夹内图标排序
-            onMoveToRoot={handleMoveToRoot} // 新增：移动到根级
-            onFolderRename={handleFolderRename}
-            onFolderDelete={handleFolderDelete}
-            onAddIconToFolder={handleAddIconToFolder}
-            onDeleteAllIconsInFolder={handleDeleteAllIconsInFolder}
-            onAddIcon={() => openAddModal('icon')}
-            onAddFolder={() => openAddModal('folder')}
-            onRefresh={() => {
-              const saved = ConfigManager.loadConfig();
-              if (saved) setConfig(saved);
-            }}
-            onPageChange={setCurrentPageIndex} // 新增：跟踪当前页面索引
-          />
+        {isMounted ? (
+          <PageContainer
+              icons={config.icons}
+              folders={config.folders}
+              pages={config.pages.map((page, index) => ({
+                ...page,
+                // 仅在搜索时过滤当前页面的图标 ID
+                iconIds: index === currentPageIndex && debouncedSearchQuery.trim()
+                  ? filteredPageIconIds
+                  : page.iconIds
+              }))}
+              config={config}
+              onUpdate={handleConfigUpdate}
+              searchedFolderIds={searchedFolderIds}
+              onIconEdit={handleIconEdit}
+              onIconDelete={handleIconDelete}
+              onIconHide={handleIconHide}
+              onMoveIconToFolder={handleMoveIconToFolder}
+              onReorderIconsInFolder={handleReorderIconsInFolder} // 新增：文件夹内图标排序
+              onMoveToRoot={handleMoveToRoot} // 新增：移动到根级
+              onFolderRename={handleFolderRename}
+              onFolderDelete={handleFolderDelete}
+              onAddIconToFolder={handleAddIconToFolder}
+              onDeleteAllIconsInFolder={handleDeleteAllIconsInFolder}
+              onAddIcon={() => openAddModal('icon')}
+              onAddFolder={() => openAddModal('folder')}
+              onRefresh={() => {
+                const saved = ConfigManager.loadConfig();
+                if (saved) setConfig(saved);
+              }}
+              onPageChange={setCurrentPageIndex} // 新增：跟踪当前页面索引
+            />
+        ) : null}
       </main>
 
       {/* 添加项目模态框 */}

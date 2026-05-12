@@ -215,6 +215,32 @@ export function PageContainer({
   }, [currentPageIndex, pages.length, handlePageChange]);
 
   /**
+   * 将图标移动到目标页面（清理所有页面中的旧位置，添加到目标页面末尾）
+   */
+  const moveIconToPage = useCallback((
+    activeId: string,
+    targetPage: Page,
+    updatedIcons: IconItem[]
+  ) => {
+    // 从所有页面清理图标 ID，并添加到目标页面末尾
+    const finalPages = pages.map(page => {
+      if (page.id === targetPage.id) {
+        return {
+          ...page,
+          iconIds: [...page.iconIds.filter(id => id !== activeId), activeId]
+        };
+      }
+      // 其他页面移除该图标 ID
+      return {
+        ...page,
+        iconIds: page.iconIds.filter(id => id !== activeId)
+      };
+    });
+
+    onUpdate({ pages: finalPages, icons: updatedIcons });
+  }, [pages, onUpdate]);
+
+  /**
    * 处理桌面空白处右键
    */
   const handleBlankContextMenu = useCallback((e: React.MouseEvent) => {
@@ -362,25 +388,8 @@ export function PageContainer({
           );
         }
 
-        // 关键修复：确保图标不在任何其他页面的 iconIds 中（防止数据污染）
-        const cleanedPages = pages.map(page => ({
-          ...page,
-          iconIds: page.iconIds.filter(id => id !== activeId)
-        }));
-
-        // 添加到目标页面末尾
-        const finalPages = cleanedPages.map(page => {
-          if (page.id === targetPage.id) {
-            return {
-              ...page,
-              iconIds: [...page.iconIds, activeId]
-            };
-          }
-          return page;
-        });
-
-        // 更新配置
-        onUpdate({ pages: finalPages, icons: updatedIcons });
+        // 移动到目标页面
+        moveIconToPage(activeId, targetPage, updatedIcons);
         return;
       }
 
@@ -391,24 +400,8 @@ export function PageContainer({
           icon.id === activeId ? { ...icon, folderId: undefined } : icon
         );
 
-        // 从所有页面清理图标 ID
-        const cleanedPages = pages.map(page => ({
-          ...page,
-          iconIds: page.iconIds.filter(id => id !== activeId)
-        }));
-
-        // 添加到目标页面末尾
-        const finalPages = cleanedPages.map(page => {
-          if (page.id === targetPage.id) {
-            return {
-              ...page,
-              iconIds: [...page.iconIds, activeId]
-            };
-          }
-          return page;
-        });
-
-        onUpdate({ pages: finalPages, icons: updatedIcons });
+        // 移动到目标页面（同一页面）
+        moveIconToPage(activeId, targetPage, updatedIcons);
         return;
       }
     }
@@ -446,7 +439,7 @@ export function PageContainer({
       onUpdate({ pages: updatedPages });
       return;
     }
-  }, [icons, folders, pages, onUpdate, readyToDropFolderId, findPageByItemId]);
+  }, [icons, folders, pages, onUpdate, readyToDropFolderId, findPageByItemId, moveIconToPage]);
 
   /**
    * 获取正在拖拽的元素用于 DragOverlay

@@ -1,13 +1,15 @@
 'use client';
 
-import React, {useState, useCallback, useRef, useMemo} from 'react';
+import React, {useState, useCallback, useMemo} from 'react';
 import { createPortal } from 'react-dom';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { IconItem, ConfigManager } from '@/lib/configManager';
-import { BuiltinIcon, getBuiltinIconById, getDefaultIcon } from '@/lib/builtinIcons';
+import { getBuiltinIconById, getDefaultIcon } from '@/lib/builtinIcons';
 import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/lib/urlUtils';
+import { renderSolidIcon } from '@/lib/iconUtils';
 import { getStrings } from '@/lib/strings';
+import { useLongPressMenu } from '@/hooks/useLongPressMenu';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,8 +121,14 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [showFolderSelector, setShowFolderSelector] = useState(false); // 新增：文件夹选择器
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressTriggeredRef = useRef(false);
+
+  // 使用长按 Hook 处理触摸菜单
+  const { handlePointerDownCapture, longPressTriggeredRef } = useLongPressMenu({
+    onMenuOpen: ({ x, y }) => {
+      setMenuPosition({ x, y });
+      setIsMenuOpen(true);
+    }
+  });
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config?.theme?.language || 'zh';
@@ -152,39 +160,6 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         return defaultSize;
     }
   }, [config]);
-
-  /**
-   * 渲染纯色图标（首字+背景色）
-   */
-  const renderSolidIcon = useCallback((icon: BuiltinIcon, appName?: string) => {
-    // 提取应用名称的第一个字符
-    const getFirstChar = (name: string): string => {
-      if (!name || name.trim().length === 0) return '?';
-
-      const firstChar = name.trim().charAt(0);
-      // 如果是中文，直接返回第一个汉字
-      if (/[\u4e00-\u9fa5]/.test(firstChar)) {
-        return firstChar;
-      }
-      // 如果是英文，返回大写字母
-      if (/[a-zA-Z]/.test(firstChar)) {
-        return firstChar.toUpperCase();
-      }
-      // 其他情况返回原字符或 ?
-      return firstChar || '?';
-    };
-
-    const displayChar = appName ? getFirstChar(appName) : getFirstChar(icon.name);
-
-    return (
-      <div
-        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
-        style={{ backgroundColor: icon.color }}
-      >
-        {displayChar}
-      </div>
-    );
-  }, []);
 
   /**
    * 获取图标内容
@@ -262,43 +237,10 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
   }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.name]);
 
   /**
-   * 处理指针按下捕获 - 长按触发菜单（仅触摸）
-   */
-  const handlePointerDownCapture = useCallback((e: React.PointerEvent) => {
-    if (e.pointerType === 'pen') return;
-
-    const startX = e.clientX;
-    const startY = e.clientY;
-
-    longPressTimerRef.current = setTimeout(() => {
-      longPressTriggeredRef.current = true;
-      setMenuPosition({ x: startX, y: startY });
-      setIsMenuOpen(true);
-    }, 500);
-
-    const handleMove = (moveE: PointerEvent) => {
-      if (Math.abs(moveE.clientX - startX) > 5 || Math.abs(moveE.clientY - startY) > 5) {
-        clearTimeout(longPressTimerRef.current!);
-        longPressTriggeredRef.current = false;
-        document.removeEventListener('pointermove', handleMove);
-        document.removeEventListener('pointerup', handleUp);
-      }
-    };
-
-    const handleUp = () => {
-      clearTimeout(longPressTimerRef.current!);
-      longPressTriggeredRef.current = false;
-      document.removeEventListener('pointermove', handleMove);
-      document.removeEventListener('pointerup', handleUp);
-    };
-
-    document.addEventListener('pointermove', handleMove);
-    document.addEventListener('pointerup', handleUp);
-  }, []);
-
-  /**
    * 处理点击事件
    */
+  /* eslint-disable react-hooks/exhaustive-deps */
+  // longPressTriggeredRef 是稳定引用，不需要加入依赖数组
   const handleClick = useCallback(() => {
     // 如果刚刚触发了长按，跳过点击逻辑
     if (longPressTriggeredRef.current) {
@@ -324,6 +266,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
       window.open(item.url, '_blank');
     }
   }, [item.url, item.isHidden, config?.operationMode, isMenuOpen]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   /**
    * 处理双击事件
@@ -368,7 +311,10 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         }}
       >
         {/* 图标内容 */}
-        <div className={`${getIconSizeClass()} mb-2 rounded-lg overflow-hidden bg-transparent flex items-center justify-center`}>
+        <div
+          className={`${getIconSizeClass()} mb-2 rounded-lg overflow-hidden bg-transparent flex items-center justify-center`}
+          suppressHydrationWarning
+        >
           {(() => {
             const iconContent = getIconContent();
 
