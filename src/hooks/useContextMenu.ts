@@ -1,6 +1,6 @@
 /**
  * 统一右键菜单和长按菜单 Hook
- * 
+ *
  * 职责：统一管理右键点击和长按触发的菜单交互
  * - 处理右键菜单打开/关闭
  * - 集成长按触发
@@ -47,7 +47,7 @@ export function useContextMenu(options: UseContextMenuOptions = {}) {
     setPosition({ x: safeX, y: safeY });
     setIsOpen(true);
     options.onOpen?.();
-  }, [options.disabled, options.onOpen]);
+  }, [options]);
 
   /**
    * 关闭菜单
@@ -55,7 +55,7 @@ export function useContextMenu(options: UseContextMenuOptions = {}) {
   const close = useCallback(() => {
     setIsOpen(false);
     options.onClose?.();
-  }, [options.onClose]);
+  }, [options]);
 
   /**
    * 切换菜单状态
@@ -74,7 +74,7 @@ export function useContextMenu(options: UseContextMenuOptions = {}) {
    */
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     if (options.disabled) return;
-    
+
     e.preventDefault();
     e.stopPropagation();
     open(e.clientX, e.clientY);

@@ -2,7 +2,6 @@
 
 import React, { useState, useCallback } from 'react';
 import { useSortable, SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { DndContext, DragEndEvent, useSensor, useSensors, PointerSensor, TouchSensor } from '@dnd-kit/core';
 import { FolderItem, IconItem } from '@/lib/configManager';
 import { Icon } from './Icon';
@@ -76,7 +75,7 @@ export function Folder({
   onMoveToRoot,
   onMoveToFolder
 }: FolderProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: folder.id,
   });
 
@@ -98,20 +97,13 @@ export function Folder({
     position: menuPosition,
     close: closeMenu,
     handleContextMenu,
-    longPressHandlers
+    longPressHandlers,
+    resetLongPressState
   } = useContextMenu({
     disabled: isDraggingProp || isDragging,
     onOpen: () => {},
     onClose: () => {}
   });
-
-  // 拖拽样式（优先使用全局状态）
-  const shouldDisableMenu = isDraggingProp || isDragging;
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: (isDraggingProp || isDragging) ? 0.5 : 1,
-  };
 
   // 处理文件夹删除的三种情况
   const handleDeleteAction = (type: 'cancel' | 'folderOnly' | 'all') => {
@@ -170,7 +162,7 @@ export function Folder({
   const handleClick = useCallback(() => {
     // 如果刚刚触发了长按，跳过点击逻辑
     if (longPressHandlers.longPressTriggeredRef.current) {
-      longPressHandlers.longPressTriggeredRef.current = false;
+      resetLongPressState();
       return;
     }
 
@@ -191,7 +183,7 @@ export function Folder({
     if (operationMode.openMethod === 'click') {
       setIsModalOpen(true);
     }
-  }, [config?.operationMode, isMenuOpen, closeMenu]);
+  }, [config?.operationMode, isMenuOpen, closeMenu, resetLongPressState]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /**
@@ -238,6 +230,7 @@ export function Folder({
   // 固定的基础类名（避免 hydration 不匹配）
   const folderClassName = 'group relative flex flex-col items-center p-3 rounded-lg transition-all duration-200 cursor-pointer hover:bg-accent/50 hover:shadow-md';
 
+  let style;
   return (
     <div
       className={folderClassName}

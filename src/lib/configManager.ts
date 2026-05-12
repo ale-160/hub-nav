@@ -16,12 +16,7 @@ export type {
 
 // 从新位置导入类型
 import type {
-  IconCacheItem,
   IconCache,
-  IconItem,
-  FolderItem,
-  OperationModeSettings,
-  ThemeSettings,
   Page,
   UserConfig
 } from '@/utils/config/types';
@@ -56,18 +51,18 @@ export class ConfigManager {
     this.saveTimeout = setTimeout(() => {
       try {
         const jsonString = JSON.stringify(config);
-        
+
         // 检查配置大小（localStorage 通常限制为 5MB）
         const sizeInBytes = new Blob([jsonString]).size;
         const sizeInMB = sizeInBytes / (1024 * 1024);
-        
+
         // 如果配置超过 4.5MB，发出警告
         if (sizeInMB > 4.5) {
           if (process.env.NODE_ENV === 'development') {
             console.warn(`配置大小 (${sizeInMB.toFixed(2)}MB) 接近 localStorage 上限，可能导致保存失败`);
           }
         }
-        
+
         localStorage.setItem(this.STORAGE_KEY, jsonString);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'QuotaExceededError') {
@@ -95,7 +90,7 @@ export class ConfigManager {
       }
 
       const config = JSON.parse(stored) as UserConfig;
-      
+
       // 基础结构验证
       if (!this.isValidConfig(config)) {
         if (process.env.NODE_ENV === 'development') {
@@ -141,7 +136,7 @@ export class ConfigManager {
     if (typeof window === 'undefined') {
       return '{}';
     }
-    
+
     const config = this.loadConfig();
     if (!config) {
       throw new Error('没有可导出的配置数据');
@@ -406,7 +401,7 @@ export class ConfigManager {
       name: '新页面',
       iconIds: []
     };
-    
+
     return {
       ...config,
       pages: [...config.pages, newPage]
@@ -476,7 +471,7 @@ export class ConfigManager {
     try {
       const cache = this.getIconCache();
       const cachedItem = cache[domain];
-      
+
       if (!cachedItem) {
         return null;
       }
@@ -484,7 +479,7 @@ export class ConfigManager {
       // 检查缓存是否过期（7天）
       const now = Date.now();
       const expiryTime = cachedItem.lastAccessedAt + (this.CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-      
+
       if (now > expiryTime) {
         // 缓存过期，删除该条目
         delete cache[domain];
@@ -520,15 +515,15 @@ export class ConfigManager {
     try {
       // 清理过期缓存
       this.cleanExpiredCache();
-      
+
       const cache = this.getIconCache();
       const now = Date.now();
-      
+
       // 检查缓存大小是否超限
       if (this.isCacheSizeExceeded(cache, url)) {
         this.cleanOldestCache(cache);
       }
-      
+
       // 写入新缓存或更新现有缓存
       if (cache[domain]) {
         // 更新现有缓存
@@ -547,7 +542,7 @@ export class ConfigManager {
           lastAccessedAt: now
         };
       }
-      
+
       localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -572,7 +567,7 @@ export class ConfigManager {
       for (const domain in cache) {
         const cachedItem = cache[domain];
         const expiryTime = cachedItem.lastAccessedAt + (this.CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-        
+
         if (now > expiryTime) {
           delete cache[domain];
           hasChanges = true;
@@ -600,11 +595,11 @@ export class ConfigManager {
       // 计算当前缓存大小
       const cacheString = JSON.stringify(cache);
       const currentSize = new Blob([cacheString]).size;
-      
+
       // 计算新缓存项的大小
       const newItemSize = new Blob([newDataUrl]).size;
       const newSize = currentSize + newItemSize;
-      
+
       return newSize > this.MAX_CACHE_SIZE;
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
@@ -623,17 +618,17 @@ export class ConfigManager {
       // 将缓存条目按最后访问时间排序
       const entries = Object.entries(cache);
       entries.sort((a, b) => a[1].lastAccessedAt - b[1].lastAccessedAt);
-      
+
       // 删除最旧的条目直到总大小低于3MB
       const TARGET_SIZE = 3 * 1024 * 1024; // 3MB
-      
+
       for (const [domain] of entries) {
         delete cache[domain];
-        
+
         // 重新检查大小
         const cacheString = JSON.stringify(cache);
         const currentSize = new Blob([cacheString]).size;
-        
+
         if (currentSize <= TARGET_SIZE) {
           break;
         }
@@ -644,19 +639,4 @@ export class ConfigManager {
       }
     }
   }
-}
-
-/**
- * 辅助函数：查找文件夹所在的页面 ID
- * @param folderId - 文件夹 ID
- * @param pages - 所有页面列表
- * @returns 页面 ID，如果未找到则返回 null
- */
-export function findPageIdByFolderId(folderId: string, pages: Page[]): string | null {
-  for (const page of pages) {
-    if (page.iconIds.includes(folderId)) {
-      return page.id;
-    }
-  }
-  return null;
 }

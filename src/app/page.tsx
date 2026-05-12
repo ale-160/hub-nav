@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { ConfigManager, UserConfig, IconItem, FolderItem, ThemeSettings } from '@/lib/configManager';
+import { ConfigManager, UserConfig, IconItem, ThemeSettings } from '@/lib/configManager';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useTheme } from '@/hooks/useTheme';
 import { useConfig } from '@/hooks/useConfig';
@@ -38,23 +38,22 @@ interface AddItemForm {
 
 export default function Home() {
   // 使用配置管理 Hook
-  const { 
-    config, 
+  const {
+    config,
     isMounted,
     updateConfig: updateConfigBase,
     addIconWithPage,
     addFolderWithPage,
-    saveConfig,
   } = useConfig();
 
   const S = getStrings(config.theme.language);
 
   // 主题管理
   const { toggleMode, setTheme } = useTheme();
-  
+
   // 使用导入导出 Hook
   const { exportConfig, importConfig } = useImportExport({ language: config.theme.language });
-  
+
   /**
    * 处理配置更新（包含主题同步）
    */
@@ -67,10 +66,9 @@ export default function Home() {
       setTheme(themeWithoutMode as Partial<ThemeSettings>);
     }
   }, [updateConfigBase, setTheme]);
-  
+
   // 使用图标和文件夹管理 Hook（Service 层）
   const {
-    updateIcon,
     deleteIcon,
     toggleIconVisibility: handleIconHide,
     updateFolder: handleFolderRename,
@@ -254,7 +252,7 @@ export default function Home() {
         setSearchQuery(''); // 清空搜索框
       }
     }
-  }, [searchQuery, config.searchEngine]);
+  }, [searchQuery, config.searchEngine, setSearchQuery]);
 
   /**
    * 处理图标编辑
