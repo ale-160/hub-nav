@@ -41,6 +41,7 @@ export default function Home() {
   useEffect(() => {
     const loadedConfig = ConfigManager.loadConfig();
     if (loadedConfig) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfig(loadedConfig);
     }
     setIsMounted(true); // 标记客户端已挂载
@@ -108,7 +109,7 @@ export default function Home() {
    */
   const isIconMatch = useCallback((icon: IconItem, query: string): boolean => {
     const lowerQuery = query.toLowerCase();
-    
+
     // 仅匹配应用名称
     return icon.name.toLowerCase().includes(lowerQuery);
   }, []);
