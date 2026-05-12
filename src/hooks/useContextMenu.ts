@@ -89,6 +89,13 @@ export function useContextMenu(options: UseContextMenuOptions = {}) {
   });
 
   /**
+   * 重置长按触发状态（供外部调用）
+   */
+  const resetLongPressState = useCallback(() => {
+    longPressHandlers.longPressTriggeredRef.current = false;
+  }, [longPressHandlers.longPressTriggeredRef]);
+
+  /**
    * 点击外部自动关闭菜单
    */
   useEffect(() => {
@@ -136,6 +143,7 @@ export function useContextMenu(options: UseContextMenuOptions = {}) {
     close,
     toggle,
     handleContextMenu,
-    longPressHandlers
+    longPressHandlers,
+    resetLongPressState
   };
 }

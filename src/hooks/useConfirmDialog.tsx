@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * 确认对话框 Hook
- * 
- * 职责：统一管理删除/操作确认对话框
- * - 提供标准化的确认 UI
- * - 支持多种确认类型（删除文件夹、删除图标等）
- * - 自动处理国际化文案
- */
-
-import { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getStrings } from '@/data/i18n';
 import type { Language } from '@/data/i18n';
@@ -31,12 +22,14 @@ export interface IconDeleteConfirmProps {
   onCancel: () => void;
 }
 
-export function useConfirmDialog(options: ConfirmDialogOptions = {}) {
+export interface UseConfirmDialogReturn {
+  renderFolderDeleteConfirm: (props: FolderDeleteConfirmProps) => React.ReactNode;
+  renderIconDeleteConfirm: (props: IconDeleteConfirmProps) => React.ReactNode;
+}
+
+export function useConfirmDialog(options: ConfirmDialogOptions = {}): UseConfirmDialogReturn {
   const S = getStrings(options.language || 'zh');
 
-  /**
-   * 渲染文件夹删除确认对话框
-   */
   const renderFolderDeleteConfirm = useCallback((props: FolderDeleteConfirmProps) => {
     if (!props.folderName) return null;
 
@@ -75,9 +68,6 @@ export function useConfirmDialog(options: ConfirmDialogOptions = {}) {
     );
   }, [S.confirmDelete, S.confirmDeleteFolder, S.cancel, S.onlyDeleteFolder, S.deleteAll]);
 
-  /**
-   * 渲染图标删除确认对话框
-   */
   const renderIconDeleteConfirm = useCallback((props: IconDeleteConfirmProps) => {
     if (!props.iconName) return null;
 

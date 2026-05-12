@@ -132,7 +132,8 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
     position: menuPosition,
     close: closeMenu,
     handleContextMenu,
-    longPressHandlers
+    longPressHandlers,
+    resetLongPressState
   } = useContextMenu({
     disabled: isDragging,
     onOpen: () => {},
@@ -140,13 +141,14 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
   });
 
   // 使用确认对话框 Hook
-  const { renderIconDeleteConfirm } = useConfirmDialog({ language: currentLanguage });
+  const confirmDialog = useConfirmDialog({ language: currentLanguage });
+  const renderIconDeleteConfirm = confirmDialog.renderIconDeleteConfirm;
 
   // 使用文件夹选择器 Hook
-  const { renderFolderSelector } = useFolderSelector({ language: currentLanguage });
+  const folderSelector = useFolderSelector({ language: currentLanguage });
+  const renderFolderSelector = folderSelector.renderFolderSelector;
 
   // 拖拽样式
-  const shouldDisableMenu = isDragging;
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -235,7 +237,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
   const handleClick = useCallback(() => {
     // 如果刚刚触发了长按，跳过点击逻辑
     if (longPressHandlers.longPressTriggeredRef.current) {
-      longPressHandlers.longPressTriggeredRef.current = false;
+      resetLongPressState();
       return;
     }
 
@@ -256,7 +258,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
     if (operationMode.openMethod === 'click' && !item.isHidden) {
       window.open(item.url, '_blank');
     }
-  }, [item.url, item.isHidden, config?.operationMode, isMenuOpen, closeMenu]);
+  }, [item.url, item.isHidden, config?.operationMode, isMenuOpen, closeMenu, resetLongPressState]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /**

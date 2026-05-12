@@ -1,15 +1,6 @@
 'use client';
 
-/**
- * 文件夹选择器 Hook
- * 
- * 职责：统一管理移动到文件夹的选择器 UI
- * - 提供标准化的文件夹列表展示
- * - 自动处理国际化文案
- * - 支持 Portal 渲染
- */
-
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { getStrings } from '@/data/i18n';
 import type { Language } from '@/data/i18n';
@@ -29,12 +20,13 @@ export interface FolderSelectorProps {
   onCancel: () => void;
 }
 
-export function useFolderSelector(options: UseFolderSelectorOptions = {}) {
+export interface UseFolderSelectorReturn {
+  renderFolderSelector: (props: FolderSelectorProps) => React.ReactNode;
+}
+
+export function useFolderSelector(options: UseFolderSelectorOptions = {}): UseFolderSelectorReturn {
   const S = getStrings(options.language || 'zh');
 
-  /**
-   * 渲染文件夹选择器
-   */
   const renderFolderSelector = useCallback((props: FolderSelectorProps) => {
     if (!props.folders || props.folders.length === 0) return null;
 
