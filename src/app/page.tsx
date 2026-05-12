@@ -677,8 +677,8 @@ export default function Home() {
       {/* 主体区域 */}
       <main className="flex-1">
         <PageContainer
-            icons={filteredIcons}
-            folders={filteredFolders}
+            icons={config.icons}
+            folders={config.folders}
             pages={config.pages}
             config={config}
             onUpdate={handleConfigUpdate}

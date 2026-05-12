@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import { useTheme as useWrkszTheme } from '@wrksz/themes/client';
 import { useLocalStorage } from './useLocalStorage';
-import { ConfigManager, ThemeSettings } from '../lib/configManager';
+import { ConfigManager, ThemeSettings } from '@/lib/configManager';
 
 /**
  * 自定义 Hook：用于管理主题设置（基于 @wrksz/themes）
@@ -15,20 +15,20 @@ export function useTheme() {
   const [theme, setTheme] = useLocalStorage<ThemeSettings>('hub-nav-theme', defaultTheme);
 
   // 使用 @wrksz/themes 管理实际的暗色/亮色模式
-  const { setTheme: setResolvedTheme, resolvedTheme } = useWrkszTheme();
+  const { setTheme: setResolvedTheme} = useWrkszTheme();
 
   /**
    * 切换亮暗模式（使用 @wrksz/themes）
    */
   const toggleMode = useCallback(() => {
     const newMode = theme.mode === 'light' ? 'dark' : 'light';
-    
+
     // 更新本地存储的配置
     setTheme(prev => ({
       ...prev,
       mode: newMode
     }));
-    
+
     // 使用 @wrksz/themes 切换实际的主题类
     setResolvedTheme(newMode);
   }, [theme.mode, setTheme, setResolvedTheme]);
@@ -42,7 +42,7 @@ export function useTheme() {
       ...prev,
       ...partial
     }));
-    
+
     // 如果更新了 mode，同步到 @wrksz/themes
     if (partial.mode) {
       setResolvedTheme(partial.mode);
@@ -51,7 +51,7 @@ export function useTheme() {
 
   /**
    * 监听 fontColor 变化，实时应用到全局 CSS 变量
-   * 
+   *
    * 注意：此处直接操作 DOM 是为了覆盖 Tailwind 文字类的 !important 优先级。
    * @wrksz/themes 仅管理暗色/亮色模式的 class 切换，不管理自定义 CSS 变量。
    * 因此必须在 @wrksz/themes 之外手动处理字体颜色注入，通过动态创建 <style> 标签
@@ -59,11 +59,11 @@ export function useTheme() {
    */
   useEffect(() => {
     const styleId = 'hub-nav-font-color-override';
-    
+
     if (theme.fontColor) {
       // 设置 CSS 变量
       document.documentElement.style.setProperty('--font-color', theme.fontColor);
-      
+
       // 创建更高优先级的 style 标签覆盖 Tailwind 文字类
       let styleTag = document.getElementById(styleId) as HTMLStyleElement;
       if (!styleTag) {
@@ -71,7 +71,7 @@ export function useTheme() {
         styleTag.id = styleId;
         document.head.appendChild(styleTag);
       }
-      
+
       // 暗色模式下使用 .dark 选择器提升优先级
       styleTag.textContent = `
         body,
@@ -102,7 +102,7 @@ export function useTheme() {
     } else {
       // 移除 CSS 变量
       document.documentElement.style.removeProperty('--font-color');
-      
+
       // 删除 style 标签
       const styleTag = document.getElementById(styleId);
       if (styleTag) {
