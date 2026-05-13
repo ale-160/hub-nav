@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Command,
   CommandEmpty,
@@ -51,6 +51,9 @@ export const BuiltinIconPicker = React.memo(function BuiltinIconPicker({
 }: BuiltinIconPickerProps) {
   const STRINGS = getStrings(language);
 
+  // ✅ 使用 ref 获取颜色选择器 DOM 引用
+  const colorPickerRef = useRef<HTMLInputElement>(null);
+
   return (
     <div>
       {/* 搜索框 */}
@@ -75,16 +78,15 @@ export const BuiltinIconPicker = React.memo(function BuiltinIconPicker({
                     key={icon.id}
                     onSelect={() => {
                       if (isPalette) {
-                        // 调色盘：触发隐藏的颜色选择器
-                        const colorInput = document.getElementById('custom-color-picker') as HTMLInputElement;
-                        if (colorInput) {
-                          colorInput.click();
+                        // ✅ 调色盘：通过 ref 触发隐藏的颜色选择器
+                        if (colorPickerRef.current) {
+                          colorPickerRef.current.click();
                         }
                       } else {
                         onSelect(icon.id);
                       }
                     }}
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all cursor-pointer !p-0 ${
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all cursor-pointer p-0! ${
                       selectedIconId === icon.id
                         ? 'bg-blue-600 text-white ring-2 ring-blue-300'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-[#141b2d] dark:text-gray-300 dark:hover:bg-[#1c2541]'
@@ -106,9 +108,9 @@ export const BuiltinIconPicker = React.memo(function BuiltinIconPicker({
         </CommandList>
       </Command>
 
-      {/* 隐藏的颜色选择器 */}
+      {/* ✅ 隐藏的颜色选择器 - 使用 ref 绑定 */}
       <input
-        id="custom-color-picker"
+        ref={colorPickerRef}
         type="color"
         className="hidden"
         onChange={(e) => {

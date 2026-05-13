@@ -78,6 +78,7 @@ export function PageContainer({
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
   const [overId, setOverId] = useState<string | null>(null); // 拖拽悬停目标
   const [readyToDropFolderId, setReadyToDropFolderId] = useState<string | null>(null); // 准备好放入的文件夹ID
+  const [pageSwitchDirection, setPageSwitchDirection] = useState<'left' | 'right' | null>(null); // 页面切换方向（用于边缘高亮）
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isBlankMenuOpen, setIsBlankMenuOpen] = useState(false);
   const [blankMenuPosition, setBlankMenuPosition] = useState({ x: 0, y: 0 });
@@ -178,6 +179,27 @@ export function PageContainer({
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
   }, [currentPageIndex, pages.length, onPageChange]);
+
+  /**
+   * 组件卸载时清理所有计时器，防止内存泄漏
+   */
+  useEffect(() => {
+    return () => {
+      // 在 cleanup 函数中捕获当前的 ref 值
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const currentFolderTimers = folderHoverTimersRef.current;
+      const currentPageTimer = pageSwitchTimerRef.current;
+
+      // 清理文件夹悬停计时器（Map 类型）
+      currentFolderTimers.forEach((timer) => clearTimeout(timer));
+      currentFolderTimers.clear();
+
+      // 清理页面切换计时器（单个计时器）
+      if (currentPageTimer) {
+        clearTimeout(currentPageTimer);
+      }
+    };
+  }, []);
 
   /**
    * 处理页面切换
@@ -309,53 +331,66 @@ export function PageContainer({
         const container = scrollContainerRef.current;
         const containerRect = container.getBoundingClientRect();
 
-        // 获取鼠标位置（从 active 节点的 rect）
+        // ✅ 空值保护：获取鼠标位置（从 active 节点的 rect）
+        // 在快速移动或触摸设备上，active.rect.current.translated 可能为 null
         const activeRect = active.rect.current.translated;
-        if (activeRect) {
-          const mouseX = activeRect.left + activeRect.width / 2;
+        if (!activeRect) {
+          // 如果无法获取拖拽元素的位置，跳过边缘检测
+          return;
+        }
 
-          // 计算相对于容器的位置
-          const relativeX = mouseX - containerRect.left;
-          const edgeThreshold = 100; // 边缘检测阈值 100px
+        const mouseX = activeRect.left + activeRect.width / 2;
 
-          // 检测是否在左边缘或右边缘
-          const isLeftEdge = relativeX < edgeThreshold;
-          const isRightEdge = relativeX > containerRect.width - edgeThreshold;
+        // 计算相对于容器的位置
+        const relativeX = mouseX - containerRect.left;
+        const edgeThreshold = 200; // ✅ 边缘检测阈值扩大一倍：100px → 200px
 
-          // 确定目标页面索引
-          let targetPageIndex: number | null = null;
+        // 检测是否在左边缘或右边缘
+        const isLeftEdge = relativeX < edgeThreshold;
+        const isRightEdge = relativeX > containerRect.width - edgeThreshold;
 
-          if (isLeftEdge && currentPageIndex > 0) {
-            // 左边缘：切换到上一页
-            targetPageIndex = currentPageIndex - 1;
-          } else if (isRightEdge && currentPageIndex < pages.length - 1) {
-            // 右边缘：切换到下一页
-            targetPageIndex = currentPageIndex + 1;
+        // 确定目标页面索引
+        let targetPageIndex: number | null = null;
+        let switchDirection: 'left' | 'right' | null = null;
+
+        if (isLeftEdge && currentPageIndex > 0) {
+          // 左边缘：切换到上一页
+          targetPageIndex = currentPageIndex - 1;
+          switchDirection = 'left';
+        } else if (isRightEdge && currentPageIndex < pages.length - 1) {
+          // 右边缘：切换到下一页
+          targetPageIndex = currentPageIndex + 1;
+          switchDirection = 'right';
+        }
+
+        // ✅ 设置边缘高亮状态
+        setPageSwitchDirection(switchDirection);
+
+        // 如果有目标页面且与上次切换的页面不同，启动计时器
+        if (targetPageIndex !== null && targetPageIndex !== lastSwitchedPageRef.current) {
+          // 清除之前的计时器
+          if (pageSwitchTimerRef.current) {
+            clearTimeout(pageSwitchTimerRef.current);
           }
 
-          // 如果有目标页面且与上次切换的页面不同，启动计时器
-          if (targetPageIndex !== null && targetPageIndex !== lastSwitchedPageRef.current) {
-            // 清除之前的计时器
-            if (pageSwitchTimerRef.current) {
-              clearTimeout(pageSwitchTimerRef.current);
+          // 设置新的 600ms 计时器
+          pageSwitchTimerRef.current = setTimeout(() => {
+            const pageWidth = container.clientWidth;
+            container.scrollTo({
+              left: pageWidth * targetPageIndex!,
+              behavior: 'smooth'
+            });
+            setCurrentPageIndex(targetPageIndex!);
+            lastSwitchedPageRef.current = targetPageIndex!;
+            
+            // ✅ 清除边缘高亮
+            setPageSwitchDirection(null);
+
+            // 通知父组件页面切换
+            if (onPageChange) {
+              onPageChange(targetPageIndex!);
             }
-
-            // 设置新的 600ms 计时器
-            pageSwitchTimerRef.current = setTimeout(() => {
-              const pageWidth = container.clientWidth;
-              container.scrollTo({
-                left: pageWidth * targetPageIndex!,
-                behavior: 'smooth'
-              });
-              setCurrentPageIndex(targetPageIndex!);
-              lastSwitchedPageRef.current = targetPageIndex!;
-
-              // 通知父组件页面切换
-              if (onPageChange) {
-                onPageChange(targetPageIndex!);
-              }
-            }, 600);
-          }
+          }, 600);
         }
       }
     } else {
@@ -380,6 +415,7 @@ export function PageContainer({
     setActiveId(null);
     setActiveType(null);
     setOverId(null); // 清除悬停状态
+    setPageSwitchDirection(null); // ✅ 清除页面切换高亮
 
     // 清除所有计时器
     folderHoverTimersRef.current.forEach((timer) => clearTimeout(timer));
@@ -609,6 +645,7 @@ export function PageContainer({
             overId={overId}
             activeId={activeId}
             readyToDropFolderId={readyToDropFolderId}
+            pageSwitchDirection={pageSwitchDirection}
             onIconEdit={onIconEdit}
             onIconDelete={onIconDelete}
             onIconHide={onIconHide}

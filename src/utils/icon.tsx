@@ -77,18 +77,24 @@ export function getIconName(
 }
 
 /**
+ * ✅ 纯色图标颜色数组（17个常用颜色 + 1个调色盘）
+ * 用于内置图标选择器和 Icon 组件渲染
+ */
+export const SOLID_COLORS = [
+  '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
+  '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
+  '#6b7280', '#000000'
+];
+
+/**
  * 获取分类后的图标
  */
 export function getCategorizedIcons(customColor: string = '', language: 'zh' | 'en' = 'zh') {
   const emojiIcons = BUILTIN_ICONS.filter(icon => icon.type === 'emoji');
 
-  // 纯色图标：17个常用颜色 + 1个调色盘
-  const solidColors = [
-    '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
-    '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
-    '#6b7280', '#000000', customColor || '#ffffff'
-  ];
+  // ✅ 使用共享常量，动态添加调色盘颜色
+  const solidColors = [...SOLID_COLORS, customColor || '#ffffff'];
 
   const STRINGS = getStrings(language);
   const solidIcons = solidColors.map((color, index) => ({
@@ -115,12 +121,8 @@ export function getSelectedBuiltinIcon(
   // 如果是纯色图标，构造对应的 BuiltinIcon 对象
   if (builtinIcon.startsWith('solid-color-')) {
     const colorIndex = parseInt(builtinIcon.replace('solid-color-', ''));
-    const solidColors = [
-      '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-      '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
-      '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
-      '#6b7280', '#000000', customColor || '#ffffff'
-    ];
+    // ✅ 使用共享常量，动态添加调色盘颜色
+    const solidColors = [...SOLID_COLORS, customColor || '#ffffff'];
 
     // 关键修复：使用实际的颜色值，而不是默认白色
     const actualColor = solidColors[colorIndex];

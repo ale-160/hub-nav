@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { IconItem, ConfigManager } from '@/lib/configManager';
 import { getBuiltinIconById, getDefaultIcon } from '@/data/icons';
 import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/utils/url';
-import { renderSolidIcon } from '@/utils/icon';
+import { renderSolidIcon, SOLID_COLORS } from '@/utils/icon';
 import { getStrings } from '@/data/i18n';
 import { useContextMenu } from '@/hooks/useContextMenu';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
@@ -166,12 +166,8 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         // 处理纯色图标 (solid-color-X 格式)
         if (item.builtinIcon && item.builtinIcon.startsWith('solid-color-')) {
           const colorIndex = parseInt(item.builtinIcon.replace('solid-color-', ''));
-          const solidColors = [
-            '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
-            '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
-            '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
-            '#6b7280', '#000000', item.customColor || '#ffffff'  // ✅ 使用 customColor 而非 customIconUrl
-          ];
+          // ✅ 使用共享常量，动态添加调色盘颜色
+          const solidColors = [...SOLID_COLORS, item.customColor || '#ffffff'];
 
           const color = solidColors[colorIndex] || '#ffffff';
           return {
@@ -228,7 +224,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           };
         }
     }
-  }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.name]);
+  }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.customColor, item.name]);
 
   /**
    * 处理点击事件
