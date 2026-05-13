@@ -148,9 +148,6 @@ export default function Home() {
    * 处理添加应用到文件夹
    */
   const handleAddIconToFolder = useCallback((folderId: string) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[handleAddIconToFolder] 收到 folderId:', folderId);
-    }
     setAddModalType('icon');
     setAddModalFolderId(folderId);
     setIsAddModalOpen(true);
@@ -160,9 +157,6 @@ export default function Home() {
    * 打开添加应用模态框
    */
   const openAddIconModal = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[openAddIconModal] 打开添加应用模态框');
-    }
     setAddModalType('icon');
     setAddModalFolderId(undefined);
     setIsAddModalOpen(true);
@@ -172,9 +166,6 @@ export default function Home() {
    * 打开添加文件夹模态框
    */
   const openAddFolderModal = useCallback(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[openAddFolderModal] 打开添加文件夹模态框');
-    }
     setAddModalType('folder');
     setAddModalFolderId(undefined);
     setIsAddModalOpen(true);

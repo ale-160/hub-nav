@@ -1,10 +1,10 @@
 /**
  * Favicon 预加载器 - 并行测试候选图标可用性
- * 
+ *
  * 使用 Image 对象探测图标是否可加载，避免阻塞 UI
  */
 
-interface FaviconTestResult {
+export interface FaviconTestResult {
   url: string;
   success: boolean;
   loadTime?: number; // 毫秒，用于排序优选
@@ -15,24 +15,24 @@ interface FaviconTestResult {
  * @param url - 图标 URL
  * @param timeout - 超时时间（毫秒），默认 3000ms
  */
-function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestResult> {
+export function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestResult> {
   return new Promise((resolve) => {
     const img = new Image();
     const startTime = performance.now();
-    
+
     let resolved = false;
-    
+
     const cleanup = () => {
       img.onload = null;
       img.onerror = null;
       img.src = '';
     };
-    
+
     img.onload = () => {
       if (resolved) return;
       resolved = true;
       cleanup();
-      
+
       const loadTime = performance.now() - startTime;
       resolve({
         url,
@@ -40,7 +40,7 @@ function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestResult> 
         loadTime
       });
     };
-    
+
     img.onerror = () => {
       if (resolved) return;
       resolved = true;
@@ -50,7 +50,7 @@ function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestResult> 
         success: false
       });
     };
-    
+
     // 设置超时
     setTimeout(() => {
       if (!resolved) {
@@ -62,7 +62,7 @@ function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestResult> 
         });
       }
     }, timeout);
-    
+
     // 触发加载
     img.src = url;
   });
@@ -78,9 +78,9 @@ export async function preloadFavicons(
   maxConcurrent = 5
 ): Promise<FaviconTestResult[]> {
   if (candidates.length === 0) return [];
-  
+
   const results: FaviconTestResult[] = [];
-  
+
   // 分批并发测试
   for (let i = 0; i < candidates.length; i += maxConcurrent) {
     const batch = candidates.slice(i, i + maxConcurrent);
@@ -89,7 +89,7 @@ export async function preloadFavicons(
     );
     results.push(...batchResults);
   }
-  
+
   // 过滤成功的结果，并按加载速度排序（快的优先）
   return results
     .filter(r => r.success)

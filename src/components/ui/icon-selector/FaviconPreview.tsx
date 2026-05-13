@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ConfigManager } from '@/lib/configManager';
 import { extractDomain } from '@/utils/url';
 import { getFallbackIcon } from '@/utils/url';
@@ -29,23 +29,38 @@ export function FaviconPreview({ src, alt, className = '', appName = '' }: Favic
     }
   }, [src]);
 
-  // 处理图片加载成功 - 写入缓存
-  const handleImageLoad = useCallback(() => {
-    setIsLoading(false); // ✅ 确认成功后才显示图片
-    if (src && !cachedSrc) {
-      try {
-        const domain = extractDomain(src);
-        ConfigManager.setIconCache(domain, src);
-      } catch {
-        // 忽略缓存写入错误
+  // ✅ 新增：监听 src 和 cachedSrc 变化，重置加载状态
+  useEffect(() => {
+    if (src) {
+      // ✅ 如果有缓存，说明之前已验证过，直接显示图片（跳过加载等待）
+      if (cachedSrc) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsLoading(false);
+        setImageLoadFailed(false);
+      } else {
+        setIsLoading(true);
+        setImageLoadFailed(false);
       }
     }
   }, [src, cachedSrc]);
+
+  // 处理图片加载成功 - 写入缓存
+  const handleImageLoad = useCallback(() => {
+    setIsLoading(false); // ✅ 确认成功后才显示图片
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[FaviconPreview] image loaded successfully');
+    }
+    // 注意：缓存写入已移至 FaviconMode 的自动探测逻辑中
+    // 这里不再重复写入，避免冲突
+  }, []);
 
   // 处理图片加载失败
   const handleImageError = useCallback(() => {
     setIsLoading(false);
     setImageLoadFailed(true);
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[FaviconPreview] image load failed');
+    }
   }, []);
 
   // ✅ 修复1：加载中或加载失败时，始终显示 fallback

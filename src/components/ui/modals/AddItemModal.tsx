@@ -50,11 +50,6 @@ export function AddItemModal({
 }: AddItemModalProps) {
   const S = getStrings(language);
 
-  // 调试日志：检查传入的 props
-  if (process.env.NODE_ENV === 'development' && isOpen) {
-    console.log('[AddItemModal] 初始化 - initialType:', initialType, 'initialFolderId:', initialFolderId);
-  }
-
   // ✅ 表单状态下沉到组件内部
   const [form, setForm] = useState<AddItemForm>({
     type: initialType,
@@ -73,9 +68,6 @@ export function AddItemModal({
   // 当模态框首次打开时，根据 initialType 和 initialFolderId 初始化表单
   useEffect(() => {
     if (isOpen && !hasOpenedRef.current) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[AddItemModal] useEffect - 模态框首次打开，初始化表单 - initialType:', initialType, 'initialFolderId:', initialFolderId);
-      }
       hasOpenedRef.current = true;
       setForm({
         type: initialType,
@@ -88,7 +80,7 @@ export function AddItemModal({
         customColor: undefined
       });
     }
-    
+
     // 模态框关闭时重置标志
     if (!isOpen) {
       hasOpenedRef.current = false;
@@ -176,10 +168,6 @@ export function AddItemModal({
         toast.error(`URL 验证失败: ${validation.errorMessage}`);
         return;
       }
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[AddItemModal] 提交表单数据:', form);
     }
 
     setIsLoading(true);

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { generateFaviconCandidates } from '@/utils/favicon-strategies';
-import { preloadFavicons } from '@/utils/favicon-preloader';
+import { testSingleUrl } from '@/utils/favicon-preloader';
 import { extractDomain } from '@/utils/url';
 import { ConfigManager } from '@/lib/configManager';
 import { getStrings } from '@/data/i18n';
@@ -76,6 +76,14 @@ export function FaviconSelector({
   const [availableIcons, setAvailableIcons] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ 流式渲染：维护并发池状态
+  const runningRef = useRef(0); // 当前正在运行的请求数
+  const indexRef = useRef(0); // 下一个要测试的候选索引
+  const candidatesRef = useRef<string[]>([]); // 候选 URL 列表
+  const resultsRef = useRef<string[]>([]); // 已成功的图标列表（用于闭包访问）
+  const maxConcurrent = 5; // 最大并发数
+  const maxResults = 6; // 最多展示 6 个图标
+
   useEffect(() => {
     let cancelled = false;
 
@@ -83,6 +91,7 @@ export function FaviconSelector({
       try {
         setLoading(true);
         setError(null);
+        setAvailableIcons([]); // 清空之前的结果
 
         const domain = extractDomain(websiteUrl);
         if (!domain) {
@@ -91,25 +100,77 @@ export function FaviconSelector({
           return;
         }
 
-        // ✅ 移除缓存拦截：用户主动点击"发现更多"时应强制重新探测所有候选
-        // 生成候选并预加载
+        // 生成候选列表
         const candidates = generateFaviconCandidates(domain);
-        const results = await preloadFavicons(candidates);
-
-        if (cancelled) return;
-
-        if (results.length === 0) {
+        if (candidates.length === 0) {
           setError(getStrings(language).noFaviconFound);
-        } else {
-          // 最多展示 6 个图标，避免 UI 拥挤
-          setAvailableIcons(results.slice(0, 6).map(r => r.url));
+          setLoading(false);
+          return;
         }
+
+        // ✅ 初始化并发池状态
+        candidatesRef.current = candidates;
+        indexRef.current = 0;
+        runningRef.current = 0;
+        resultsRef.current = []; // 清空结果缓存
+
+        // ✅ 启动并发池
+        const runNext = async () => {
+          if (cancelled) return;
+
+          // 如果已经找到足够的图标，停止派发新请求
+          if (resultsRef.current.length >= maxResults) {
+            setLoading(false);
+            return;
+          }
+
+          // 如果所有候选都已派发，等待运行中的请求完成
+          if (indexRef.current >= candidates.length) {
+            if (runningRef.current === 0) {
+              // 所有请求都完成了
+              setLoading(false);
+              if (resultsRef.current.length === 0) {
+                setError(getStrings(language).noFaviconFound);
+              }
+            }
+            return;
+          }
+
+          // 如果未达到最大并发数，派发新请求
+          while (runningRef.current < maxConcurrent && indexRef.current < candidates.length) {
+            const currentIndex = indexRef.current++;
+            const url = candidates[currentIndex];
+            runningRef.current++;
+
+            // 异步测试单个 URL
+            void testSingleUrl(url, 3000).then((result) => {
+              if (cancelled) return;
+
+              runningRef.current--;
+
+              if (result.success) {
+                // ✅ 增量更新：立即添加成功的图标
+                resultsRef.current.push(result.url);
+                setAvailableIcons(prev => [...prev, result.url]);
+
+                // 如果已达到最大值，停止后续请求
+                if (resultsRef.current.length >= maxResults) {
+                  setLoading(false);
+                  return;
+                }
+              }
+
+              // 继续派发下一个请求
+              runNext();
+            });
+          }
+        };
+
+        // 启动并发池
+        void runNext();
       } catch (_err) {
         if (!cancelled) {
           setError(getStrings(language).fetchError);
-        }
-      } finally {
-        if (!cancelled) {
           setLoading(false);
         }
       }
