@@ -9,24 +9,20 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  useDroppable,
+  MouseSensor,
 } from '@dnd-kit/core';
 import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { IconItem, FolderItem, UserConfig, Page } from '@/lib/configManager';
-import { PageContent } from './PageContent';
 import { PageIndicator } from './PageIndicator';
 import { PageManager } from './PageManager';
 import { Icon } from './Icon';
 import { Folder } from './Folder';
 import { getStrings } from '@/data/i18n';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
+import { PageNavigation } from './Page/PageNavigation';
+import { BlankContextMenu } from './Page/BlankContextMenu';
+import { PageDroppable } from './Page/PageDroppable';
 
 interface PageContainerProps {
   icons: IconItem[];
@@ -86,6 +82,8 @@ export function PageContainer({
   const [isBlankMenuOpen, setIsBlankMenuOpen] = useState(false);
   const [blankMenuPosition, setBlankMenuPosition] = useState({ x: 0, y: 0 });
   const folderHoverTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map()); // 文件夹悬停计时器
+  const pageSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // 页面切换计时器
+  const lastSwitchedPageRef = useRef<number | null>(null); // 记录上次切换的页面索引
 
   // 配置传感器：使用 PointerSensor 并排除右键点击
   const pointerSensor = useSensor(PointerSensor, {
@@ -99,7 +97,12 @@ export function PageContainer({
       tolerance: 5, // 或移动 5px
     },
   });
-  const sensors = useSensors(pointerSensor, touchSensor);
+  const mouseSensor = useSensor(MouseSensor, {
+    activationConstraint: {
+      distance: 8, // 移动超过 8px 才开始拖拽
+    },
+  });
+  const sensors = useSensors(pointerSensor, touchSensor, mouseSensor);
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config.theme.language || 'zh';
@@ -272,7 +275,7 @@ export function PageContainer({
    * 处理拖拽悬停 - 更新 overId 以提供视觉反馈
    */
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    const { over } = event;
+    const { over, active } = event;
 
     if (over) {
       const newOverId = over.id as string;
@@ -300,14 +303,75 @@ export function PageContainer({
         folderHoverTimersRef.current.clear();
         setReadyToDropFolderId(null);
       }
+
+      // 检测是否悬停在页面边缘，触发自动滚动
+      if (active && scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const containerRect = container.getBoundingClientRect();
+
+        // 获取鼠标位置（从 active 节点的 rect）
+        const activeRect = active.rect.current.translated;
+        if (activeRect) {
+          const mouseX = activeRect.left + activeRect.width / 2;
+
+          // 计算相对于容器的位置
+          const relativeX = mouseX - containerRect.left;
+          const edgeThreshold = 100; // 边缘检测阈值 100px
+
+          // 检测是否在左边缘或右边缘
+          const isLeftEdge = relativeX < edgeThreshold;
+          const isRightEdge = relativeX > containerRect.width - edgeThreshold;
+
+          // 确定目标页面索引
+          let targetPageIndex: number | null = null;
+
+          if (isLeftEdge && currentPageIndex > 0) {
+            // 左边缘：切换到上一页
+            targetPageIndex = currentPageIndex - 1;
+          } else if (isRightEdge && currentPageIndex < pages.length - 1) {
+            // 右边缘：切换到下一页
+            targetPageIndex = currentPageIndex + 1;
+          }
+
+          // 如果有目标页面且与上次切换的页面不同，启动计时器
+          if (targetPageIndex !== null && targetPageIndex !== lastSwitchedPageRef.current) {
+            // 清除之前的计时器
+            if (pageSwitchTimerRef.current) {
+              clearTimeout(pageSwitchTimerRef.current);
+            }
+
+            // 设置新的 600ms 计时器
+            pageSwitchTimerRef.current = setTimeout(() => {
+              const pageWidth = container.clientWidth;
+              container.scrollTo({
+                left: pageWidth * targetPageIndex!,
+                behavior: 'smooth'
+              });
+              setCurrentPageIndex(targetPageIndex!);
+              lastSwitchedPageRef.current = targetPageIndex!;
+
+              // 通知父组件页面切换
+              if (onPageChange) {
+                onPageChange(targetPageIndex!);
+              }
+            }, 600);
+          }
+        }
+      }
     } else {
       setOverId(null);
       // 清除所有计时器
       folderHoverTimersRef.current.forEach((timer) => clearTimeout(timer));
       folderHoverTimersRef.current.clear();
       setReadyToDropFolderId(null);
+
+      // 清除页面切换计时器
+      if (pageSwitchTimerRef.current) {
+        clearTimeout(pageSwitchTimerRef.current);
+        pageSwitchTimerRef.current = null;
+      }
     }
-  }, [folders]);
+  }, [folders, pages, currentPageIndex, onPageChange]);
 
   /**
    * 处理拖拽结束 - 支持跨页拖拽和拖入文件夹
@@ -321,6 +385,13 @@ export function PageContainer({
     folderHoverTimersRef.current.forEach((timer) => clearTimeout(timer));
     folderHoverTimersRef.current.clear();
     setReadyToDropFolderId(null);
+
+    // 清除页面切换计时器并重置上次切换的页面
+    if (pageSwitchTimerRef.current) {
+      clearTimeout(pageSwitchTimerRef.current);
+      pageSwitchTimerRef.current = null;
+    }
+    lastSwitchedPageRef.current = null;
 
     const { active, over } = event;
 
@@ -497,19 +568,15 @@ export function PageContainer({
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
+      autoScroll={false}
     >
       {/* 页面切换按钮 - 左侧 */}
       {currentPageIndex > 0 && (
-        <button
+        <PageNavigation
+          direction="left"
           onClick={handlePreviousPage}
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 bg-background/80 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
-          title={STRINGS.previousPage}
-          aria-label={STRINGS.previousPage}
-        >
-          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+          label={STRINGS.previousPage}
+        />
       )}
 
       {/* 横向滚动容器 - 隐藏滚动条 */}
@@ -540,14 +607,14 @@ export function PageContainer({
             config={config}
             searchedFolderIds={searchedFolderIds}
             overId={overId}
-            activeId={activeId} // 新增：传递正在拖拽的元素ID
-            readyToDropFolderId={readyToDropFolderId} // 新增：传递准备好放入的文件夹ID
+            activeId={activeId}
+            readyToDropFolderId={readyToDropFolderId}
             onIconEdit={onIconEdit}
             onIconDelete={onIconDelete}
             onIconHide={onIconHide}
             onMoveIconToFolder={onMoveIconToFolder}
-            onReorderIconsInFolder={onReorderIconsInFolder} // 新增：传递文件夹内图标排序回调
-            onMoveToRoot={onMoveToRoot} // 新增：传递移动到根级回调
+            onReorderIconsInFolder={onReorderIconsInFolder}
+            onMoveToRoot={onMoveToRoot}
             onFolderRename={onFolderRename}
             onFolderDelete={onFolderDelete}
             onAddIconToFolder={onAddIconToFolder}
@@ -561,16 +628,11 @@ export function PageContainer({
 
       {/* 页面切换按钮 - 右侧 */}
       {currentPageIndex < pages.length - 1 && (
-        <button
+        <PageNavigation
+          direction="right"
           onClick={handleNextPage}
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-50 w-12 h-12 bg-background/80 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center hover:bg-accent transition-all duration-200"
-          title={STRINGS.nextPage}
-          aria-label={STRINGS.nextPage}
-        >
-          <svg className="w-6 h-6 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </button>
+          label={STRINGS.nextPage}
+        />
       )}
 
       {/* 页面指示器和页面管理按钮 */}
@@ -615,143 +677,19 @@ export function PageContainer({
       </DragOverlay>
 
       {/* 空白处右键菜单 */}
-      <DropdownMenu
-        open={isBlankMenuOpen}
-        onOpenChange={setIsBlankMenuOpen}
-      >
-        <DropdownMenuTrigger asChild id="page-blank-menu">
-          <span className="hidden" />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          style={{
-            position: 'fixed',
-            left: Math.min(blankMenuPosition.x, typeof window !== 'undefined' ? window.innerWidth - 180 : blankMenuPosition.x),
-            top: Math.min(blankMenuPosition.y, typeof window !== 'undefined' ? window.innerHeight - 150 : blankMenuPosition.y),
-          }}
-        >
-          {onAddIcon && (
-            <DropdownMenuItem onClick={() => {
-              onAddIcon();
-              setIsBlankMenuOpen(false);
-            }}>
-              {STRINGS.addApp}
-            </DropdownMenuItem>
-          )}
-          {onAddFolder && (
-            <DropdownMenuItem onClick={() => {
-              onAddFolder();
-              setIsBlankMenuOpen(false);
-            }}>
-              {STRINGS.addFolder}
-            </DropdownMenuItem>
-          )}
-          {onRefresh && (
-            <DropdownMenuItem onClick={() => {
-              onRefresh();
-              setIsBlankMenuOpen(false);
-            }}>
-              {STRINGS.refresh}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <BlankContextMenu
+        isOpen={isBlankMenuOpen}
+        position={blankMenuPosition}
+        onClose={() => setIsBlankMenuOpen(false)}
+        onAddIcon={onAddIcon}
+        onAddFolder={onAddFolder}
+        onRefresh={onRefresh}
+        labels={{
+          addApp: STRINGS.addApp,
+          addFolder: STRINGS.addFolder,
+          refresh: STRINGS.refresh
+        }}
+      />
     </DndContext>
-  );
-}
-
-/**
- * 页面 Droppable 组件 - 每个页面作为一个独立的 droppable 区域
- */
-interface PageDroppableProps {
-  page: Page;
-  icons: IconItem[];
-  folders: FolderItem[];
-  config: UserConfig;
-  searchedFolderIds: string[];
-  overId?: string | null; // 拖拽悬停目标
-  activeId?: string | null; // 正在拖拽的元素ID
-  readyToDropFolderId?: string | null; // 准备好放入的文件夹ID
-  onIconEdit?: (id: string) => void;
-  onIconDelete?: (id: string) => void;
-  onIconHide?: (id: string) => void;
-  onMoveIconToFolder?: (iconId: string, folderId: string) => void;
-  onReorderIconsInFolder?: (folderId: string, orderedIconIds: string[]) => void; // 新增：文件夹内图标排序
-  onMoveToRoot?: (iconId: string) => void; // 新增：移动到根级
-  onFolderRename?: (id: string, name: string) => void;
-  onFolderDelete?: (id: string, deleteApps?: boolean) => void;
-  onAddIconToFolder?: (folderId: string) => void;
-  onDeleteAllIconsInFolder?: (folderId: string) => void;
-  onAddIcon?: () => void;
-  onAddFolder?: () => void;
-  onRefresh?: () => void;
-}
-
-function PageDroppable({
-  page,
-  icons,
-  folders,
-  config,
-  searchedFolderIds,
-  overId,
-  activeId, // 新增
-  readyToDropFolderId, // 新增
-  onIconEdit,
-  onIconDelete,
-  onIconHide,
-  onMoveIconToFolder,
-  onReorderIconsInFolder, // 新增
-  onMoveToRoot, // 新增
-  onFolderRename,
-  onFolderDelete,
-  onAddIconToFolder,
-  onDeleteAllIconsInFolder,
-  onAddIcon,
-  onAddFolder,
-  onRefresh,
-}: PageDroppableProps) {
-  const { setNodeRef } = useDroppable({
-    id: page.id,
-  });
-
-  // 根据 page.iconIds 过滤出属于当前页面的根级图标和文件夹
-  const pageIconIds = page.iconIds || [];
-  const pageFolders = folders.filter(folder => pageIconIds.includes(folder.id));
-
-  // 关键修复：传递所有图标给 PageContent，包括文件夹内的图标
-  // PageContent 内部会根据 page.iconIds 渲染根级元素
-  // Folder 组件会从完整列表中过滤出自己的内部图标
-
-  return (
-    <div
-      ref={setNodeRef}
-      className="shrink-0 w-screen snap-start p-4 md:p-6"
-    >
-      <div className="max-w-7xl mx-auto h-full">
-        <PageContent
-          page={page}
-          icons={icons} // 传递所有图标，不过滤
-          folders={pageFolders}
-          config={config}
-          searchedFolderIds={searchedFolderIds}
-          overId={overId}
-          activeId={activeId} // 新增：传递正在拖拽的元素ID
-          readyToDropFolderId={readyToDropFolderId} // 新增：传递准备好放入的文件夹ID
-          onIconEdit={onIconEdit}
-          onIconDelete={onIconDelete}
-          onIconHide={onIconHide}
-          onMoveIconToFolder={onMoveIconToFolder}
-          onReorderIconsInFolder={onReorderIconsInFolder} // 新增：传递文件夹内图标排序回调
-          onMoveToRoot={onMoveToRoot} // 新增：传递移动到根级回调
-          onFolderRename={onFolderRename}
-          onFolderDelete={onFolderDelete}
-          onAddIconToFolder={onAddIconToFolder}
-          onDeleteAllIconsInFolder={onDeleteAllIconsInFolder}
-          onAddIcon={onAddIcon}
-          onAddFolder={onAddFolder}
-          onRefresh={onRefresh}
-        />
-      </div>
-    </div>
   );
 }

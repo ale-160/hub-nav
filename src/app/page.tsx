@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import { toast } from 'sonner';
 import { ConfigManager, UserConfig, IconItem, ThemeSettings } from '@/lib/configManager';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useTheme } from '@/hooks/useTheme';
@@ -9,32 +8,14 @@ import { useConfig } from '@/hooks/useConfig';
 import { useSearch } from '@/hooks/useSearch';
 import { useIconFolderManager } from '@/hooks/useIconFolderManager';
 import { useImportExport } from '@/hooks/useImportExport';
-import { Modal } from '@/components/ui/modal';
-import { Button } from '@/components/ui/button';
-import { IconSelector } from '@/components/ui/icon-selector';
 import { SettingsModal } from '@/components/ui/settings-modal';
+import { AddItemModal } from '@/components/ui/modals/AddItemModal';
+import { EditItemModal } from '@/components/ui/modals/EditItemModal';
+import { Button } from '@/components/ui/button';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { OnboardingGuide } from '@/components/ui/onboarding-guide';
-import { STRINGS, getStrings } from '@/data/i18n';
-import { validateUrl } from '@/utils/url';
+import { getStrings } from '@/data/i18n';
 
-/**
- * 添加新项目类型
- */
-type AddItemType = 'icon' | 'folder';
-
-/**
- * 添加新项目表单数据
- */
-interface AddItemForm {
-  type: AddItemType;
-  name: string;
-  url: string;
-  folderId?: string;
-  iconType?: 'favicon' | 'builtin' | 'custom';
-  builtinIcon?: string;
-  customIconUrl?: string;
-}
 
 export default function Home() {
   // 使用配置管理 Hook
@@ -84,6 +65,7 @@ export default function Home() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [currentPageIndex, setCurrentPageIndex] = useState(0); // 跟踪当前活跃页面索引
+  const [editItem, setEditItem] = useState<IconItem | null>(null);
 
   // 使用搜索管理 Hook（必须在 currentPageIndex 声明之后）
   const {
@@ -94,151 +76,44 @@ export default function Home() {
     filteredPageIconIds
   } = useSearch({ config, currentPageIndex });
 
-  const [addForm, setAddForm] = useState<AddItemForm>({
-    type: 'icon',
-    name: '',
-    url: ''
-  });
-  const [editItem, setEditItem] = useState<IconItem | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
   /**
-   * 重置添加表单
+   * 处理添加项目提交（由 AddItemModal 调用）
    */
-  const resetAddForm = useCallback(() => {
-    setAddForm({
-      type: 'icon',
-      name: '',
-      url: '',
-      folderId: undefined,
-      iconType: 'favicon',
-      builtinIcon: undefined,
-      customIconUrl: undefined
-    });
-  }, []);
-
-  /**
-   * 打开添加模态框
-   */
-  const openAddModal = useCallback((type: AddItemType = 'icon', folderId?: string) => {
-    setAddForm({
-      type,
-      name: '',
-      url: '',
-      iconType: 'favicon',
-      builtinIcon: undefined,
-      customIconUrl: undefined,
-      folderId
-    });
-    setIsAddModalOpen(true);
-  }, []);
-
-  /**
-   * 关闭添加模态框
-   */
-  const closeAddModal = useCallback(() => {
-    setIsAddModalOpen(false);
-    resetAddForm();
-  }, [resetAddForm]);
-
-  /**
-   * 添加新项目（精简版，逻辑在 Hook 中）
-   */
-  const handleAddItem = useCallback(() => {
-    if (!addForm.name.trim()) {
-      toast.error(STRINGS.nameRequired);
-      return;
-    }
-
-    if (addForm.type === 'icon') {
-      const urlToValidate = addForm.url.trim();
-
-      if (!urlToValidate) {
-        toast.error(STRINGS.urlRequired);
-        return;
-      }
-
-      // URL 格式验证
-      const validation = validateUrl(urlToValidate);
-      if (!validation.isValid) {
-        toast.error(`URL 验证失败: ${validation.errorMessage}`);
-        return;
-      }
-    }
-
-    setIsLoading(true);
-
-    try {
-      if (addForm.type === 'icon') {
-        // 如果在文件夹内添加，验证文件夹是否存在
-        if (addForm.folderId) {
-          const targetFolder = config.folders.find(f => f.id === addForm.folderId);
-          if (!targetFolder) {
-            if (process.env.NODE_ENV === 'development') {
-              console.error('[handleAddItem] 目标文件夹不存在:', addForm.folderId);
-            }
-            toast.error('目标文件夹不存在');
-            setIsLoading(false);
-            return;
+  const handleAddItemSubmit = useCallback(async (formData: {
+    type: 'icon' | 'folder';
+    name: string;
+    url: string;
+    folderId?: string;
+    iconType?: 'favicon' | 'builtin' | 'custom';
+    builtinIcon?: string;
+    customIconUrl?: string;
+  }) => {
+    if (formData.type === 'icon') {
+      // 如果在文件夹内添加，验证文件夹是否存在
+      if (formData.folderId) {
+        const targetFolder = config.folders.find(f => f.id === formData.folderId);
+        if (!targetFolder) {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('[handleAddItemSubmit] 目标文件夹不存在:', formData.folderId);
           }
+          throw new Error('目标文件夹不存在');
         }
-
-        // 使用高级方法，自动处理页面关联
-        addIconWithPage({
-          name: addForm.name.trim(),
-          url: addForm.url.trim(),
-          folderId: addForm.folderId,
-          iconType: addForm.iconType || 'favicon',
-          builtinIcon: addForm.builtinIcon,
-          customIconUrl: addForm.customIconUrl
-        }, currentPageIndex);
-      } else {
-        // 使用高级方法，自动处理页面关联
-        addFolderWithPage(addForm.name.trim(), currentPageIndex);
       }
 
-      closeAddModal();
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('添加项目失败:', error);
-      }
-    } finally {
-      setIsLoading(false);
+      // 使用高级方法，自动处理页面关联
+      addIconWithPage({
+        name: formData.name.trim(),
+        url: formData.url.trim(),
+        folderId: formData.folderId,
+        iconType: formData.iconType || 'favicon',
+        builtinIcon: formData.builtinIcon,
+        customIconUrl: formData.customIconUrl
+      }, currentPageIndex);
+    } else {
+      // 使用高级方法，自动处理页面关联
+      addFolderWithPage(formData.name.trim(), currentPageIndex);
     }
-  }, [addForm, config, currentPageIndex, addIconWithPage, addFolderWithPage, closeAddModal]);
-
-  /**
-   * 处理表单输入
-   */
-  const handleFormChange = useCallback((field: keyof AddItemForm, value: string) => {
-    setAddForm(prev => ({ ...prev, [field]: value }));
-  }, []);
-
-  /**
-   * 处理图标类型变化
-   */
-  const handleIconTypeChange = useCallback((iconType: 'favicon' | 'builtin' | 'custom') => {
-    setAddForm(prev => ({
-      ...prev,
-      iconType,
-      builtinIcon: iconType === 'builtin' ? prev.builtinIcon || 'home' : undefined,
-      customIconUrl: iconType === 'custom' ? prev.customIconUrl : undefined
-    }));
-  }, []);
-
-  /**
-   * 处理内置图标选择
-   */
-  const handleBuiltinIconChange = useCallback((iconId: string) => {
-    setAddForm(prev => ({ ...prev, builtinIcon: iconId }));
-  }, []);
-
-  /**
-   * 处理自定义图标 URL 变化
-   */
-  const handleCustomIconUrlChange = useCallback((url: string) => {
-    setAddForm(prev => ({ ...prev, customIconUrl: url }));
-  }, []);
+  }, [config.folders, currentPageIndex, addIconWithPage, addFolderWithPage]);
 
   /**
    * 处理搜索框回车键
@@ -268,9 +143,27 @@ export default function Home() {
   /**
    * 处理添加应用到文件夹
    */
-  const handleAddIconToFolder = useCallback((folderId: string) => {
-    openAddModal('icon', folderId);
-  }, [openAddModal]);
+  const handleAddIconToFolder = useCallback(() => {
+    setIsAddModalOpen(true);
+    // AddItemModal 会接收 initialFolderId prop
+  }, []);
+
+  /**
+   * 打开添加模态框
+   */
+  const openAddModal = useCallback(() => {
+    setIsAddModalOpen(true);
+  }, []);
+
+  /**
+   * 处理编辑项目提交（由 EditItemModal 调用）
+   */
+  const handleEditItemSubmit = useCallback(async (updatedItem: IconItem) => {
+    const updatedIcons = config.icons.map(icon =>
+      icon.id === updatedItem.id ? updatedItem : icon
+    );
+    handleConfigUpdate({ icons: updatedIcons });
+  }, [config.icons, handleConfigUpdate]);
 
   /**
    * 包装文件夹重命名（适配 PageContainer 接口）
@@ -374,8 +267,8 @@ export default function Home() {
               onFolderDelete={handleFolderDelete}
               onAddIconToFolder={handleAddIconToFolder}
               onDeleteAllIconsInFolder={handleDeleteAllIconsInFolder}
-              onAddIcon={() => openAddModal('icon')}
-              onAddFolder={() => openAddModal('folder')}
+              onAddIcon={openAddModal}
+              onAddFolder={openAddModal}
               onRefresh={() => {
                 // 重新加载配置
                 const loadedConfig = ConfigManager.loadConfig();
@@ -389,184 +282,25 @@ export default function Home() {
       </main>
 
       {/* 添加项目模态框 */}
-      <Modal
+      <AddItemModal
         isOpen={isAddModalOpen}
-        onClose={closeAddModal}
-        title={S.addNewItem}
-        size="md"
-      >
-        <div className="space-y-4">
-          {/* 类型选择 */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              {S.type}
-            </label>
-            <div className="flex gap-2">
-              <Button
-                variant={addForm.type === 'icon' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => handleFormChange('type', 'icon')}
-              >
-                {S.addApp}
-              </Button>
-              <Button
-                variant={addForm.type === 'folder' ? 'default' : 'secondary'}
-                size="sm"
-                onClick={() => handleFormChange('type', 'folder')}
-              >
-                {S.addFolder}
-              </Button>
-            </div>
-          </div>
-
-          {/* 名称输入 */}
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-              {addForm.type === 'icon' ? S.appName : S.folderName}
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={addForm.name}
-              onChange={(e) => handleFormChange('name', e.target.value)}
-              placeholder={addForm.type === 'icon' ? S.appNamePlaceholder : S.folderNamePlaceholder}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-            />
-          </div>
-
-          {/* 应用地址输入（仅应用类型） */}
-          {addForm.type === 'icon' && (
-            <div>
-              <label htmlFor="url" className="block text-sm font-medium text-foreground mb-2">
-                {S.appUrl}
-              </label>
-              <input
-                type="url"
-                id="url"
-                value={addForm.url}
-                onChange={(e) => handleFormChange('url', e.target.value)}
-                placeholder={S.appUrlPlaceholder}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-          )}
-
-          {/* 图标选择器（仅图标类型） */}
-          {addForm.type === 'icon' && (
-            <IconSelector
-              iconType={addForm.iconType || 'favicon'}
-              builtinIcon={addForm.builtinIcon}
-              customIconUrl={addForm.customIconUrl}
-              websiteUrl={addForm.url}
-              appName={addForm.name}
-              language={config.theme.language}
-              onIconTypeChange={handleIconTypeChange}
-              onBuiltinIconChange={handleBuiltinIconChange}
-              onCustomIconUrlChange={handleCustomIconUrlChange}
-              onWebsiteUrlChange={(url) => handleFormChange('url', url)}
-            />
-          )}
-
-          {/* 操作按钮 */}
-          <div className="flex gap-3 justify-end pt-4">
-            <Button
-              variant="secondary"
-              onClick={closeAddModal}
-            >
-              {S.cancel}
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleAddItem}
-              disabled={isLoading}
-            >
-              {isLoading ? '加载中...' : S.add}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        onClose={() => setIsAddModalOpen(false)}
+        onSubmit={handleAddItemSubmit}
+        language={config.theme.language || 'zh'}
+      />
 
       {/* 编辑项目模态框 */}
-      <Modal
+      <EditItemModal
+        key={editItem?.id || 'new'} // 使用 key 确保每次打开时重置表单状态
         isOpen={isEditModalOpen}
         onClose={() => {
           setIsEditModalOpen(false);
           setEditItem(null);
         }}
-        title={S.editApp}
-        size="md"
-      >
-        {editItem && (
-          <div className="space-y-4">
-            {/* 名称输入 */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                {S.name}
-              </label>
-              <input
-                type="text"
-                value={editItem.name}
-                onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-
-            {/* URL 输入 */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                {S.url}
-              </label>
-              <input
-                type="url"
-                value={editItem.url}
-                onChange={(e) => setEditItem({ ...editItem, url: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-              />
-            </div>
-
-            {/* 图标选择器 */}
-            <IconSelector
-              iconType={editItem.iconType || 'favicon'}
-              builtinIcon={editItem.builtinIcon}
-              customIconUrl={editItem.customIconUrl}
-              websiteUrl={editItem.url}
-              appName={editItem.name}
-              language={config.theme.language}
-              onIconTypeChange={(iconType) => setEditItem({ ...editItem, iconType, builtinIcon: iconType === 'builtin' ? editItem.builtinIcon || 'home' : undefined, customIconUrl: iconType === 'custom' ? editItem.customIconUrl : undefined })}
-              onBuiltinIconChange={(iconId) => setEditItem({ ...editItem, builtinIcon: iconId })}
-              onCustomIconUrlChange={(url) => setEditItem({ ...editItem, customIconUrl: url })}
-              onWebsiteUrlChange={(url) => setEditItem({ ...editItem, url })}
-            />
-
-            <div className="flex gap-3 justify-end pt-4">
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  setIsEditModalOpen(false);
-                  setEditItem(null);
-                }}
-              >
-                {S.cancel}
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => {
-                  if (editItem) {
-                    const updatedIcons = config.icons.map(icon =>
-                      icon.id === editItem.id ? editItem : icon
-                    );
-                    handleConfigUpdate({ icons: updatedIcons });
-                    setIsEditModalOpen(false);
-                    setEditItem(null);
-                  }
-                }}
-              >
-                {S.save}
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
+        onSubmit={handleEditItemSubmit}
+        item={editItem}
+        language={config.theme.language || 'zh'}
+      />
 
       {/* 页脚 */}
       <footer className="border-t border-gray-200 dark:border-border bg-background py-6">
