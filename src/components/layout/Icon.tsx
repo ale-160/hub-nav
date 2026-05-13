@@ -207,8 +207,18 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           };
         }
 
-        // ✅ 使用多策略获取图标
+        // ✅ 优先使用缓存：用户在 FaviconSelector 中选择并保存的图标
         const domain = extractDomain(item.url);
+        const cachedIcon = ConfigManager.getCachedIcon(domain);
+        
+        if (cachedIcon) {
+          return {
+            type: 'image' as const,
+            content: cachedIcon
+          };
+        }
+
+        // 无缓存时使用多策略获取图标
         const candidates = generateFaviconCandidates(domain);
 
         if (candidates.length > 0) {

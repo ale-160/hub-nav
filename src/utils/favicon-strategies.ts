@@ -50,18 +50,27 @@ const standardPathStrategy: FaviconStrategy = {
 };
 
 /**
- * 策略 2：www 子域名变体
- * 某些网站仅在 www 子域名下提供 favicon
+ * 策略 2：www 子域名变体（双向互补）
+ * - 非 www 域名：添加 www 前缀
+ * - www 域名：去除 www 前缀
+ * 某些网站仅在特定子域名下提供 favicon
  */
 const wwwVariantStrategy: FaviconStrategy = {
   name: 'www-variant',
   priority: 2,
   generateUrls: (domain: string) => {
-    // 如果域名已包含 www，则跳过
+    const urls: string[] = [];
+    
+    // 如果域名已包含 www，尝试去掉 www
     if (domain.startsWith('www.')) {
-      return [];
+      const rootDomain = domain.substring(4); // 去掉 'www.'
+      urls.push(`https://${rootDomain}/favicon.ico`);
+    } else {
+      // 如果域名不包含 www，尝试添加 www
+      urls.push(`https://www.${domain}/favicon.ico`);
     }
-    return [`https://www.${domain}/favicon.ico`];
+    
+    return urls;
   }
 };
 

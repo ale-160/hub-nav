@@ -13,6 +13,51 @@ interface FaviconSelectorProps {
 }
 
 /**
+ * 单个 Favicon 选项组件
+ * 处理加载失败时显示占位符，避免网格空洞
+ */
+function FaviconOption({
+  url,
+  index,
+  onSelect
+}: {
+  url: string;
+  index: number;
+  onSelect: () => void;
+}) {
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  if (loadFailed) {
+    // ✅ 加载失败时显示占位符，保持网格布局完整
+    return (
+      <button
+        onClick={onSelect}
+        className="aspect-square rounded-lg border-2 border-border/50 bg-muted/50 flex items-center justify-center cursor-not-allowed opacity-50"
+        disabled
+        title="图标加载失败"
+      >
+        <span className="text-2xl text-muted-foreground">❌</span>
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={onSelect}
+      className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-all p-2 flex items-center justify-center bg-background"
+      data-testid="favicon-option"
+    >
+      <img
+        src={url}
+        alt={`Favicon option ${index + 1}`}
+        className="w-full h-full object-contain"
+        onError={() => setLoadFailed(true)}
+      />
+    </button>
+  );
+}
+
+/**
  * Favicon 选择器组件
  *
  * 功能：
@@ -41,19 +86,12 @@ export function FaviconSelector({
 
         const domain = extractDomain(websiteUrl);
         if (!domain) {
-          setError(STRINGS.invalidDomain);
+          setError(getStrings(language).invalidDomain);
           setLoading(false);
           return;
         }
 
-        // 检查缓存
-        const cached = ConfigManager.getCachedIcon(domain);
-        if (cached) {
-          setAvailableIcons([cached]);
-          setLoading(false);
-          return;
-        }
-
+        // ✅ 移除缓存拦截：用户主动点击"发现更多"时应强制重新探测所有候选
         // 生成候选并预加载
         const candidates = generateFaviconCandidates(domain);
         const results = await preloadFavicons(candidates);
@@ -61,14 +99,14 @@ export function FaviconSelector({
         if (cancelled) return;
 
         if (results.length === 0) {
-          setError(STRINGS.noFaviconFound);
+          setError(getStrings(language).noFaviconFound);
         } else {
           // 最多展示 6 个图标，避免 UI 拥挤
           setAvailableIcons(results.slice(0, 6).map(r => r.url));
         }
       } catch (_err) {
         if (!cancelled) {
-          setError(STRINGS.fetchError);
+          setError(getStrings(language).fetchError);
         }
       } finally {
         if (!cancelled) {
@@ -82,7 +120,7 @@ export function FaviconSelector({
     return () => {
       cancelled = true;
     };
-  }, [websiteUrl, language, STRINGS]);
+  }, [websiteUrl, language]);
 
   const handleSelect = (url: string) => {
     const domain = extractDomain(websiteUrl);
@@ -125,22 +163,12 @@ export function FaviconSelector({
 
       <div className="grid grid-cols-3 gap-3">
         {availableIcons.map((url, index) => (
-          <button
+          <FaviconOption
             key={url}
-            onClick={() => handleSelect(url)}
-            className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-all p-2 flex items-center justify-center bg-background"
-            data-testid="favicon-option"
-          >
-            <img
-              src={url}
-              alt={`Favicon option ${index + 1}`}
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                // 隐藏加载失败的图标
-                e.currentTarget.parentElement?.style.setProperty('display', 'none');
-              }}
-            />
-          </button>
+            url={url}
+            index={index}
+            onSelect={() => handleSelect(url)}
+          />
         ))}
       </div>
 
