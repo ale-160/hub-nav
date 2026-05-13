@@ -149,6 +149,11 @@ export function EditItemModal({
           onCustomIconUrlChange={handleCustomIconUrlChange}
           onWebsiteUrlChange={(url) => handleFieldChange('url', url)}
           onCustomColorChange={handleCustomColorChange}
+          onFaviconSelect={(url) => {
+            // ✅ 用户选择了 favicon，更新 customIconUrl
+            handleFieldChange('customIconUrl', url);
+            handleFieldChange('iconType', 'custom');
+          }}
         />
 
         <div className="flex gap-3 justify-end pt-4">

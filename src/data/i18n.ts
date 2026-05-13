@@ -184,6 +184,15 @@ export const STRINGS_ZH = {
   customIconPreview: '自定义图标预览',
   imageUrl: '图片URL',
   selectIcon: '选择图标',
+  discoverMore: '发现更多',
+  tryDiscoverMore: '尝试发现更多图标',
+  selectPreferredIcon: '选择您喜欢的图标',
+  searchingFavicons: '正在搜索网站图标...',
+  noFaviconFound: '未找到可用图标，将使用默认图标',
+  fetchError: '图标获取失败，请检查网络连接',
+  useDefaultIcon: '使用默认图标',
+  faviconTip: '点击任意图标即可选中，也可稍后在设置中更换',
+  invalidDomain: '无效的域名',
   
   // 添加/编辑弹窗
   type: '类型',
@@ -434,6 +443,16 @@ export const STRINGS_EN = {
   customIconPreview: 'Custom Icon Preview',
   imageUrl: 'Image URL',
   selectIcon: 'Select Icon',
+  // ✅ New: Favicon Selector strings
+  discoverMore: 'Discover More',
+  tryDiscoverMore: 'Try Discovering More Icons',
+  selectPreferredIcon: 'Select Your Preferred Icon',
+  searchingFavicons: 'Searching for favicons...',
+  noFaviconFound: 'No favicon found, using default icon',
+  fetchError: 'Failed to fetch icons, please check your network',
+  useDefaultIcon: 'Use Default Icon',
+  faviconTip: 'Click any icon to select, or change later in settings',
+  invalidDomain: 'Invalid domain',
   
   // Add/Edit Modal
   type: 'Type',

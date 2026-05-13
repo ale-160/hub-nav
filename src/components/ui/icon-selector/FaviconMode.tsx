@@ -1,36 +1,59 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { getStrings } from '@/data/i18n';
 import { FaviconPreview } from './FaviconPreview';
+import { FaviconSelector } from './FaviconSelector';
 import { getWebsiteIconPreviewUrl } from '@/utils/icon';
 
 interface FaviconModeProps {
   websiteUrl?: string;
   language?: 'zh' | 'en';
-  onWebsiteUrlChange?: (url: string) => void;
+  onFaviconSelect?: (url: string) => void; // ✅ 新增：用户选择图标回调
 }
 
 /**
  * 网站图标模式组件
- * 显示网站图标预览状态（成功、失败、无 URL）
+ * 
+ * ✅ 修复2：删除 URL 输入框，websiteUrl 完全由父组件传入
+ * 职责：
+ * - 展示当前图标预览
+ * - 提供"发现更多图标"按钮
+ * - 展开网格选择器
  */
 export const FaviconMode = React.memo(function FaviconMode({
   websiteUrl,
-  language = 'zh'
+  language = 'zh',
+  onFaviconSelect
 }: FaviconModeProps) {
   const STRINGS = getStrings(language);
-  const [websiteIconPreview, setWebsiteIconPreview] = useState<string>('');
+  const [showSelector, setShowSelector] = useState(false);
 
-  /**
-   * 更新网站图标预览
-   */
-  useEffect(() => {
-    if (websiteUrl) {
-      const previewUrl = getWebsiteIconPreviewUrl(websiteUrl);
-      setWebsiteIconPreview(previewUrl);
-    } else {
-      setWebsiteIconPreview('');
+  // 计算当前预览 URL
+  const websiteIconPreview = websiteUrl ? getWebsiteIconPreviewUrl(websiteUrl) : '';
+
+  // 处理用户选择图标
+  const handleSelect = (url: string) => {
+    setShowSelector(false);
+    if (onFaviconSelect) {
+      onFaviconSelect(url);
     }
-  }, [websiteUrl]);
+  };
+
+  // 处理取消选择
+  const handleCancel = () => {
+    setShowSelector(false);
+  };
+
+  // 如果正在选择图标，显示选择器
+  if (showSelector && websiteUrl) {
+    return (
+      <FaviconSelector
+        websiteUrl={websiteUrl}
+        language={language}
+        onSelect={handleSelect}
+        onCancel={handleCancel}
+      />
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -52,6 +75,13 @@ export const FaviconMode = React.memo(function FaviconMode({
               {STRINGS.autoFetchFavicon}
             </p>
           </div>
+          {/* ✅ 新增：发现更多图标按钮 */}
+          <button
+            onClick={() => setShowSelector(true)}
+            className="text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            {STRINGS.discoverMore}
+          </button>
         </div>
       )}
 
@@ -65,9 +95,16 @@ export const FaviconMode = React.memo(function FaviconMode({
 
       {websiteUrl && !websiteIconPreview && (
         <div className="text-center py-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-          <p className="text-sm text-yellow-700 dark:text-yellow-300">
+          <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
             {STRINGS.fetchFailed}
           </p>
+          {/* ✅ 新增：即使默认路径失败，也可能有其他候选 */}
+          <button
+            onClick={() => setShowSelector(true)}
+            className="text-xs text-primary hover:text-primary/80 transition-colors"
+          >
+            {STRINGS.tryDiscoverMore}
+          </button>
         </div>
       )}
     </div>

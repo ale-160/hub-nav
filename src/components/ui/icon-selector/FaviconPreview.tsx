@@ -14,6 +14,8 @@ interface FaviconPreviewProps {
 }
 
 export function FaviconPreview({ src, alt, className = '', appName = '' }: FaviconPreviewProps) {
+  // ✅ 修复1：使用 isLoading 状态，在图片加载成功前保持 fallback
+  const [isLoading, setIsLoading] = useState(true);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
   // 直接从缓存读取（派生状态，无需 useEffect + setState）
@@ -29,6 +31,7 @@ export function FaviconPreview({ src, alt, className = '', appName = '' }: Favic
 
   // 处理图片加载成功 - 写入缓存
   const handleImageLoad = useCallback(() => {
+    setIsLoading(false); // ✅ 确认成功后才显示图片
     if (src && !cachedSrc) {
       try {
         const domain = extractDomain(src);
@@ -41,11 +44,12 @@ export function FaviconPreview({ src, alt, className = '', appName = '' }: Favic
 
   // 处理图片加载失败
   const handleImageError = useCallback(() => {
+    setIsLoading(false);
     setImageLoadFailed(true);
   }, []);
 
-  // 如果图片加载失败，显示回退图标
-  if (imageLoadFailed || !src) {
+  // ✅ 修复1：加载中或加载失败时，始终显示 fallback
+  if (isLoading || imageLoadFailed || !src) {
     return (
       <div className={`w-full h-full flex items-center justify-center ${className}`}>
         <span className="text-2xl">{getFallbackIcon(appName)}</span>

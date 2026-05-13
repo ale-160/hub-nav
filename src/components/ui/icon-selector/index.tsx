@@ -19,6 +19,7 @@ interface IconSelectorProps {
   onCustomIconUrlChange: (url: string) => void;
   onWebsiteUrlChange?: (url: string) => void;
   onCustomColorChange?: (color: string) => void; // 新增：自定义颜色变化回调
+  onFaviconSelect?: (url: string) => void; // ✅ 新增：用户选择 favicon 回调
 }
 
 export type { IconSelectorProps };
@@ -43,8 +44,8 @@ export const IconSelector = React.memo(function IconSelector({
   onIconTypeChange,
   onBuiltinIconChange,
   onCustomIconUrlChange,
-  onWebsiteUrlChange,
-  onCustomColorChange
+  onCustomColorChange,
+  onFaviconSelect
 }: IconSelectorProps) {
   const STRINGS = getStrings(language);
   
@@ -67,7 +68,7 @@ export const IconSelector = React.memo(function IconSelector({
         <FaviconMode
           websiteUrl={websiteUrl}
           language={language}
-          onWebsiteUrlChange={onWebsiteUrlChange}
+          onFaviconSelect={onFaviconSelect}
         />
       )}
       

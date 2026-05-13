@@ -281,6 +281,11 @@ export function AddItemModal({
             onCustomIconUrlChange={handleCustomIconUrlChange}
             onWebsiteUrlChange={(url) => handleFieldChange('url', url)}
             onCustomColorChange={handleCustomColorChange}
+            onFaviconSelect={(url) => {
+              // ✅ 用户选择了 favicon，更新 customIconUrl
+              handleFieldChange('customIconUrl', url);
+              handleFieldChange('iconType', 'custom');
+            }}
           />
         )}
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BUILTIN_ICONS, BuiltinIcon } from '@/data/icons';
 import { getStrings } from '@/data/i18n';
-import { extractDomain, getFaviconUrls } from './url';
+import { extractDomain, generateFaviconCandidates } from './url';
 
 /**
  * 提取应用名称的第一个字符
@@ -145,15 +145,16 @@ export function getSelectedBuiltinIcon(
 }
 
 /**
- * 获取网站图标的预览 URL（拼接方式）
+ * 获取网站图标的预览 URL（使用多策略）
  */
 export function getWebsiteIconPreviewUrl(url: string): string {
   if (!url) return '';
 
   try {
     const domain = extractDomain(url);
-    const faviconUrls = getFaviconUrls(domain);
-    return faviconUrls[0] || '';
+    // ✅ 使用新的多策略生成候选列表，取第一个
+    const candidates = generateFaviconCandidates(domain);
+    return candidates[0] || '';
   } catch {
     return '';
   }

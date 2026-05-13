@@ -9,7 +9,6 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  MouseSensor,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -86,7 +85,7 @@ export function PageContainer({
   const pageSwitchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); // 页面切换计时器
   const lastSwitchedPageRef = useRef<number | null>(null); // 记录上次切换的页面索引
 
-  // 配置传感器：使用 PointerSensor 并排除右键点击
+  // ✅ 配置传感器：PointerSensor 已统一处理鼠标、触摸和触控笔
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: {
       distance: 8, // 移动超过 8px 才开始拖拽
@@ -98,12 +97,7 @@ export function PageContainer({
       tolerance: 5, // 或移动 5px
     },
   });
-  const mouseSensor = useSensor(MouseSensor, {
-    activationConstraint: {
-      distance: 8, // 移动超过 8px 才开始拖拽
-    },
-  });
-  const sensors = useSensors(pointerSensor, touchSensor, mouseSensor);
+  const sensors = useSensors(pointerSensor, touchSensor);
 
   // 根据当前配置的语言获取文案
   const currentLanguage = config.theme.language || 'zh';

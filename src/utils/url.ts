@@ -2,6 +2,9 @@
  * URL 工具函数 - 用于处理网站图标的获取和回退机制
  */
 
+// ✅ 修复4：导出新的多策略函数
+export { generateFaviconCandidates } from './favicon-strategies';
+
 /**
  * 验证 URL 格式是否有效且安全
  * @param url - 待验证的 URL 字符串
@@ -82,20 +85,6 @@ export function extractDomain(input: string): string {
     const cleaned = input.replace(/^https?:\/\//, '').split('/')[0];
     return cleaned || input;
   }
-}
-
-/**
- * 获取网站图标的 URL（只使用拼接方式）
- * @param domain - 域名
- * @returns 图标 URL
- */
-export function getFaviconUrls(domain: string): string[] {
-  if (!domain) return [];
-  
-  return [
-    // 直接请求目标网站的 favicon.ico
-    `https://${domain}/favicon.ico`
-  ];
 }
 
 /**

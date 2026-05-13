@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { IconItem, ConfigManager } from '@/lib/configManager';
 import { getBuiltinIconById, getDefaultIcon } from '@/data/icons';
-import { extractDomain, getFaviconUrls, getFallbackIcon } from '@/utils/url';
+import { extractDomain, generateFaviconCandidates, getFallbackIcon } from '@/utils/url';
 import { renderSolidIcon, SOLID_COLORS } from '@/utils/icon';
 import { getStrings } from '@/data/i18n';
 import { useContextMenu } from '@/hooks/useContextMenu';
@@ -207,14 +207,14 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           };
         }
 
-        // 使用拼接方式获取图标
+        // ✅ 使用多策略获取图标
         const domain = extractDomain(item.url);
-        const faviconUrls = getFaviconUrls(domain);
+        const candidates = generateFaviconCandidates(domain);
 
-        if (faviconUrls.length > 0) {
+        if (candidates.length > 0) {
           return {
             type: 'image' as const,
-            content: faviconUrls[0]
+            content: candidates[0]
           };
         } else {
           // 如果无法获取图标 URL，使用回退图标
