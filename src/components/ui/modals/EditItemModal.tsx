@@ -49,7 +49,8 @@ export function EditItemModal({
         ...prev,
         iconType,
         builtinIcon: iconType === 'builtin' ? prev.builtinIcon || 'home' : undefined,
-        customIconUrl: iconType === 'custom' ? prev.customIconUrl : undefined
+        customIconUrl: iconType === 'custom' ? prev.customIconUrl : undefined,
+        customColor: iconType === 'builtin' && prev.builtinIcon?.startsWith('solid-color-') ? prev.customColor : undefined
       };
     });
   }, []);
@@ -72,7 +73,7 @@ export function EditItemModal({
    * 处理自定义颜色变化（调色盘）
    */
   const handleCustomColorChange = useCallback((color: string) => {
-    setEditForm(prev => prev ? { ...prev, customIconUrl: color } : null);
+    setEditForm(prev => prev ? { ...prev, customColor: color } : null);
   }, []);
 
   /**

@@ -170,7 +170,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
             '#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6',
             '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#14b8a6',
             '#f43f5e', '#eab308', '#0ea5e9', '#22c55e', '#6366f1',
-            '#6b7280', '#000000', item.customIconUrl || '#ffffff'
+            '#6b7280', '#000000', item.customColor || '#ffffff'  // ✅ 使用 customColor 而非 customIconUrl
           ];
 
           const color = solidColors[colorIndex] || '#ffffff';

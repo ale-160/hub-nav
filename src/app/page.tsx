@@ -62,6 +62,8 @@ export default function Home() {
 
   // UI 状态
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [addModalType, setAddModalType] = useState<'icon' | 'folder'>('icon');
+  const [addModalFolderId, setAddModalFolderId] = useState<string | undefined>(undefined);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [currentPageIndex, setCurrentPageIndex] = useState(0); // 跟踪当前活跃页面索引
@@ -87,6 +89,7 @@ export default function Home() {
     iconType?: 'favicon' | 'builtin' | 'custom';
     builtinIcon?: string;
     customIconUrl?: string;
+    customColor?: string;
   }) => {
     if (formData.type === 'icon') {
       // 如果在文件夹内添加，验证文件夹是否存在
@@ -107,7 +110,8 @@ export default function Home() {
         folderId: formData.folderId,
         iconType: formData.iconType || 'favicon',
         builtinIcon: formData.builtinIcon,
-        customIconUrl: formData.customIconUrl
+        customIconUrl: formData.customIconUrl,
+        customColor: formData.customColor
       }, currentPageIndex);
     } else {
       // 使用高级方法，自动处理页面关联
@@ -143,15 +147,36 @@ export default function Home() {
   /**
    * 处理添加应用到文件夹
    */
-  const handleAddIconToFolder = useCallback(() => {
+  const handleAddIconToFolder = useCallback((folderId: string) => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[handleAddIconToFolder] 收到 folderId:', folderId);
+    }
+    setAddModalType('icon');
+    setAddModalFolderId(folderId);
     setIsAddModalOpen(true);
-    // AddItemModal 会接收 initialFolderId prop
   }, []);
 
   /**
-   * 打开添加模态框
+   * 打开添加应用模态框
    */
-  const openAddModal = useCallback(() => {
+  const openAddIconModal = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[openAddIconModal] 打开添加应用模态框');
+    }
+    setAddModalType('icon');
+    setAddModalFolderId(undefined);
+    setIsAddModalOpen(true);
+  }, []);
+
+  /**
+   * 打开添加文件夹模态框
+   */
+  const openAddFolderModal = useCallback(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[openAddFolderModal] 打开添加文件夹模态框');
+    }
+    setAddModalType('folder');
+    setAddModalFolderId(undefined);
     setIsAddModalOpen(true);
   }, []);
 
@@ -267,8 +292,8 @@ export default function Home() {
               onFolderDelete={handleFolderDelete}
               onAddIconToFolder={handleAddIconToFolder}
               onDeleteAllIconsInFolder={handleDeleteAllIconsInFolder}
-              onAddIcon={openAddModal}
-              onAddFolder={openAddModal}
+              onAddIcon={openAddIconModal}
+              onAddFolder={openAddFolderModal}
               onRefresh={() => {
                 // 重新加载配置
                 const loadedConfig = ConfigManager.loadConfig();
@@ -284,9 +309,15 @@ export default function Home() {
       {/* 添加项目模态框 */}
       <AddItemModal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setAddModalType('icon');
+          setAddModalFolderId(undefined);
+        }}
         onSubmit={handleAddItemSubmit}
         language={config.theme.language || 'zh'}
+        initialType={addModalType}
+        initialFolderId={addModalFolderId}
       />
 
       {/* 编辑项目模态框 */}

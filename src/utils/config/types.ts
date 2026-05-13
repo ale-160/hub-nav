@@ -32,7 +32,8 @@ export interface IconItem {
   isHidden: boolean;
   iconType?: 'favicon' | 'builtin' | 'custom';
   builtinIcon?: string;
-  customIconUrl?: string;
+  customIconUrl?: string; // 自定义图标 URL（仅用于图片）
+  customColor?: string;   // 自定义颜色值（仅用于纯色图标，如 #ff5500）
 }
 
 /**

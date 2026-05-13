@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { Modal } from '../modal';
 import { Button } from '../button';
@@ -21,7 +21,8 @@ interface AddItemForm {
   folderId?: string;
   iconType?: 'favicon' | 'builtin' | 'custom';
   builtinIcon?: string;
-  customIconUrl?: string;
+  customIconUrl?: string; // 自定义图标 URL（仅用于图片）
+  customColor?: string;   // 自定义颜色值（仅用于纯色图标）
 }
 
 interface AddItemModalProps {
@@ -30,6 +31,7 @@ interface AddItemModalProps {
   onSubmit: (formData: AddItemForm) => Promise<void>;
   language: 'zh' | 'en';
   initialFolderId?: string;
+  initialType?: 'icon' | 'folder';
 }
 
 /**
@@ -43,20 +45,55 @@ export function AddItemModal({
   onClose,
   onSubmit,
   language,
-  initialFolderId
+  initialFolderId,
+  initialType = 'icon'
 }: AddItemModalProps) {
   const S = getStrings(language);
 
+  // 调试日志：检查传入的 props
+  if (process.env.NODE_ENV === 'development' && isOpen) {
+    console.log('[AddItemModal] 初始化 - initialType:', initialType, 'initialFolderId:', initialFolderId);
+  }
+
   // ✅ 表单状态下沉到组件内部
   const [form, setForm] = useState<AddItemForm>({
-    type: 'icon',
+    type: initialType,
     name: '',
     url: '',
     folderId: initialFolderId,
     iconType: 'favicon',
     builtinIcon: undefined,
-    customIconUrl: undefined
+    customIconUrl: undefined,
+    customColor: undefined
   });
+
+  // 使用 ref 跟踪模态框是否已打开，避免在 effect 中 setState
+  const hasOpenedRef = useRef(false);
+
+  // 当模态框首次打开时，根据 initialType 和 initialFolderId 初始化表单
+  useEffect(() => {
+    if (isOpen && !hasOpenedRef.current) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[AddItemModal] useEffect - 模态框首次打开，初始化表单 - initialType:', initialType, 'initialFolderId:', initialFolderId);
+      }
+      hasOpenedRef.current = true;
+      setForm({
+        type: initialType,
+        name: '',
+        url: '',
+        folderId: initialFolderId,
+        iconType: 'favicon',
+        builtinIcon: undefined,
+        customIconUrl: undefined,
+        customColor: undefined
+      });
+    }
+    
+    // 模态框关闭时重置标志
+    if (!isOpen) {
+      hasOpenedRef.current = false;
+    }
+  }, [isOpen, initialType, initialFolderId]);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -65,15 +102,16 @@ export function AddItemModal({
    */
   const resetForm = useCallback(() => {
     setForm({
-      type: 'icon',
+      type: initialType,
       name: '',
       url: '',
       folderId: initialFolderId,
       iconType: 'favicon',
       builtinIcon: undefined,
-      customIconUrl: undefined
+      customIconUrl: undefined,
+      customColor: undefined
     });
-  }, [initialFolderId]);
+  }, [initialFolderId, initialType]);
 
   /**
    * 处理表单字段变化
@@ -112,7 +150,7 @@ export function AddItemModal({
    * 处理自定义颜色变化（调色盘）
    */
   const handleCustomColorChange = useCallback((color: string) => {
-    setForm(prev => ({ ...prev, customIconUrl: color }));
+    setForm(prev => ({ ...prev, customColor: color }));
   }, []);
 
   /**
@@ -138,6 +176,10 @@ export function AddItemModal({
         toast.error(`URL 验证失败: ${validation.errorMessage}`);
         return;
       }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[AddItemModal] 提交表单数据:', form);
     }
 
     setIsLoading(true);
