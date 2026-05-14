@@ -10,16 +10,19 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 - 🖥️ **桌面网格系统**：支持多页面切屏、图标拖拽排序、跨页移动。
 - 📁 **文件夹管理**：支持展开/折叠、内部拖拽、搜索自动定位。
 - 🔍 **全局搜索**：基于 cmdk 的快速过滤面板。
-- 🎨 **主题定制**：支持亮/暗模式切换、自定义壁纸及字体颜色适配。
+- 🎨 **主题定制**：支持亮/暗模式切换、自定义壁纸及字体颜色适配（基于 @wrksz/themes）。
 - 💾 **本地持久化**：所有配置自动保存至 LocalStorage，支持导入导出。
+- 📦 **备份管理**：导入前自动备份，最多保留 5 个备份，总大小限制 5MB。
+- 🔄 **版本迁移**：智能检测配置文件版本，自动执行迁移流程。
 
 ## 2. 技术栈
 
 - **核心框架**：Next.js 16+ (App Router, Static Export) + React 19
 - **语言**：TypeScript (Strict Mode)
 - **样式方案**：Tailwind CSS 4 + shadcn/ui (Radix UI Primitives)
+- **主题管理**：@wrksz/themes 0.9.2（替代 next-themes）
 - **状态管理**：React Hooks (useState, useReducer) + LocalStorage
-- **关键库**：@dnd-kit (拖拽), lucide-react (图标), next-themes (主题), cmdk (搜索)
+- **关键库**：@dnd-kit (拖拽), lucide-react (图标), cmdk (搜索), sonner (Toast)
 
 ## 3. 项目结构与核心职责
 
@@ -30,7 +33,7 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 | `src/app/` | 页面入口与根布局 | `page.tsx`: 全局状态中心，处理添加/删除/移动等核心逻辑。<br>`layout.tsx`: 根布局，集成 ThemeProvider 与 ErrorBoundary。 |
 | `src/components/layout/` | 核心业务组件 | `PageContainer.tsx`: 多页容器，管理全局拖拽上下文。<br>`PageContent.tsx`: 单页内容渲染，负责网格布局。<br>`Folder.tsx`: 文件夹组件，处理嵌套逻辑与搜索联动。 |
 | `src/components/ui/` | 基础 UI 组件 | 基于 shadcn/ui 封装的 Modal, Button, Input, DropdownMenu 等。**注意：文件命名使用 kebab-case**（如 `icon-selector.tsx`, `settings-modal.tsx`）。 |
-| `src/hooks/` | 自定义 Hooks | `useTheme.ts`: 主题切换与壁纸应用。<br>`useLocalStorage.ts`: 跨标签页同步的配置持久化。<br>`useImportExport.ts`: 配置导入导出功能。<br>`useIconFolderManager.ts`: 图标和文件夹管理。 |
+| `src/hooks/` | 自定义 Hooks | `useTheme.ts`: 主题切换与壁纸应用。<br>`useLocalStorage.ts`: 跨标签页同步的配置持久化。<br>`useConfig.ts`: 配置管理核心 Hook。<br>`useImportExport.ts`: 配置导入导出功能。<br>`useIconFolderManager.ts`: 图标和文件夹管理。 |
 | `src/lib/` | 工具与配置管理 | `configManager.ts`: 配置读写中心，处理数据迁移与结构化存储。<br>`builtinIcons.ts`: 常用网站内置图标集合。 |
 | `src/utils/config/` | 配置相关工具模块 | `types.ts`: 配置类型定义。<br>`version.ts`: 版本管理。<br>`defaults.ts`: 默认值填充。<br>`validator.ts`: 数据验证。<br>`backup.ts`: 备份与回滚。<br>`migrations.ts`: 迁移管理器。<br>`migration-registry.ts`: 迁移函数注册表。<br>`exporter.ts`: 配置导出。<br>`importer.ts`: 配置导入。 |
 | `src/utils/` | 通用工具函数 | `configExport.ts`: 配置导出工具。<br>`iconOperations.ts`: 图标操作工具。 |

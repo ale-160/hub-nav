@@ -1,9 +1,9 @@
 {
   "name": "hub-nav-open",
-  "version": "0.1.0",
+  "version": "0.1.8",
   "private": false,
   "description": "A modern, customizable browser navigation page built with Next.js and React.",
-  "homepage": "https://hub-nav.github.io",
+  "homepage": "https://hub-nav.github.io/hub-nav",
   "repository": {
     "type": "git",
     "url": "https://github.com/Hub-Nav/hub-nav.git"

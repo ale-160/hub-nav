@@ -111,19 +111,6 @@ npm run lint
 - 导入时使用别名路径（如 `import { IconSelector } from '@/components/ui/icon-selector'`）
 - 此规范与 Next.js App Router 官方推荐一致，避免大小写敏感问题
 
-### 文件组织规范
-
-```
-src/
-├── app/                    # 页面入口
-├── components/
-│   ├── layout/            # 核心业务组件
-│   ├── ui/                # 基础 UI 组件
-│   └── providers/        # 全局 Provider
-├── hooks/                 # 自定义 Hooks
-└── lib/                   # 工具函数和配置
-```
-
 ---
 
 ## Commit 规范
@@ -177,63 +164,6 @@ style(ui): 调整按钮间距
 
 ---
 
-## 测试要求
-
-### 新功能测试
-
-新功能提交前，请确保：
-
-1. 功能在开发环境中正常运行
-2. 亮暗两种主题模式均测试通过
-3. 移动端视图响应式表现正常
-
-### Bug 修复
-
-Bug 修复请提供：
-
-1. 问题的复现步骤
-2. 修复前后的对比
-3. 测试环境说明（浏览器版本、设备类型等）
-
-### 运行现有测试
-
-```bash
-# 运行开发服务器
-npm run dev
-
-# 构建测试
-npm run build
-
-# 类型检查
-npm run typecheck
-
-# ESLint 检查
-npm run lint
-```
-
----
-
-## 开发环境
-
-### 环境要求
-
-- Node.js 18+
-- npm 9+ 或 pnpm 8+
-
-### 快速开始
-
-```bash
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 访问 http://localhost:8525
-```
-
----
-
 ## 问题反馈
 
 ### Issue 规范
@@ -262,4 +192,4 @@ npm run dev
 
 ---
 
-**最后更新**：2026-05-11
+**最后更新**：2026-05-14

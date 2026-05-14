@@ -3,7 +3,7 @@
 一个操作系统风格的浏览器导航起始页，支持拖拽、文件夹、主题切换和多语言。
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-0.1.0-green.svg)](https://github.com/Hub-Nav/hub-nav)
+[![Version](https://img.shields.io/badge/version-0.1.8-green.svg)](https://github.com/Hub-Nav/hub-nav)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2.4-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.4-blue.svg)](https://react.dev/)
 
@@ -11,27 +11,31 @@
 
 - 🎨 **桌面网格与拖拽系统**：仿 OS 风格的响应式网格布局，支持图标与文件夹的拖拽排序
 - 📁 **文件夹管理系统**：应用归类、展开/折叠、拖入/拖出、搜索自动展开
+- 📱 **多页面切屏**：CSS Scroll Snap 横向滑动切换页面，支持跨页面拖拽移动
+- 🔀 **拖拽排序**：支持图标与文件夹的手动拖拽排序，直观易用
 - 🔍 **全局搜索过滤**：基于 cmdk 的命令面板，支持模糊搜索
-- 🌙 **主题切换**：亮暗模式切换，基于 next-themes 实现
+- 🌙 **主题切换**：亮暗模式切换，基于 @wrksz/themes 实现
 - 🖼️ **壁纸设置**：预设渐变背景、自定义壁纸 URL、本地图片上传
-- 💾 **配置管理**：基于 LocalStorage 的配置持久化，支持导入导出
+- 💾 **配置管理**：基于 LocalStorage 的配置持久化，支持导入导出、版本迁移和自动备份
 - 🌍 **多语言支持**：中英文切换，文案集中管理
 - ⚙️ **操作模式定制**：混合模式、电脑端模式、移动端模式、自定义模式
-- 🛠️ **设置面板管理**：左侧 Tab 导航 + 右侧内容面板
+- 🛠️ **设置面板管理**：左侧 Tab 导航 + 右侧内容面板，包含外观、搜索、数据管理和备份管理
+- 📦 **备份管理**：自动备份当前配置，最多保留 5 个备份，总大小限制 5MB，支持可视化管理和一键恢复
 - 🖱️ **右键长按菜单**：右键/长按触发上下文菜单，支持编辑、删除、隐藏等操作
-- 📱 **多页面切屏**：CSS Scroll Snap 横向滑动切换页面
 - ✨ **图标渲染系统**：支持 favicon、内置图标、自定义图片三种模式
 - 🎯 **跨页面拖拽**：图标/文件夹可从一个页面拖拽到另一个页面，自动同步数据结构
+- 🔄 **版本迁移**：智能检测配置文件版本，自动执行迁移流程，确保向后兼容
 
 ## 技术栈
 
 - **核心框架**：Next.js 16.2.4 + React 19.2.4 (App Router)
 - **UI/样式**：Tailwind CSS 4.2.4 + shadcn/ui（基于 Radix UI 1.4.3）
+- **主题管理**：@wrksz/themes 0.9.2（替代 next-themes，提供更丰富的主题定制能力）
 - **关键库**：
   - @dnd-kit/core 6.3.1（拖拽系统）
   - lucide-react 1.14.0（图标库）
   - cmdk 1.1.1（命令面板）
-  - next-themes 0.4.6（主题管理）
+  - sonner 2.0.7（Toast 通知）
   - class-variance-authority 0.7.1
   - tailwind-merge 3.5.0
 - **工具链**：TypeScript 5.x, ESLint 9.x
@@ -68,34 +72,54 @@ npm start
 ```
 hub-nav-open/
 ├── src/
-│   ├── app/
-│   │   └── page.tsx          # 主应用页面
+│   ├── app/                    # Next.js App Router 页面入口
+│   │   ├── layout.tsx         # 根布局（集成 ThemeProvider）
+│   │   ├── page.tsx           # 主应用页面
+│   │   └── globals.css        # 全局样式
 │   ├── components/
-│   │   ├── layout/           # 核心业务组件
-│   │   │   ├── PageContainer.tsx
-│   │   │   ├── PageContent.tsx
-│   │   │   ├── PageIndicator.tsx
-│   │   │   ├── AppGrid.tsx
-│   │   │   ├── Folder.tsx
-│   │   │   └── Icon.tsx
-│   │   ├── providers/
-│   │   │   └── ThemeProvider.tsx
-│   │   └── ui/               # shadcn/ui 组件
-│   │       ├── SettingsModal.tsx
-│   │       ├── IconSelector.tsx
-│   │       ├── Modal.tsx
-│   │       ├── Button.tsx
-│   │       └── ...
-│   ├── hooks/
-│   │   ├── useLocalStorage.ts
-│   │   └── useTheme.ts
-│   └── lib/
-│       ├── configManager.ts  # 配置持久化
-│       ├── builtinIcons.ts   # 内置图标库
-│       ├── strings.ts        # 中文文案
-│       ├── strings-en.ts     # 英文文案
-│       └── urlUtils.ts
-├── public/                   # 静态资源
+│   │   ├── layout/            # 核心业务组件
+│   │   │   ├── Page/          # 页面相关组件
+│   │   │   ├── PageContainer.tsx  # 多页容器
+│   │   │   ├── PageContent.tsx    # 单页内容
+│   │   │   ├── PageIndicator.tsx  # 页面指示器
+│   │   │   ├── PageManager.tsx    # 页面管理器
+│   │   │   ├── Folder.tsx     # 文件夹组件
+│   │   │   └── Icon.tsx       # 图标组件
+│   │   ├── ui/                # shadcn/ui 基础组件
+│   │   │   ├── icon-selector/ # 图标选择器
+│   │   │   ├── modals/        # 模态框组件
+│   │   │   ├── button.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   ├── settings-modal.tsx
+│   │   │   └── ...
+│   │   └── providers/         # 全局 Provider
+│   │       └── ErrorBoundary.tsx
+│   ├── hooks/                 # 自定义 Hooks
+│   │   ├── useConfig.ts       # 配置管理
+│   │   ├── useTheme.ts        # 主题管理
+│   │   ├── useLocalStorage.ts # 本地存储
+│   │   ├── useImportExport.ts # 导入导出
+│   │   ├── useIconFolderManager.ts # 图标和文件夹管理
+│   │   └── ...
+│   ├── lib/                   # 工具库
+│   │   ├── configManager.ts   # 配置管理器
+│   │   └── builtinIcons.ts    # 内置图标库
+│   ├── utils/                 # 通用工具函数
+│   │   ├── config/            # 配置相关工具
+│   │   │   ├── types.ts       # 类型定义
+│   │   │   ├── version.ts     # 版本管理
+│   │   │   ├── backup.ts      # 备份管理
+│   │   │   ├── exporter.ts    # 配置导出
+│   │   │   ├── importer.ts    # 配置导入
+│   │   │   └── migration-registry.ts # 迁移注册表
+│   │   ├── configExport.ts    # 配置导出工具
+│   │   ├── iconOperations.ts  # 图标操作工具
+│   │   └── url.ts             # URL 工具函数
+│   └── data/                  # 数据文件
+│       ├── i18n.ts            # 国际化文案
+│       └── icons.ts           # 图标数据
+├── public/                    # 静态资源
+├── books/                     # 文档与测试报告
 ├── package.json
 ├── tsconfig.json
 └── next.config.ts
