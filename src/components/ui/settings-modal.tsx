@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
 import { UserConfig, OperationModeSettings } from '@/lib/configManager';
 import { Modal } from './modal';
@@ -15,6 +15,17 @@ import {
 } from './select';
 import { OperationModeSelector } from './operation-mode-selector';
 import { getStrings } from '@/data/i18n';
+import {
+  getBackupList,
+  restoreBackup,
+  deleteBackup,
+  clearAllBackups,
+  formatBackupTime,
+  calculateBackupSize,
+  formatFileSize,
+  getBackupStorageInfo,
+  type BackupEntry
+} from '@/utils/config/backup';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -59,6 +70,30 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
   const [customSearchEngine, setCustomSearchEngine] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [uploadedWallpaper, setUploadedWallpaper] = useState<string | null>(null);
+
+  // 备份管理状态
+  const [backups, setBackups] = useState<BackupEntry[]>([]);
+  const [backupStorageInfo, setBackupStorageInfo] = useState<{
+    totalSize: number;
+    maxSize: number;
+    usagePercent: number;
+    isNearLimit: boolean;
+    backupCount: number;
+  }>({ totalSize: 0, maxSize: 0, usagePercent: 0, isNearLimit: false, backupCount: 0 });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+
+  // 加载备份列表
+  useEffect(() => {
+    if (isOpen && activeTab === 'data') {
+      const loadBackups = () => {
+        const backupList = getBackupList();
+        setBackups(backupList);
+        setBackupStorageInfo(getBackupStorageInfo());
+      };
+      loadBackups();
+    }
+  }, [isOpen, activeTab]);
 
   // 根据当前配置的语言获取文案（优先使用传入的 language，其次使用 config 中的）
   const currentLanguage = language || config.theme.language || 'zh';
@@ -215,6 +250,44 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
   }, [handleWallpaperSelect, STRINGS.imageTooLarge, STRINGS.pleaseSelectImage]);
 
   /**
+   * 恢复备份
+   */
+  const handleRestoreBackup = useCallback((backupId: string) => {
+    const restoredConfig = restoreBackup(backupId);
+    if (restoredConfig) {
+      onConfigUpdate(restoredConfig);
+      toast.success(STRINGS.backupRestored);
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+    } else {
+      toast.error('恢复失败');
+    }
+  }, [onConfigUpdate, STRINGS.backupRestored]);
+
+  /**
+   * 删除备份
+   */
+  const handleDeleteBackup = useCallback((backupId: string) => {
+    deleteBackup(backupId);
+    setBackups(getBackupList());
+    setBackupStorageInfo(getBackupStorageInfo());
+    setShowDeleteConfirm(null);
+    toast.success(STRINGS.backupDeleted);
+  }, [STRINGS.backupDeleted]);
+
+  /**
+   * 清空所有备份
+   */
+  const handleClearAllBackups = useCallback(() => {
+    clearAllBackups();
+    setBackups([]);
+    setBackupStorageInfo({ totalSize: 0, maxSize: 0, usagePercent: 0, isNearLimit: false, backupCount: 0 });
+    setShowClearAllConfirm(false);
+    toast.success(STRINGS.backupsCleared);
+  }, [STRINGS.backupsCleared]);
+
+  /**
    * 处理操作模式变化
    */
   const handleOperationModeChange = useCallback((operationMode: OperationModeSettings) => {
@@ -293,7 +366,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
         </div>
 
         {/* 右侧标签页内容 */}
-        <div className="flex-1 overflow-y-auto p-6 max-h-[70vh] min-w-[500px] bg-background">
+        <div className="flex-1 overflow-y-auto p-6 max-h-[70vh] min-w-125 bg-background">
           {/* 外观设置 */}
           {activeTab === 'appearance' && (
             <div className="space-y-6">
@@ -314,7 +387,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                           ? `url(${wallpaper.url}) center/cover`
                           : 'transparent'
                       }}
-                      title={wallpaper.id === 'none' ? STRINGS.noWallpaper : 
+                      title={wallpaper.id === 'none' ? STRINGS.noWallpaper :
                              wallpaper.id === 'gradient1' ? STRINGS.gradientBlue :
                              wallpaper.id === 'gradient2' ? STRINGS.gradientPurple :
                              wallpaper.id === 'gradient3' ? STRINGS.gradientOrange :
@@ -331,7 +404,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                     </Button>
                   ))}
                 </div>
-                
+
                 {/* 自定义壁纸 */}
                 <div className="mt-4 space-y-3">
                   {/* 本地上传壁纸 */}
@@ -350,18 +423,18 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                       📁 {STRINGS.uploadLocalImage}
                     </label>
                   </div>
-                  
+
                   {/* 上传壁纸预览 */}
                   {uploadedWallpaper && (
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="w-16 h-10 rounded border border-gray-300 dark:border-border bg-cover bg-center"
                         style={{ backgroundImage: `url(${uploadedWallpaper})` }}
                       />
                       <span className="text-xs text-muted-foreground">{STRINGS.apply}</span>
                     </div>
                   )}
-                  
+
                   {/* 自定义壁纸URL */}
                   <div className="flex gap-2">
                     <input
@@ -445,7 +518,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                       title={name}
                     />
                   ))}
-                  
+
                   {/* 调色盘按钮 */}
                   <Button
                     variant="outline"
@@ -455,12 +528,12 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                         colorInput.click();
                       }
                     }}
-                    className="w-8 h-8 p-0 bg-gradient-to-br from-red-400 via-purple-400 to-blue-400 flex items-center justify-center text-white text-sm"
+                    className="w-8 h-8 p-0 bg-linear-to-br from-red-400 via-purple-400 to-blue-400 flex items-center justify-center text-white text-sm"
                     title={STRINGS.customColor}
                   >
                     🎨
                   </Button>
-                  
+
                   {/* 隐藏的颜色选择器 */}
                   <input
                     id="font-color-picker"
@@ -469,7 +542,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                     onChange={(e) => handleFontColorChange(e.target.value)}
                   />
                 </div>
-                
+
                 {/* 自定义颜色输入 */}
                 <div className="flex gap-2">
                   <input
@@ -517,7 +590,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 {/* 自定义搜索引擎 */}
                 <div className="pt-4 border-t border-gray-200 dark:border-border mt-4">
                   <h4 className="text-sm font-medium text-foreground mb-2">{STRINGS.customSearchEngineUrl}</h4>
@@ -544,7 +617,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
 
           {/* 数据管理 */}
           {activeTab === 'data' && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* 存储信息区块 */}
               <div>
                 <h3 className="text-sm font-medium text-foreground mb-3">{STRINGS.storageUsage}</h3>
@@ -568,6 +641,79 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                 </div>
               </div>
 
+              {/* 备份管理 */}
+              <div>
+                <h3 className="text-sm font-medium text-foreground mb-3">{STRINGS.backupManagement}</h3>
+
+                {/* 备份存储使用情况 */}
+                <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-muted-foreground">{STRINGS.backupStorageUsed}</span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {formatFileSize(backupStorageInfo.totalSize)} / {formatFileSize(backupStorageInfo.maxSize)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className={`h-2 rounded-full transition-all ${
+                        backupStorageInfo.isNearLimit ? 'bg-red-500' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${Math.min(backupStorageInfo.usagePercent, 100)}%` }}
+                    />
+                  </div>
+                  {backupStorageInfo.isNearLimit && (
+                    <p className="text-xs text-red-500 mt-2">⚠️ {STRINGS.backupStorageLimit}</p>
+                  )}
+                </div>
+
+                {/* 备份列表 */}
+                <div className="space-y-2">
+                  {backups.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">{STRINGS.noBackups}</p>
+                  ) : (
+                    <>
+                      {backups.map((backup) => (
+                        <div key={backup.id} className="p-3 bg-background border border-border rounded-lg">
+                          <div className="flex justify-between items-start mb-2">
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">{formatBackupTime(backup.timestamp)}</p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {STRINGS.backupVersion}: {backup.version} | {STRINGS.backupSize}: {formatFileSize(calculateBackupSize(backup))}
+                              </p>
+                            </div>
+                            <div className="flex gap-2 ml-4">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRestoreBackup(backup.id)}
+                              >
+                                {STRINGS.restoreBackup}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => setShowDeleteConfirm(backup.id)}
+                              >
+                                {STRINGS.deleteBackup}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* 清空所有备份按钮 */}
+                      <Button
+                        onClick={() => setShowClearAllConfirm(true)}
+                        variant="secondary"
+                        className="w-full mt-2"
+                      >
+                        {STRINGS.clearAllBackups}
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <h3 className="text-sm font-medium text-foreground mb-3">{STRINGS.data}</h3>
                 <div className="space-y-3">
@@ -577,9 +723,9 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                   <Button onClick={handleImportConfig} variant="secondary" className="w-full justify-center">
                     📥 {STRINGS.importConfig}
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setShowResetConfirm(true)}
-                    variant="destructive" 
+                    variant="destructive"
                     className="w-full justify-center"
                   >
                     {STRINGS.resetAllData}
@@ -606,7 +752,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                     </div>
                     {currentLanguage === 'zh' && <span>✓</span>}
                   </Button>
-                  
+
                   <Button
                     variant={currentLanguage === 'en' ? 'default' : 'outline'}
                     onClick={() => handleLanguageChange('en')}
@@ -619,7 +765,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                     {currentLanguage === 'en' && <span>✓</span>}
                   </Button>
                 </div>
-                
+
                 <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                   <p className="text-xs text-yellow-800 dark:text-yellow-200">
                     💡 提示：切换语言后，界面将立即更新。刷新页面后语言设置将保持。
@@ -676,6 +822,70 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                 size="sm"
               >
                 {STRINGS.resetConfirmTitle}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 删除备份确认对话框 */}
+      {showDeleteConfirm && (
+        <Modal
+          isOpen={!!showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(null)}
+          title={STRINGS.deleteBackup}
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {STRINGS.confirmDeleteBackup}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                onClick={() => setShowDeleteConfirm(null)}
+                variant="secondary"
+                size="sm"
+              >
+                {STRINGS.cancel}
+              </Button>
+              <Button
+                onClick={() => showDeleteConfirm && handleDeleteBackup(showDeleteConfirm)}
+                variant="destructive"
+                size="sm"
+              >
+                {STRINGS.deleteBackup}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 清空所有备份确认对话框 */}
+      {showClearAllConfirm && (
+        <Modal
+          isOpen={showClearAllConfirm}
+          onClose={() => setShowClearAllConfirm(false)}
+          title={STRINGS.clearAllBackups}
+          size="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              {STRINGS.confirmClearAllBackups}
+            </p>
+            <div className="flex gap-2 justify-end">
+              <Button
+                onClick={() => setShowClearAllConfirm(false)}
+                variant="secondary"
+                size="sm"
+              >
+                {STRINGS.cancel}
+              </Button>
+              <Button
+                onClick={handleClearAllBackups}
+                variant="destructive"
+                size="sm"
+              >
+                {STRINGS.clearAllBackups}
               </Button>
             </div>
           </div>

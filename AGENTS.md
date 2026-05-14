@@ -30,8 +30,10 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 | `src/app/` | 页面入口与根布局 | `page.tsx`: 全局状态中心，处理添加/删除/移动等核心逻辑。<br>`layout.tsx`: 根布局，集成 ThemeProvider 与 ErrorBoundary。 |
 | `src/components/layout/` | 核心业务组件 | `PageContainer.tsx`: 多页容器，管理全局拖拽上下文。<br>`PageContent.tsx`: 单页内容渲染，负责网格布局。<br>`Folder.tsx`: 文件夹组件，处理嵌套逻辑与搜索联动。 |
 | `src/components/ui/` | 基础 UI 组件 | 基于 shadcn/ui 封装的 Modal, Button, Input, DropdownMenu 等。**注意：文件命名使用 kebab-case**（如 `icon-selector.tsx`, `settings-modal.tsx`）。 |
-| `src/hooks/` | 自定义 Hooks | `useTheme.ts`: 主题切换与壁纸应用。<br>`useLocalStorage.ts`: 跨标签页同步的配置持久化。 |
+| `src/hooks/` | 自定义 Hooks | `useTheme.ts`: 主题切换与壁纸应用。<br>`useLocalStorage.ts`: 跨标签页同步的配置持久化。<br>`useImportExport.ts`: 配置导入导出功能。<br>`useIconFolderManager.ts`: 图标和文件夹管理。 |
 | `src/lib/` | 工具与配置管理 | `configManager.ts`: 配置读写中心，处理数据迁移与结构化存储。<br>`builtinIcons.ts`: 常用网站内置图标集合。 |
+| `src/utils/config/` | 配置相关工具模块 | `types.ts`: 配置类型定义。<br>`version.ts`: 版本管理。<br>`defaults.ts`: 默认值填充。<br>`validator.ts`: 数据验证。<br>`backup.ts`: 备份与回滚。<br>`migrations.ts`: 迁移管理器。<br>`migration-registry.ts`: 迁移函数注册表。<br>`exporter.ts`: 配置导出。<br>`importer.ts`: 配置导入。 |
+| `src/utils/` | 通用工具函数 | `configExport.ts`: 配置导出工具。<br>`iconOperations.ts`: 图标操作工具。 |
 
 ### 3.2 静态资源 (public/)
 存放 Favicon、预设壁纸及 SVG 图标。注意：构建产物位于 `out/` 目录。
@@ -69,6 +71,8 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 - **中心化存储**：所有用户配置（页面数据、图标列表、文件夹结构）均通过 `src/lib/configManager.ts` 统一管理。
 - **持久化机制**：利用 `src/hooks/useLocalStorage.ts` 实现 LocalStorage 的读写与跨标签页同步（通过 `storage` 事件监听）。
 - **向后兼容**：在 `configManager` 中实现了版本检测与自动迁移逻辑，确保旧版配置能平滑升级。
+- **备份管理**：导入前自动备份当前配置，最多保留 5 个备份，总大小限制为 5MB。设置界面提供备份可视化和管理功能。
+- **导出格式**：采用带元数据的标准格式（包含 `_schema`、`_version`、`_meta`、`data`），支持版本迁移和验证。
 
 ## 6. 任务执行建议
 
@@ -78,5 +82,5 @@ hub-nav-open 是一个操作系统的浏览器导航起始页。用户可以通�
 4. **文件命名**：新增组件文件时使用 kebab-case 命名（如 `my-component.tsx`），导出函数使用 PascalCase（如 `export function MyComponent()`）。
 
 ---
-**最后更新**：2026-05-11  
+**最后更新**：2026-05-14  
 **维护说明**：本文档随项目架构演进同步更新，是外部协作者理解本项目的第一入口。

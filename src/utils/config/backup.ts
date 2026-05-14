@@ -8,6 +8,8 @@ import type { UserConfig } from './types';
 
 const BACKUP_PREFIX = 'hub-nav-backup-';
 const MAX_BACKUPS = 5; // 最多保留5个备份
+const MAX_TOTAL_SIZE = 5 * 1024 * 1024; // 最大总大小 5MB
+const WARNING_THRESHOLD = 4.5 * 1024 * 1024; // 预警阈值 4.5MB
 
 /**
  * 备份条目接口
@@ -51,6 +53,20 @@ export function saveBackup(backup: BackupEntry): void {
   try {
     const backups = getBackupList();
     
+    // 检查总大小是否超限
+    const currentTotalSize = calculateTotalSize(backups);
+    const newSize = new Blob([backup.data]).size;
+    
+    if (currentTotalSize + newSize > MAX_TOTAL_SIZE) {
+      // 如果超限，删除最旧的备份直到有足够空间
+      while (backups.length > 0 && currentTotalSize + newSize > MAX_TOTAL_SIZE) {
+        const oldest = backups.pop();
+        if (oldest) {
+          localStorage.removeItem(oldest.id);
+        }
+      }
+    }
+
     // 将新备份添加到列表开头
     backups.unshift(backup);
 
@@ -193,4 +209,61 @@ export function formatBackupTime(timestamp: string): string {
   } catch {
     return timestamp;
   }
+}
+
+/**
+ * 计算单个备份的大小（字节）
+ * @param backup - 备份条目
+ * @returns 备份大小（字节）
+ */
+export function calculateBackupSize(backup: BackupEntry): number {
+  return new Blob([backup.data]).size;
+}
+
+/**
+ * 计算所有备份的总大小（字节）
+ * @param backups - 备份列表
+ * @returns 总大小（字节）
+ */
+export function calculateTotalSize(backups: BackupEntry[]): number {
+  return backups.reduce((total, backup) => total + calculateBackupSize(backup), 0);
+}
+
+/**
+ * 格式化文件大小为可读字符串
+ * @param bytes - 字节数
+ * @returns 格式化的大小字符串
+ */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  } else if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  } else {
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  }
+}
+
+/**
+ * 获取备份存储使用信息
+ * @returns 存储使用信息
+ */
+export function getBackupStorageInfo(): {
+  totalSize: number;
+  maxSize: number;
+  usagePercent: number;
+  isNearLimit: boolean;
+  backupCount: number;
+} {
+  const backups = getBackupList();
+  const totalSize = calculateTotalSize(backups);
+  const usagePercent = (totalSize / MAX_TOTAL_SIZE) * 100;
+  
+  return {
+    totalSize,
+    maxSize: MAX_TOTAL_SIZE,
+    usagePercent,
+    isNearLimit: totalSize >= WARNING_THRESHOLD,
+    backupCount: backups.length
+  };
 }

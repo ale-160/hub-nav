@@ -155,12 +155,20 @@ export function useConfig() {
    * 将 IDs 添加到指定页面的 iconIds
    */
   const addIdsToPage = useCallback((pageIndex: number, idsToAdd: string[]) => {
-    if (pageIndex < 0 || pageIndex >= config.pages.length) {
-      return config.pages;
+    // 如果没有页面，创建默认页面
+    if (config.pages.length === 0) {
+      return [{
+        id: crypto.randomUUID(),
+        name: '首页',
+        iconIds: [...idsToAdd]
+      }];
     }
 
+    // 安全索引：确保 pageIndex 在有效范围内
+    const safeIndex = Math.max(0, Math.min(pageIndex, config.pages.length - 1));
+
     return config.pages.map((page, index) => {
-      if (index === pageIndex) {
+      if (index === safeIndex) {
         return {
           ...page,
           iconIds: [...new Set([...page.iconIds, ...idsToAdd])]

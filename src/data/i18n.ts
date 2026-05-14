@@ -135,6 +135,24 @@ export const STRINGS_ZH = {
   folderCount: '文件夹数量',
   pageCount: '页面数量',
   
+  // 备份管理
+  backupManagement: '备份管理',
+  backupList: '备份列表',
+  noBackups: '暂无备份',
+  backupTime: '备份时间',
+  backupVersion: '版本',
+  backupSize: '大小',
+  restoreBackup: '恢复',
+  deleteBackup: '删除',
+  clearAllBackups: '清空所有备份',
+  backupStorageUsed: '已用',
+  backupStorageLimit: '存储即将满，建议清理备份',
+  confirmDeleteBackup: '确定要删除此备份吗？',
+  confirmClearAllBackups: '确定要清空所有备份吗？此操作不可恢复。',
+  backupRestored: '备份已恢复，页面将刷新',
+  backupDeleted: '备份已删除',
+  backupsCleared: '所有备份已清空',
+  
   // 颜色名称
   black: '黑',
   white: '白',
@@ -393,6 +411,24 @@ export const STRINGS_EN = {
   iconCount: 'Icon Count',
   folderCount: 'Folder Count',
   pageCount: 'Page Count',
+  
+  // Backup Management
+  backupManagement: 'Backup Management',
+  backupList: 'Backup List',
+  noBackups: 'No backups yet',
+  backupTime: 'Time',
+  backupVersion: 'Version',
+  backupSize: 'Size',
+  restoreBackup: 'Restore',
+  deleteBackup: 'Delete',
+  clearAllBackups: 'Clear All Backups',
+  backupStorageUsed: 'Used',
+  backupStorageLimit: 'Storage nearly full, consider cleaning up backups',
+  confirmDeleteBackup: 'Are you sure you want to delete this backup?',
+  confirmClearAllBackups: 'Are you sure you want to clear all backups? This action cannot be undone.',
+  backupRestored: 'Backup restored, page will refresh',
+  backupDeleted: 'Backup deleted',
+  backupsCleared: 'All backups cleared',
   
   // Color Names
   black: 'Black',

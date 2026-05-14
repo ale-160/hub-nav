@@ -136,7 +136,7 @@ export function importFromJson(jsonString: string): ImportResult {
           success: false,
           error: {
             code: 'MIGRATION_FAILED',
-            message: migrationResult.error || '数据迁移失败'
+            message: `版本迁移失败：${migrationResult.error || '配置文件版本不兼容'}`
           },
           warnings,
           migration
@@ -156,11 +156,17 @@ export function importFromJson(jsonString: string): ImportResult {
     const validation = validateConfig(configData);
 
     if (!validation.valid) {
+      // 提取第一个错误作为主要错误信息
+      const firstError = validation.errors[0];
+      const errorMessage = firstError 
+        ? `数据验证失败：${firstError.message}（字段：${firstError.path}）`
+        : '数据验证失败，配置文件结构不完整';
+
       return {
         success: false,
         error: {
           code: 'VALIDATION_FAILED',
-          message: '数据验证失败',
+          message: errorMessage,
           details: validation.errors
         },
         warnings: [...warnings, ...validation.warnings.map(w => ({
@@ -190,11 +196,35 @@ export function importFromJson(jsonString: string): ImportResult {
     };
 
   } catch (error) {
+    // 提供更友好的错误信息
+    let errorCode: ImportErrorCode = 'UNKNOWN';
+    let errorMessage = '导入失败';
+
+    if (error instanceof SyntaxError) {
+      // JSON 解析错误
+      errorCode = 'INVALID_FORMAT';
+      errorMessage = '配置文件格式错误，请检查 JSON 格式是否正确';
+    } else if (error instanceof Error) {
+      // 其他已知错误
+      const errorMsg = error.message.toLowerCase();
+      
+      if (errorMsg.includes('version') || errorMsg.includes('migrat')) {
+        errorCode = 'MIGRATION_FAILED';
+        errorMessage = '版本迁移失败，配置文件可能不兼容';
+      } else if (errorMsg.includes('validat')) {
+        errorCode = 'VALIDATION_FAILED';
+        errorMessage = '数据验证失败，配置文件结构不完整';
+      } else {
+        errorCode = 'UNKNOWN';
+        errorMessage = `导入失败: ${error.message}`;
+      }
+    }
+
     return {
       success: false,
       error: {
-        code: 'INVALID_FORMAT',
-        message: `JSON 解析失败: ${error instanceof Error ? error.message : String(error)}`
+        code: errorCode,
+        message: errorMessage
       },
       warnings
     };
