@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { ConfigManager, UserConfig, IconItem, FolderItem } from '@/lib/configManager';
+import { deleteIconFromConfig } from '@/utils/iconOperations';
 
 /**
  * 配置管理 Hook
@@ -141,37 +142,61 @@ export function useConfig() {
   }, [config, saveConfig]);
 
   /**
+   * 从所有页面中移除指定的 ID
+   */
+  const removeIdsFromAllPages = useCallback((idsToRemove: string[]) => {
+    return config.pages.map(page => ({
+      ...page,
+      iconIds: page.iconIds.filter(id => !idsToRemove.includes(id))
+    }));
+  }, [config.pages]);
+
+  /**
+   * 将 IDs 添加到指定页面的 iconIds
+   */
+  const addIdsToPage = useCallback((pageIndex: number, idsToAdd: string[]) => {
+    if (pageIndex < 0 || pageIndex >= config.pages.length) {
+      return config.pages;
+    }
+
+    return config.pages.map((page, index) => {
+      if (index === pageIndex) {
+        return {
+          ...page,
+          iconIds: [...new Set([...page.iconIds, ...idsToAdd])]
+        };
+      }
+      return page;
+    });
+  }, [config.pages]);
+
+  /**
+   * 通用更新函数：根据 ID 更新数组中的项
+   */
+  const updateItemInArray = useCallback(<T extends { id: string }>(
+    items: T[],
+    itemId: string,
+    updates: Partial<T>
+  ): T[] => {
+    return items.map(item =>
+      item.id === itemId ? { ...item, ...updates } : item
+    );
+  }, []);
+
+  /**
    * 更新图标
    */
   const updateIcon = useCallback((iconId: string, updates: Partial<IconItem>) => {
-    const newIcons = config.icons.map(icon =>
-      icon.id === iconId ? { ...icon, ...updates } : icon
-    );
-
-    saveConfig({
-      ...config,
-      icons: newIcons
-    });
-  }, [config, saveConfig]);
+    const newIcons = updateItemInArray(config.icons, iconId, updates);
+    saveConfig({ ...config, icons: newIcons });
+  }, [config, saveConfig, updateItemInArray]);
 
   /**
    * 删除图标
    */
   const deleteIcon = useCallback((iconId: string) => {
-    // 从所有页面中移除该图标 ID
-    const newPages = config.pages.map(page => ({
-      ...page,
-      iconIds: page.iconIds.filter(id => id !== iconId)
-    }));
-
-    // 从图标列表中移除
-    const newIcons = config.icons.filter(icon => icon.id !== iconId);
-
-    saveConfig({
-      ...config,
-      icons: newIcons,
-      pages: newPages
-    });
+    const newConfig = deleteIconFromConfig(config, iconId);
+    saveConfig(newConfig);
   }, [config, saveConfig]);
 
   /**
@@ -196,98 +221,48 @@ export function useConfig() {
    * 更新文件夹
    */
   const updateFolder = useCallback((folderId: string, updates: Partial<FolderItem>) => {
-    const newFolders = config.folders.map(folder =>
-      folder.id === folderId ? { ...folder, ...updates } : folder
-    );
-
-    saveConfig({
-      ...config,
-      folders: newFolders
-    });
-  }, [config, saveConfig]);
+    const newFolders = updateItemInArray(config.folders, folderId, updates);
+    saveConfig({ ...config, folders: newFolders });
+  }, [config, saveConfig, updateItemInArray]);
 
   /**
    * 删除文件夹
    */
   const deleteFolder = useCallback((folderId: string, deleteApps: boolean = false) => {
     const newFolders = config.folders.filter(folder => folder.id !== folderId);
+    
+    // 获取文件夹内的所有图标 ID
+    const folderIconIds = config.icons
+      .filter(icon => icon.folderId === folderId)
+      .map(icon => icon.id);
+
     let newIcons: IconItem[];
     let newPages = config.pages;
 
-    // 如果选择同时删除应用，则删除该文件夹内的所有图标
     if (deleteApps) {
-      const folderIconIds = config.icons
-        .filter(icon => icon.folderId === folderId)
-        .map(icon => icon.id);
-
+      // 删除文件夹及其所有图标
       newIcons = config.icons.filter(icon => !folderIconIds.includes(icon.id));
-
-      // 从所有页面中移除这些图标 ID
-      newPages = config.pages.map(page => ({
-        ...page,
-        iconIds: page.iconIds.filter(id => !folderIconIds.includes(id))
-      }));
-
-      saveConfig({
-        ...config,
-        folders: newFolders,
-        icons: newIcons,
-        pages: newPages
-      });
+      // 从所有页面移除这些图标 ID
+      newPages = removeIdsFromAllPages(folderIconIds);
     } else {
-      // 仅删除文件夹，将图标移到根级并添加到第一页
-      const folderIcons = config.icons.filter(icon => icon.folderId === folderId);
-      const folderIconIds = folderIcons.map(icon => icon.id);
-      
-      // 将图标的 folderId 设为 undefined
+      // 仅删除文件夹，将图标移到根级
       newIcons = config.icons.map(icon =>
         icon.folderId === folderId ? { ...icon, folderId: undefined } : icon
       );
 
-      // 将这些图标添加到第一页的 iconIds（如果第一页存在）
-      if (config.pages.length > 0 && folderIconIds.length > 0) {
-        newPages = config.pages.map((page, index) => {
-          if (index === 0) {
-            // 添加到第一页末尾，去重
-            return {
-              ...page,
-              iconIds: [...new Set([...page.iconIds, ...folderIconIds])]
-            };
-          }
-          return page;
-        });
+      // 将这些图标添加到第一页
+      if (folderIconIds.length > 0) {
+        newPages = addIdsToPage(0, folderIconIds);
       }
-
-      saveConfig({
-        ...config,
-        folders: newFolders,
-        icons: newIcons,
-        pages: newPages
-      });
     }
-  }, [config, saveConfig]);
 
-  /**
-   * 导出配置
-   */
-  const exportConfig = useCallback(() => {
-    try {
-      const json = ConfigManager.exportConfig();
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `hub-nav-config-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      return true;
-    } catch (error) {
-      console.error('导出配置失败:', error);
-      return false;
-    }
-  }, []);
+    saveConfig({
+      ...config,
+      folders: newFolders,
+      icons: newIcons,
+      pages: newPages
+    });
+  }, [config, saveConfig, removeIdsFromAllPages, addIdsToPage]);
 
   /**
    * 导入配置
@@ -302,8 +277,8 @@ export function useConfig() {
         }
       }
       return success;
-    } catch (error) {
-      console.error('导入配置失败:', error);
+    } catch (_err) {
+      console.error('导入配置失败:', _err);
       return false;
     }
   }, []);
@@ -323,7 +298,6 @@ export function useConfig() {
     // 高级操作（包含页面关联，推荐使用）
     addIconWithPage,
     addFolderWithPage,
-    exportConfig,
     importConfig
   };
 }

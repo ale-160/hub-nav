@@ -47,9 +47,6 @@ export function FaviconPreview({ src, alt, className = '', appName = '' }: Favic
   // 处理图片加载成功 - 写入缓存
   const handleImageLoad = useCallback(() => {
     setIsLoading(false); // ✅ 确认成功后才显示图片
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[FaviconPreview] image loaded successfully');
-    }
     // 注意：缓存写入已移至 FaviconMode 的自动探测逻辑中
     // 这里不再重复写入，避免冲突
   }, []);
@@ -58,9 +55,6 @@ export function FaviconPreview({ src, alt, className = '', appName = '' }: Favic
   const handleImageError = useCallback(() => {
     setIsLoading(false);
     setImageLoadFailed(true);
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[FaviconPreview] image load failed');
-    }
   }, []);
 
   // ✅ 修复1：加载中或加载失败时，始终显示 fallback

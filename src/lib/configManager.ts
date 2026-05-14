@@ -21,6 +21,14 @@ import type {
   UserConfig
 } from '@/utils/config/types';
 
+// 导入新的导入导出模块
+import { exportToJson } from '@/utils/config/exporter';
+import { importFromJson } from '@/utils/config/importer';
+import { CURRENT_VERSION } from '@/utils/config/version';
+
+// 注册迁移函数（只需导入一次）
+import '@/utils/config/migration-registry';
+
 /**
  * 配置管理器类
  * 提供配置的保存、加载、导入导出等功能
@@ -129,7 +137,7 @@ export class ConfigManager {
 
   /**
    * 导出配置为 JSON 字符串
-   * @returns 配置的 JSON 字符串表示
+   * @returns 配置的 JSON 字符串表示（包含元数据）
    */
   static exportConfig(): string {
     // 服务端环境返回空对象
@@ -141,7 +149,9 @@ export class ConfigManager {
     if (!config) {
       throw new Error('没有可导出的配置数据');
     }
-    return JSON.stringify(config, null, 2);
+    
+    // 使用新的导出模块，生成带元数据的格式
+    return exportToJson(config);
   }
 
   /**
@@ -151,17 +161,20 @@ export class ConfigManager {
    */
   static importConfig(json: string): boolean {
     try {
-      const config = JSON.parse(json) as UserConfig;
-
-      // 验证配置结构
-      if (!this.isValidConfig(config)) {
+      // 使用新的导入模块，自动处理版本迁移和验证
+      const result = importFromJson(json);
+      
+      if (!result.success) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('导入配置失败:', result.error?.message);
+        }
         return false;
       }
 
       // 保存导入的配置 - 绕过防抖，直接同步写入
-      if (typeof window !== 'undefined') {
+      if (typeof window !== 'undefined' && result.data) {
         try {
-          const jsonString = JSON.stringify(config);
+          const jsonString = JSON.stringify(result.data);
           localStorage.setItem(this.STORAGE_KEY, jsonString);
         } catch (error) {
           if (process.env.NODE_ENV === 'development') {
@@ -310,14 +323,16 @@ export class ConfigManager {
     return {
       layout: {
         columns: 5,
-        rows: 4
+        rows: 4,
+        extensions: undefined
       },
       theme: {
         mode: 'light',
         primaryColor: '#3b82f6',
         iconSize: 'medium',
         gridSpacing: 16,
-        language: 'zh' // 默认中文
+        language: 'zh', // 默认中文
+        extensions: undefined
       },
       icons: [
         {
@@ -361,7 +376,7 @@ export class ConfigManager {
         }
       ],
       rootOrder: ['icon-github', 'icon-deepseek', 'folder-favorites'], // 初始化根级排序数组
-      version: 1,
+      version: CURRENT_VERSION, // 使用语义化版本号
       searchEngine: 'https://www.bing.com/search?q=',
       operationMode: {
         mode: 'hybrid',

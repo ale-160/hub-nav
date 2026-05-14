@@ -9,6 +9,7 @@
 
 import { useCallback } from 'react';
 import { IconItem, FolderItem, UserConfig } from '@/utils/config/types';
+import { deleteIconFromConfig } from '@/utils/iconOperations';
 
 export interface UseIconFolderManagerOptions {
   config: UserConfig;
@@ -35,20 +36,8 @@ export function useIconFolderManager({ config, saveConfig }: UseIconFolderManage
    * 删除图标（包含页面清理）
    */
   const deleteIcon = useCallback((iconId: string) => {
-    // 从所有页面中移除该图标 ID
-    const newPages = config.pages.map(page => ({
-      ...page,
-      iconIds: page.iconIds.filter(id => id !== iconId)
-    }));
-
-    // 从图标列表中移除
-    const newIcons = config.icons.filter(icon => icon.id !== iconId);
-
-    saveConfig({
-      ...config,
-      icons: newIcons,
-      pages: newPages
-    });
+    const newConfig = deleteIconFromConfig(config, iconId);
+    saveConfig(newConfig);
   }, [config, saveConfig]);
 
   /**
