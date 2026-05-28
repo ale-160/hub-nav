@@ -3,7 +3,7 @@
   "version": "0.1.8",
   "private": false,
   "description": "A modern, customizable browser navigation page built with Next.js and React.",
-  "homepage": "https://ale160.com",
+  "homepage": "https://hub-nav.ale160.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/ale-160/hub-nav.git"
