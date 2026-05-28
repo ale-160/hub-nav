@@ -338,7 +338,7 @@ export class ConfigManager {
         {
           id: 'icon-github',
           name: 'GitHub',
-          url: 'https://github.com/Hub-Nav/hub-nav',
+          url: 'https://github.com/ale-160/hub-nav',
           folderId: undefined,
           order: 0,
           isHidden: false,

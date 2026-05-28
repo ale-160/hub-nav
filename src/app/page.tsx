@@ -332,7 +332,7 @@ export default function Home() {
               {S.poweredBy} {S.systemName} · {S.openSourceEdition}
             </p>
             <a
-              href="https://github.com/Hub-Nav/hub-nav"
+              href="https://github.com/ale-160/hub-nav"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 md:mt-0"

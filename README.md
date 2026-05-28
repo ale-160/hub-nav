@@ -3,7 +3,7 @@
 一个操作系统风格的浏览器导航起始页，支持拖拽、文件夹、主题切换和多语言。
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Version](https://img.shields.io/badge/version-0.1.8-green.svg)](https://github.com/Hub-Nav/hub-nav)
+[![Version](https://img.shields.io/badge/version-0.1.8-green.svg)](https://github.com/ale-160/hub-nav)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2.4-black.svg)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2.4-blue.svg)](https://react.dev/)
 
@@ -143,7 +143,7 @@ hub-nav-open/
 
 如有问题、建议或反馈，欢迎通过以下方式联系我们：
 
-- 📧 邮箱：[hubnav@126.com](mailto:hubnav@126.com)
+- 📧 邮箱：[ale160@126.com](mailto:ale160@126.com)
 
 ---
 

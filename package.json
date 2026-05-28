@@ -3,10 +3,10 @@
   "version": "0.1.8",
   "private": false,
   "description": "A modern, customizable browser navigation page built with Next.js and React.",
-  "homepage": "https://hub-nav.github.io/hub-nav",
+  "homepage": "https://ale160.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Hub-Nav/hub-nav.git"
+    "url": "https://github.com/ale-160/hub-nav.git"
   },
   "keywords": [
     "navigation",

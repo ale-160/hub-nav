@@ -4,7 +4,7 @@ import path from 'path';
 
 const baseConfig: NextConfig = {
     output: 'export',
-    basePath: '/hub-nav',
+    basePath: '', // 使用自定义域名时不需要 basePath
     trailingSlash: true,
     images: {
         unoptimized: true,
