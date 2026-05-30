@@ -204,7 +204,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between h-16 gap-4">
             {/* 左侧：Logo */}
-            <div className="flex items-center gap-3">
+            <a href="https://ale160.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
               <img src={process.env.NODE_ENV === 'production' ? '/logo-icon.ico' : '/logo-icon.ico'} alt="Logo" className="w-8 h-8" />
               <h1 className="text-xl font-bold text-foreground">
                 {S.systemName}
@@ -212,7 +212,7 @@ export default function Home() {
                   {S.appVersion}
                 </span>
               </h1>
-            </div>
+            </a>
 
             {/* 右侧：搜索和操作按钮 */}
             <div className="flex items-center gap-3 flex-1 md:flex-none">
@@ -327,18 +327,28 @@ export default function Home() {
       {/* 页脚 */}
       <footer className="border-t border-gray-200 dark:border-border bg-background py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between text-center md:text-left">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between text-center md:text-left gap-2">
             <p className="text-sm text-muted-foreground">
               {S.poweredBy} {S.systemName} · {S.openSourceEdition}
             </p>
-            <a
-              href="https://github.com/ale-160/hub-nav"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-2 md:mt-0"
-            >
-              {S.githubRepo}
-            </a>
+            <div className="flex items-center gap-4">
+              <a
+                href="https://ale160.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                阿乐一百六
+              </a>
+              <a
+                href="https://github.com/ale-160/hub-nav"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {S.githubRepo}
+              </a>
+            </div>
           </div>
         </div>
       </footer>

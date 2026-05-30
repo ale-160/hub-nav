@@ -336,11 +336,20 @@ export class ConfigManager {
       },
       icons: [
         {
+          id: 'icon-ale160',
+          name: '阿乐一百六',
+          url: 'https://ale160.com',
+          folderId: undefined,
+          order: 0,
+          isHidden: false,
+          iconType: 'favicon'
+        },
+        {
           id: 'icon-github',
           name: 'GitHub',
           url: 'https://github.com/ale-160/hub-nav',
           folderId: undefined,
-          order: 0,
+          order: 1,
           isHidden: false,
           iconType: 'favicon'
         },
@@ -349,7 +358,7 @@ export class ConfigManager {
           name: 'DeepSeek',
           url: 'https://chat.deepseek.com/',
           folderId: undefined,
-          order: 1,
+          order: 2,
           isHidden: false,
           iconType: 'custom',
           customIconUrl: 'https://fe-static.deepseek.com/chat/favicon.svg'
@@ -367,7 +376,7 @@ export class ConfigManager {
         {
           id: 'page-1',
           name: '新页面',
-          iconIds: ['icon-github', 'icon-deepseek', 'folder-favorites']
+          iconIds: ['icon-ale160', 'icon-github', 'icon-deepseek', 'folder-favorites']
         },
         {
           id: 'page-2',
@@ -375,7 +384,7 @@ export class ConfigManager {
           iconIds: []
         }
       ],
-      rootOrder: ['icon-github', 'icon-deepseek', 'folder-favorites'], // 初始化根级排序数组
+      rootOrder: ['icon-ale160', 'icon-github', 'icon-deepseek', 'folder-favorites'], // 初始化根级排序数组
       version: CURRENT_VERSION, // 使用语义化版本号
       searchEngine: 'https://www.bing.com/search?q=',
       operationMode: {
