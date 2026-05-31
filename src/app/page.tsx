@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { OnboardingGuide } from '@/components/ui/onboarding-guide';
 import { getStrings } from '@/data/i18n';
+import { HelpCircle, Globe } from 'lucide-react';
 
 
 export default function Home() {
@@ -28,6 +29,9 @@ export default function Home() {
   } = useConfig();
 
   const S = getStrings(config.theme.language);
+
+  // UI 状态
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
   // 主题管理
   const { toggleMode, setTheme } = useTheme();
@@ -47,6 +51,19 @@ export default function Home() {
       setTheme(themeWithoutMode as Partial<ThemeSettings>);
     }
   }, [updateConfigBase, setTheme]);
+
+  /**
+   * 切换语言
+   */
+  const handleToggleLanguage = useCallback(() => {
+    const newLanguage = config.theme.language === 'zh' ? 'en' : 'zh';
+    handleConfigUpdate({
+      theme: {
+        ...config.theme,
+        language: newLanguage
+      }
+    });
+  }, [config.theme, handleConfigUpdate]);
 
   // 使用图标和文件夹管理 Hook（Service 层）
   const {
@@ -215,7 +232,7 @@ export default function Home() {
             </a>
 
             {/* 右侧：搜索和操作按钮 */}
-            <div className="flex items-center gap-3 flex-1 md:flex-none">
+            <div className="flex items-center gap-2 flex-1 md:flex-none">
               {/* 搜索框 */}
               <div className="flex-1 md:flex-none">
                 <input
@@ -227,6 +244,28 @@ export default function Home() {
                 className="w-full md:w-64 px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               </div>
+
+              {/* 帮助按钮 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsHelpModalOpen(true)}
+                title={S.help}
+                className="p-2"
+              >
+                <HelpCircle className="w-5 h-5" />
+              </Button>
+
+              {/* 语言切换按钮 */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleToggleLanguage}
+                title={S.language}
+                className="p-2"
+              >
+                <Globe className="w-5 h-5" />
+              </Button>
 
               {/* 主题切换按钮 */}
               <Button
@@ -364,8 +403,12 @@ export default function Home() {
         language={config.theme.language}
       />
 
-      {/* 新手引导 */}
-      <OnboardingGuide />
+      {/* 帮助模态框 */}
+      <OnboardingGuide
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        language={config.theme.language}
+      />
     </div>
   );
 }

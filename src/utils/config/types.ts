@@ -130,7 +130,7 @@ export interface ThemeSettings {
   iconSize: 'small' | 'medium' | 'large';
   gridSpacing: number;
   fontColor?: string;
-  language?: 'zh' | 'en'; // 语言设置
+  language: 'zh' | 'en'; // 语言设置
   extensions?: ThemeExtensions; // 扩展字段
 }
 

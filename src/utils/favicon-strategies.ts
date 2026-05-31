@@ -5,74 +5,41 @@
  */
 
 /**
- * 图标候选策略配置
+ * 所有可能的 favicon 路径，按优先级排序
  */
-interface FaviconStrategy {
-  name: string;
-  generateUrls: (domain: string) => string[];
-  priority: number; // 1-10，数字越小优先级越高
+const FAVICON_PATHS = [
+  // 最高频路径（覆盖 ~60% 网站）
+  '/favicon.ico',
+  '/favicon.png',
+  '/favicon.svg',
+  
+  // 次高频路径（覆盖 ~20% 网站）
+  '/assets/favicon.ico',
+  '/assets/favicon.png',
+  '/images/favicon.ico',
+  '/images/favicon.png',
+  '/static/favicon.ico',
+  '/static/favicon.png',
+  
+  // Apple Touch Icon（iOS 设备常用，覆盖 ~15%）
+  '/apple-touch-icon.png',
+  '/apple-touch-icon-precomposed.png',
+  
+  // 现代框架默认路径（Next.js/Vite 等）
+  '/favicon-32x32.png',
+  '/favicon-16x16.png',
+  '/android-chrome-192x192.png',
+];
+
+/**
+ * 为指定域名生成完整的 favicon 候选列表
+ * 
+ * @param domain - 纯净域名（不含协议和路径）
+ * @returns 候选图标 URL 数组（按优先级排序）
+ */
+function generateForDomain(domain: string): string[] {
+  return FAVICON_PATHS.map(path => `https://${domain}${path}`);
 }
-
-/**
- * 策略 1：标准路径枚举（核心策略）
- * 覆盖 Top 1000 网站中最常见的 favicon 路径
- */
-const standardPathStrategy: FaviconStrategy = {
-  name: 'standard-paths',
-  priority: 1,
-  generateUrls: (domain: string) => {
-    const paths = [
-      // ✅ 最高频路径（覆盖 ~60% 网站）
-      '/favicon.ico',
-      '/favicon.png',
-      '/favicon.svg',
-      
-      // ✅ 次高频路径（覆盖 ~20% 网站）
-      '/assets/favicon.ico',
-      '/assets/favicon.png',
-      '/images/favicon.ico',
-      '/images/favicon.png',
-      '/static/favicon.ico',
-      '/static/favicon.png',
-      
-      // ✅ Apple Touch Icon（iOS 设备常用，覆盖 ~15%）
-      '/apple-touch-icon.png',
-      '/apple-touch-icon-precomposed.png',
-      
-      // ✅ 现代框架默认路径（Next.js/Vite 等）
-      '/favicon-32x32.png',
-      '/favicon-16x16.png',
-      '/android-chrome-192x192.png',
-    ];
-    
-    return paths.map(path => `https://${domain}${path}`);
-  }
-};
-
-/**
- * 策略 2：www 子域名变体（双向互补）
- * - 非 www 域名：添加 www 前缀
- * - www 域名：去除 www 前缀
- * 某些网站仅在特定子域名下提供 favicon
- */
-const wwwVariantStrategy: FaviconStrategy = {
-  name: 'www-variant',
-  priority: 2,
-  generateUrls: (domain: string) => {
-    const urls: string[] = [];
-    
-    // 如果域名已包含 www，尝试去掉 www
-    if (domain.startsWith('www.')) {
-      const rootDomain = domain.substring(4); // 去掉 'www.'
-      urls.push(`https://${rootDomain}/favicon.ico`);
-    } else {
-      // 如果域名不包含 www，尝试添加 www
-      urls.push(`https://www.${domain}/favicon.ico`);
-    }
-    
-    return urls;
-  }
-};
 
 /**
  * 执行所有策略，生成去重后的候选 URL 列表
@@ -83,17 +50,20 @@ const wwwVariantStrategy: FaviconStrategy = {
 export function generateFaviconCandidates(domain: string): string[] {
   if (!domain) return [];
   
-  const strategies = [
-    standardPathStrategy,
-    wwwVariantStrategy,
-  ].sort((a, b) => a.priority - b.priority);
-  
   const candidates = new Set<string>();
   
-  for (const strategy of strategies) {
-    const urls = strategy.generateUrls(domain);
-    urls.forEach(url => candidates.add(url));
+  // 1. 首先添加原始域名的完整候选列表
+  generateForDomain(domain).forEach(url => candidates.add(url));
+  
+  // 2. 添加 www 或非 www 变体的完整候选列表
+  let variantDomain: string;
+  if (domain.startsWith('www.')) {
+    variantDomain = domain.substring(4); // 去掉 'www.'
+  } else {
+    variantDomain = `www.${domain}`;
   }
+  
+  generateForDomain(variantDomain).forEach(url => candidates.add(url));
   
   return Array.from(candidates);
 }

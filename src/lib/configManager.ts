@@ -354,14 +354,14 @@ export class ConfigManager {
           iconType: 'favicon'
         },
         {
-          id: 'icon-deepseek',
-          name: 'DeepSeek',
-          url: 'https://chat.deepseek.com/',
-          folderId: undefined,
+          id: 'icon-webtext',
+          name: 'web-text',
+          url: 'https://web-text.ale160.com',
+          folderId: 'folder-favorites',
           order: 2,
           isHidden: false,
           iconType: 'custom',
-          customIconUrl: 'https://fe-static.deepseek.com/chat/favicon.svg'
+          customIconUrl: 'https://ale160.com/favicon.ico'
         }
       ],
       folders: [
@@ -376,7 +376,7 @@ export class ConfigManager {
         {
           id: 'page-1',
           name: '新页面',
-          iconIds: ['icon-ale160', 'icon-github', 'icon-deepseek', 'folder-favorites']
+          iconIds: ['icon-ale160', 'icon-github', 'folder-favorites']
         },
         {
           id: 'page-2',
@@ -384,7 +384,7 @@ export class ConfigManager {
           iconIds: []
         }
       ],
-      rootOrder: ['icon-ale160', 'icon-github', 'icon-deepseek', 'folder-favorites'], // 初始化根级排序数组
+      rootOrder: ['icon-ale160', 'icon-github', 'folder-favorites'], // 初始化根级排序数组
       version: CURRENT_VERSION, // 使用语义化版本号
       searchEngine: 'https://www.bing.com/search?q=',
       operationMode: {
