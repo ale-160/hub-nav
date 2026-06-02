@@ -50,6 +50,11 @@ export const STRINGS_ZH = {
   emptyFolder: '空文件夹',
   openFolder: '打开文件夹',
   renameFolder: '重命名文件夹',
+  folderContainsXApps: '包含 {count} 个应用',
+  folderContainsXApps_one: '包含 1 个应用',
+  favorites: '收藏',
+  webText: 'web-text',
+  ale160: '阿乐一百六',
   
   // 配置操作
   exportSuccess: '配置导出成功',
@@ -121,6 +126,7 @@ export const STRINGS_ZH = {
   baidu: '百度',
   customSearchEngineUrl: '自定义搜索引擎URL',
   resetAllData: '重置所有数据',
+  resetColor: '重置颜色',
   resetConfirmTitle: '确认重置',
   resetConfirmMessage: '这将清除所有数据并恢复默认设置，是否继续？',
   continue: '继续',
@@ -254,6 +260,9 @@ export const STRINGS_ZH = {
   errorBoundaryRefresh: '刷新页面',
   loading: '加载中...',
   
+  // 语言设置提示
+  languageSwitchTip: '切换语言后，界面将立即更新。刷新页面后语言设置将保持。',
+  
   // 内置图标名称映射
   iconNames: {
     home: '首页',
@@ -338,6 +347,11 @@ export const STRINGS_EN = {
   emptyFolder: 'Empty Folder',
   openFolder: 'Open Folder',
   renameFolder: 'Rename Folder',
+  folderContainsXApps: 'Contains {count} apps',
+  folderContainsXApps_one: 'Contains 1 app',
+  favorites: 'Favorites',
+  webText: 'web-text',
+  ale160: 'ale160',
   
   // Config Operations
   exportSuccess: 'Configuration exported successfully',
@@ -409,6 +423,7 @@ export const STRINGS_EN = {
   baidu: 'Baidu',
   customSearchEngineUrl: 'Custom Search Engine URL',
   resetAllData: 'Reset All Data',
+  resetColor: 'Reset Color',
   resetConfirmTitle: 'Confirm Reset',
   resetConfirmMessage: 'This will clear all data and restore default settings. Continue?',
   continue: 'Continue',
@@ -544,6 +559,9 @@ export const STRINGS_EN = {
   errorBoundaryRefresh: 'Refresh Page',
   loading: 'Loading...',
   
+  // Language Setting Tips
+  languageSwitchTip: 'Interface will update immediately after switching language. Language settings will be preserved after page refresh.',
+  
   // Built-in Icon Names
   iconNames: {
     home: 'Home',
@@ -582,12 +600,28 @@ export const STRINGS_EN = {
   } as const,
 } as const;
 
+// 获取浏览器语言
+interface NavigatorWithUserLanguage extends Navigator {
+  userLanguage?: string;
+}
+
+export function getBrowserLanguage(): Language {
+  if (typeof window !== 'undefined') {
+    const nav = navigator as NavigatorWithUserLanguage;
+    const browserLang = nav.language || nav.userLanguage;
+    if (browserLang && browserLang.startsWith('zh')) {
+      return 'zh';
+    }
+  }
+  return 'en';
+}
+
 /**
  * 根据语言获取对应的文案
  * @param lang - 语言代码 ('zh' | 'en')
  * @returns 对应语言的文案对象
  */
-export function getStrings(lang: Language = 'zh') {
+export function getStrings(lang: Language = 'en') {
   if (lang === 'en') {
     return STRINGS_EN;
   }

@@ -352,7 +352,10 @@ export function Folder({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={folder.name}
-        description={`包含 ${folderIcons.length} 个应用`}
+        description={folderIcons.length === 1 
+          ? STRINGS.folderContainsXApps_one 
+          : STRINGS.folderContainsXApps.replace('{count}', String(folderIcons.length))
+        }
         size="xl"
       >
         <div

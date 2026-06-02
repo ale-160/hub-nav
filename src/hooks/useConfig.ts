@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { ConfigManager, UserConfig, IconItem, FolderItem } from '@/lib/configManager';
-import { deleteIconFromConfig } from '@/utils/iconOperations';
+import {useCallback, useEffect, useState} from 'react';
+import {ConfigManager, FolderItem, IconItem, UserConfig} from '@/lib/configManager';
+import {deleteIconFromConfig} from '@/utils/iconOperations';
+import {getBrowserLanguage} from '@/data/i18n';
 
 /**
  * 配置管理 Hook
@@ -14,10 +15,19 @@ export function useConfig() {
 
   // 客户端挂载后从 localStorage 加载配置
   useEffect(() => {
+    const browserLang = getBrowserLanguage();
     const loadedConfig = ConfigManager.loadConfig();
     if (loadedConfig) {
+      // 如果配置中没有语言设置，则检测浏览器语言
+      if (!loadedConfig.theme.language) {
+        loadedConfig.theme.language = browserLang;
+      }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfig(loadedConfig);
+    } else {
+      // 没有配置时，使用默认配置并检测浏览器语言
+      const defaultConfig = ConfigManager.getDefaultConfig(browserLang);
+      setConfig(defaultConfig);
     }
     setIsMounted(true);
   }, []);
@@ -238,7 +248,7 @@ export function useConfig() {
    */
   const deleteFolder = useCallback((folderId: string, deleteApps: boolean = false) => {
     const newFolders = config.folders.filter(folder => folder.id !== folderId);
-    
+
     // 获取文件夹内的所有图标 ID
     const folderIconIds = config.icons
       .filter(icon => icon.folderId === folderId)

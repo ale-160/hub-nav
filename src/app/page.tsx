@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { OnboardingGuide } from '@/components/ui/onboarding-guide';
 import { getStrings } from '@/data/i18n';
+import { getStructuredData } from '@/config/structuredData';
 import { HelpCircle, Globe } from 'lucide-react';
 
 
@@ -29,6 +30,9 @@ export default function Home() {
   } = useConfig();
 
   const S = getStrings(config.theme.language);
+  
+  // 获取结构化数据
+  const structuredDataList = getStructuredData(config.theme.language);
 
   // UI 状态
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -153,40 +157,40 @@ export default function Home() {
   /**
    * 处理图标编辑
    */
-  const handleIconEdit = useCallback((iconId: string) => {
+  const handleIconEdit = (iconId: string) => {
     const icon = config.icons.find(i => i.id === iconId);
     if (icon) {
       setEditItem(icon);
       setIsEditModalOpen(true);
     }
-  }, [config.icons]);
+  };
 
   /**
    * 处理添加应用到文件夹
    */
-  const handleAddIconToFolder = useCallback((folderId: string) => {
+  const handleAddIconToFolder = (folderId: string) => {
     setAddModalType('icon');
     setAddModalFolderId(folderId);
     setIsAddModalOpen(true);
-  }, []);
+  };
 
   /**
    * 打开添加应用模态框
    */
-  const openAddIconModal = useCallback(() => {
+  const openAddIconModal = () => {
     setAddModalType('icon');
     setAddModalFolderId(undefined);
     setIsAddModalOpen(true);
-  }, []);
+  };
 
   /**
    * 打开添加文件夹模态框
    */
-  const openAddFolderModal = useCallback(() => {
+  const openAddFolderModal = () => {
     setAddModalType('folder');
     setAddModalFolderId(undefined);
     setIsAddModalOpen(true);
-  }, []);
+  };
 
   /**
    * 处理编辑项目提交（由 EditItemModal 调用）
@@ -206,16 +210,26 @@ export default function Home() {
   }, [handleFolderRename]);
 
   return (
-    <div
-      className="min-h-screen"
-      style={{
-        background: config.theme.wallpaperUrl
-          ? config.theme.wallpaperUrl.startsWith('linear-gradient')
-            ? config.theme.wallpaperUrl
-            : `url(${config.theme.wallpaperUrl}) center/cover fixed`
-          : 'var(--bg-primary)'
-      }}
-    >
+    <>
+      {/* 结构化数据 */}
+      {structuredDataList.map((data, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+        />
+      ))}
+      
+      <div
+        className="min-h-screen"
+        style={{
+          background: config.theme.wallpaperUrl
+            ? config.theme.wallpaperUrl.startsWith('linear-gradient')
+              ? config.theme.wallpaperUrl
+              : `url(${config.theme.wallpaperUrl}) center/cover fixed`
+            : 'var(--bg-primary)'
+        }}
+      >
       {/* 顶部栏 */}
             <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 ${config.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-(--bg-secondary)'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -377,7 +391,7 @@ export default function Home() {
                 rel="noopener noreferrer"
                 className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
-                阿乐一百六
+                {S.ale160}
               </a>
               <a
                 href="https://github.com/ale-160/hub-nav"
@@ -409,6 +423,7 @@ export default function Home() {
         onClose={() => setIsHelpModalOpen(false)}
         language={config.theme.language}
       />
-    </div>
+      </div>
+    </>
   );
 }

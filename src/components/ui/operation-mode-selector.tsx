@@ -1,7 +1,7 @@
 'use client';
 
 import { OperationModeSettings } from '@/lib/configManager';
-import { STRINGS } from '@/data/i18n';
+import { getStrings } from '@/data/i18n';
 
 interface OperationModeSelectorProps {
   operationMode: OperationModeSettings;
@@ -12,7 +12,9 @@ interface OperationModeSelectorProps {
 /**
  * 操作模式选择器组件
  */
-export function OperationModeSelector({ operationMode, onChange }: OperationModeSelectorProps) {
+export function OperationModeSelector({ operationMode, onChange, language }: OperationModeSelectorProps) {
+  // 根据传入的 language 参数获取对应的翻译
+  const STRINGS = getStrings(language || 'zh');
   /**
    * 处理预设模式选择
    */

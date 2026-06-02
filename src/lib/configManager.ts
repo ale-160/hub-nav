@@ -26,6 +26,9 @@ import { exportToJson } from '@/utils/config/exporter';
 import { importFromJson } from '@/utils/config/importer';
 import { CURRENT_VERSION } from '@/utils/config/version';
 
+// 导入多语言支持
+import { getStrings, Language } from '@/data/i18n';
+
 // 注册迁移函数（只需导入一次）
 import '@/utils/config/migration-registry';
 
@@ -317,9 +320,11 @@ export class ConfigManager {
   /**
    * 获取默认配置
    * 用于初始化或重置配置
+   * @param lang - 语言代码 ('zh' | 'en')
    * @returns 默认的用户配置对象
    */
-  static getDefaultConfig(): UserConfig {
+  static getDefaultConfig(lang: Language = 'en'): UserConfig {
+    const S = getStrings(lang);
     return {
       layout: {
         columns: 5,
@@ -331,13 +336,13 @@ export class ConfigManager {
         primaryColor: '#3b82f6',
         iconSize: 'medium',
         gridSpacing: 16,
-        language: 'zh', // 默认中文
+        language: lang, // 使用传入的语言
         extensions: undefined
       },
       icons: [
         {
           id: 'icon-ale160',
-          name: '阿乐一百六',
+          name: S.ale160,
           url: 'https://ale160.com',
           folderId: undefined,
           order: 0,
@@ -354,8 +359,8 @@ export class ConfigManager {
           iconType: 'favicon'
         },
         {
-          id: 'icon-webtext',
-          name: 'web-text',
+          id: 'icon-web-text',
+          name: S.webText,
           url: 'https://web-text.ale160.com',
           folderId: 'folder-favorites',
           order: 2,
@@ -367,7 +372,7 @@ export class ConfigManager {
       folders: [
         {
           id: 'folder-favorites',
-          name: '收藏',
+          name: S.favorites,
           parentId: undefined,
           order: 0
         }
@@ -375,12 +380,12 @@ export class ConfigManager {
       pages: [
         {
           id: 'page-1',
-          name: '新页面',
+          name: S.newPage,
           iconIds: ['icon-ale160', 'icon-github', 'folder-favorites']
         },
         {
           id: 'page-2',
-          name: '新页面',
+          name: S.newPage,
           iconIds: []
         }
       ],
