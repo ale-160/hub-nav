@@ -221,8 +221,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between h-16 gap-4">
             {/* 左侧：Logo */}
-            <a href="https://ale160.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-              <img src={process.env.NODE_ENV === 'production' ? '/logo-icon.ico' : '/logo-icon.ico'} alt="Logo" className="w-8 h-8" />
+            <a href="https://ale160.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <img src="https://ale160.com/images/logo-icon.ico" alt="Logo" className="w-8 h-8 rounded" />
               <h1 className="text-xl font-bold text-foreground">
                 {S.systemName}
                 <span className="text-sm text-muted-foreground ml-2">
