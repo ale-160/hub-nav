@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getStrings } from '@/data/i18n';
-import { FaviconPreview } from './FaviconPreview';
 import { FaviconSelector } from './FaviconSelector';
 import { extractDomain, generateFaviconCandidates } from '@/utils/url';
 import { testSingleUrl } from '@/utils/favicon-preloader';
@@ -14,7 +13,7 @@ interface FaviconModeProps {
 
 /**
  * 网站图标模式组件
- * 
+ *
  * ✅ 修复2：删除 URL 输入框，websiteUrl 完全由父组件传入
  * 职责：
  * - 展示当前图标预览
@@ -29,17 +28,26 @@ export const FaviconMode = React.memo(function FaviconMode({
   const STRINGS = getStrings(language);
   const [showSelector, setShowSelector] = useState(false);
   const [autoDetectedIcon, setAutoDetectedIcon] = useState<string | null>(null);
-  const [isDetecting, setIsDetecting] = useState(false); // ✅ 新增：探测状态
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  // 处理图标加载失败
+  const handleIconLoadError = useCallback(() => {
+    setLoadFailed(true);
+  }, []);
 
   // ✅ 自动探测第一个成功的 favicon
   useEffect(() => {
     if (!websiteUrl || showSelector) {
       setAutoDetectedIcon(null);
       setIsDetecting(false);
+      setLoadFailed(false);
       return;
     }
 
-    setIsDetecting(true); // 开始探测
+    setIsDetecting(true);
+    setAutoDetectedIcon(null);
+    setLoadFailed(false);
     let cancelled = false;
 
     async function detectFirstIcon() {
@@ -48,37 +56,48 @@ export const FaviconMode = React.memo(function FaviconMode({
         const domain = extractDomain(websiteUrl);
         if (!domain) return;
 
+        // 先清除旧缓存
+        if (ConfigManager.hasDomainCache(domain)) {
+          ConfigManager.clearDomainCache(domain);
+        }
+
         const candidates = generateFaviconCandidates(domain);
         if (candidates.length === 0) {
-          if (!cancelled) setIsDetecting(false);
+          if (!cancelled) {
+            setIsDetecting(false);
+            setLoadFailed(true);
+          }
           return;
         }
 
-        // ✅ 逐个测试，找到第一个成功的就停止
+        // 逐个测试，找到第一个成功的就停止
         for (const url of candidates) {
           if (cancelled) return;
 
-          const result = await testSingleUrl(url, 3000);
+          const result = await testSingleUrl(url);
 
           if (result.success) {
             if (!cancelled) {
               setAutoDetectedIcon(result.url);
-              setIsDetecting(false); // ✅ 探测完成
-              // ✅ 立即写入缓存，确保 FaviconPreview 使用正确的 URL
+              setIsDetecting(false);
               if (domain) {
                 ConfigManager.setIconCache(domain, result.url);
               }
             }
-            return; // ✅ 找到第一个就停止
+            return;
           }
         }
-        
+
         // 所有候选都失败
         if (!cancelled) {
           setIsDetecting(false);
+          setLoadFailed(true);
         }
       } catch {
-        if (!cancelled) setIsDetecting(false);
+        if (!cancelled) {
+          setIsDetecting(false);
+          setLoadFailed(true);
+        }
       }
     }
 
@@ -88,9 +107,6 @@ export const FaviconMode = React.memo(function FaviconMode({
       cancelled = true;
     };
   }, [websiteUrl, showSelector]);
-
-  // ✅ 只使用自动探测成功的结果，不使用未测试的候选
-  const websiteIconPreview = autoDetectedIcon || '';
 
   // 处理用户选择图标
   const handleSelect = (url: string) => {
@@ -137,16 +153,15 @@ export const FaviconMode = React.memo(function FaviconMode({
       )}
 
       {/* 成功获取到图标 */}
-      {websiteUrl && websiteIconPreview && (
+      {websiteUrl && autoDetectedIcon && !loadFailed && (
         <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-          <div className="w-12 h-12 rounded-lg bg-background flex items-center justify-center border border-border">
-            {/* ✅ 使用 key 强制组件完全重新渲染 */}
-            <FaviconPreview
-              key={websiteIconPreview}
-              src={websiteIconPreview}
+          <div className="w-12 h-12 rounded-lg bg-background flex items-center justify-center border border-border overflow-hidden">
+            <img
+              key={autoDetectedIcon}
+              src={autoDetectedIcon}
               alt="网站图标预览"
-              className="w-8 h-8"
-              appName="网站图标"
+              className="w-8 h-8 object-cover"
+              onError={handleIconLoadError}
             />
           </div>
           <div className="flex-1">
@@ -176,7 +191,7 @@ export const FaviconMode = React.memo(function FaviconMode({
       )}
 
       {/* 探测完成但没有成功获取到图标 */}
-      {websiteUrl && !isDetecting && !websiteIconPreview && (
+      {websiteUrl && !isDetecting && (!autoDetectedIcon || loadFailed) && (
         <div className="text-center py-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
           <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-2">
             {STRINGS.fetchFailed}

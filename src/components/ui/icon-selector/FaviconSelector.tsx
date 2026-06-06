@@ -80,7 +80,7 @@ export function FaviconSelector({
   const runningRef = useRef(0); // 当前正在运行的请求数
   const indexRef = useRef(0); // 下一个要测试的候选索引
   const candidatesRef = useRef<string[]>([]); // 候选 URL 列表
-  const resultsRef = useRef<string[]>([]); // 已成功的图标列表（用于闭包访问）
+  const resultsMapRef = useRef<Map<string, boolean>>(new Map()); // 已成功的图标 Map（用于保持优先级）
   const maxConcurrent = 5; // 最大并发数
   const maxResults = 6; // 最多展示 6 个图标
 
@@ -112,14 +112,20 @@ export function FaviconSelector({
         candidatesRef.current = candidates;
         indexRef.current = 0;
         runningRef.current = 0;
-        resultsRef.current = []; // 清空结果缓存
+        resultsMapRef.current = new Map(); // 清空结果缓存
+
+        // ✅ 更新显示图标的函数：按原始优先级排序
+        const updateAvailableIcons = () => {
+          const sortedIcons = candidates.filter(url => resultsMapRef.current.get(url)).slice(0, maxResults);
+          setAvailableIcons(sortedIcons);
+        };
 
         // ✅ 启动并发池
         const runNext = async () => {
           if (cancelled) return;
 
           // 如果已经找到足够的图标，停止派发新请求
-          if (resultsRef.current.length >= maxResults) {
+          if (resultsMapRef.current.size >= maxResults) {
             setLoading(false);
             return;
           }
@@ -129,7 +135,7 @@ export function FaviconSelector({
             if (runningRef.current === 0) {
               // 所有请求都完成了
               setLoading(false);
-              if (resultsRef.current.length === 0) {
+              if (resultsMapRef.current.size === 0) {
                 setError(getStrings(language).noFaviconFound);
               }
             }
@@ -149,12 +155,12 @@ export function FaviconSelector({
               runningRef.current--;
 
               if (result.success) {
-                // ✅ 增量更新：立即添加成功的图标
-                resultsRef.current.push(result.url);
-                setAvailableIcons(prev => [...prev, result.url]);
+                // ✅ 记录成功的图标
+                resultsMapRef.current.set(url, true);
+                updateAvailableIcons();
 
                 // 如果已达到最大值，停止后续请求
-                if (resultsRef.current.length >= maxResults) {
+                if (resultsMapRef.current.size >= maxResults) {
                   setLoading(false);
                   return;
                 }

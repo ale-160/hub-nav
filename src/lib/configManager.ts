@@ -606,10 +606,64 @@ export class ConfigManager {
       if (hasChanges) {
         localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
       }
+    } catch (_error) {
+    }
+  }
+
+  /**
+   * 清除特定域名的缓存
+   * @param domain - 域名
+   */
+  static clearDomainCache(domain: string): void {
+    if (!domain || typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const cache = this.getIconCache();
+      if (cache[domain]) {
+        delete cache[domain];
+        localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
+      }
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('清理过期缓存失败:', error);
+        console.error('清除域名缓存失败:', error);
       }
+    }
+  }
+
+  /**
+   * 清除所有图标缓存
+   */
+  static clearAllIconCache(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      localStorage.removeItem(this.ICON_CACHE_KEY);
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('清除所有缓存失败:', error);
+      }
+    }
+  }
+
+  /**
+   * 检查是否有特定域名的缓存
+   * @param domain - 域名
+   * @returns 是否有缓存
+   */
+  static hasDomainCache(domain: string): boolean {
+    if (!domain || typeof window === 'undefined') {
+      return false;
+    }
+
+    try {
+      const cache = this.getIconCache();
+      return !!cache[domain];
+    } catch {
+      return false;
     }
   }
 

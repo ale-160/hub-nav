@@ -55,7 +55,7 @@ export function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestR
     setTimeout(() => {
       if (!resolved) {
         resolved = true;
-        cleanup(); // ✅ 修复3：超时后也要清理 Image 对象
+        cleanup();
         resolve({
           url,
           success: false
@@ -63,7 +63,7 @@ export function testSingleUrl(url: string, timeout = 3000): Promise<FaviconTestR
       }
     }, timeout);
 
-    // 触发加载
+    // 触发加载，不使用 crossOrigin 避免 CORS 错误
     img.src = url;
   });
 }
