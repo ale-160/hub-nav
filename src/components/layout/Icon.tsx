@@ -20,21 +20,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 /**
- * Favicon 组件 - 专门用于展示 favicon 图片，使用拼接方式
+ * Favicon 组件 - 专门用于展示 favicon 图片
  */
 interface FaviconProps {
   src: string;
   alt: string;
   className?: string;
   appName?: string;
+  isCustomIcon?: boolean; // 是否是自定义图标
 }
 
-function Favicon({ src, alt, className = '', appName = '' }: FaviconProps) {
+function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false }: FaviconProps) {
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
 
-  // 直接从缓存读取（派生状态，无需 useEffect + setState）
+  // 直接从缓存读取（仅对非自定义图标使用缓存）
   const cachedSrc = useMemo(() => {
-    if (!src) return null;
+    if (!src || isCustomIcon) return null; // 自定义图标不使用缓存
     try {
       const domain = extractDomain(src);
       return ConfigManager.getCachedIcon(domain);
@@ -44,11 +45,11 @@ function Favicon({ src, alt, className = '', appName = '' }: FaviconProps) {
       }
       return null;
     }
-  }, [src]);
+  }, [src, isCustomIcon]);
 
-  // 处理图片加载成功 - 写入缓存
+  // 处理图片加载成功 - 仅对非自定义图标写入缓存
   const handleImageLoad = useCallback(() => {
-    if (src && !cachedSrc) {
+    if (src && !cachedSrc && !isCustomIcon) {
       try {
         const domain = extractDomain(src);
         ConfigManager.setIconCache(domain, src);
@@ -58,7 +59,7 @@ function Favicon({ src, alt, className = '', appName = '' }: FaviconProps) {
         }
       }
     }
-  }, [src, cachedSrc]);
+  }, [src, cachedSrc, isCustomIcon]);
 
   // 处理图片加载失败
   const handleImageError = useCallback(() => {
@@ -74,10 +75,12 @@ function Favicon({ src, alt, className = '', appName = '' }: FaviconProps) {
     );
   }
 
-  // 显示图片（优先使用缓存）
+  // 显示图片（自定义图标直接使用src，不使用缓存）
+  // 同时添加key确保图片更新时重新渲染
   return (
     <img
-      src={cachedSrc || src}
+      key={src}
+      src={isCustomIcon ? src : (cachedSrc || src)}
       alt={alt}
       className={`w-full h-full object-cover ${className}`}
       onLoad={handleImageLoad}
@@ -194,7 +197,8 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
       case 'custom':
         return {
           type: 'image' as const,
-          content: item.customIconUrl || ''
+          content: item.customIconUrl || '',
+          isCustomIcon: true // 标记为自定义图标
         };
 
       case 'favicon':
@@ -326,6 +330,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
                   alt={item.name}
                   className="w-full h-full object-cover"
                   appName={item.name}
+                  isCustomIcon={(iconContent as any).isCustomIcon}
                 />
               );
             }
