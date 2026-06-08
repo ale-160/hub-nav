@@ -4,7 +4,7 @@ import React, {useState, useCallback, useMemo} from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { IconItem, ConfigManager } from '@/lib/configManager';
-import { getBuiltinIconById, getDefaultIcon } from '@/data/icons';
+import { getBuiltinIconById, getDefaultIcon, type BuiltinIcon } from '@/data/icons';
 import { extractDomain, generateFaviconCandidates, getFallbackIcon } from '@/utils/url';
 import { renderSolidIcon, SOLID_COLORS } from '@/utils/icon';
 import { getStrings } from '@/data/i18n';
@@ -32,6 +32,10 @@ interface FaviconProps {
 
 function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false }: FaviconProps) {
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  // 为自定义图标添加时间戳以避免浏览器缓存
+  const [customIconTimestamp, setCustomIconTimestamp] = useState(() => Date.now());
+  // 使用 ref 跟踪上一次的 src，避免在 effect 中同步调用 setState
+  const prevSrcRef = React.useRef<string>('');
 
   // 直接从缓存读取（仅对非自定义图标使用缓存）
   const cachedSrc = useMemo(() => {
@@ -44,6 +48,14 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
         console.error('检查缓存失败:', error);
       }
       return null;
+    }
+  }, [src, isCustomIcon]);
+
+  // 当自定义图标 URL 变化时，更新时间戳以强制刷新
+  React.useEffect(() => {
+    if (isCustomIcon && src && src !== prevSrcRef.current) {
+      prevSrcRef.current = src;
+      setCustomIconTimestamp(Date.now());
     }
   }, [src, isCustomIcon]);
 
@@ -77,10 +89,13 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
 
   // 显示图片（自定义图标直接使用src，不使用缓存）
   // 同时添加key确保图片更新时重新渲染
+  // 对于自定义图标，添加时间戳参数以绕过浏览器缓存
+  const displaySrc = isCustomIcon ? `${src}?t=${customIconTimestamp}` : (cachedSrc || src);
+  
   return (
     <img
-      key={src}
-      src={isCustomIcon ? src : (cachedSrc || src)}
+      key={displaySrc}
+      src={displaySrc}
       alt={alt}
       className={`w-full h-full object-cover ${className}`}
       onLoad={handleImageLoad}
@@ -112,6 +127,14 @@ interface IconProps {
     };
   };
 }
+
+/**
+ * 图标内容类型定义
+ */
+type IconContentType = 
+  | { type: 'solid'; content: string; builtinIcon: BuiltinIcon }
+  | { type: 'emoji'; content: string; builtinIcon?: BuiltinIcon }
+  | { type: 'image'; content: string; isCustomIcon?: boolean };
 
 /**
  * 图标组件 - 渲染单个图标项
@@ -161,7 +184,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
   /**
    * 获取图标内容
    */
-  const getIconContent = useCallback(() => {
+  const getIconContent = useCallback((): IconContentType => {
     const iconType = item.iconType || 'favicon';
 
     switch (iconType) {
@@ -188,9 +211,19 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
 
         // 处理普通内置图标
         const builtinIcon = item.builtinIcon ? getBuiltinIconById(item.builtinIcon) : getDefaultIcon();
+        
+        if (!builtinIcon) {
+          // 如果找不到内置图标，使用默认图标
+          return {
+            type: 'emoji' as const,
+            content: '',
+            builtinIcon: getDefaultIcon()
+          };
+        }
+        
         return {
-          type: builtinIcon?.type === 'solid' ? 'solid' as const : 'emoji' as const,
-          content: builtinIcon?.emoji || '',
+          type: builtinIcon.type === 'solid' ? 'solid' as const : 'emoji' as const,
+          content: builtinIcon.emoji || '',
           builtinIcon: builtinIcon
         };
 
@@ -330,7 +363,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
                   alt={item.name}
                   className="w-full h-full object-cover"
                   appName={item.name}
-                  isCustomIcon={(iconContent as any).isCustomIcon}
+                  isCustomIcon={iconContent.type === 'image' ? iconContent.isCustomIcon : false}
                 />
               );
             }

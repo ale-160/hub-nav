@@ -1,7 +1,6 @@
 import React from 'react';
 import { BUILTIN_ICONS, BuiltinIcon } from '@/data/icons';
 import { getStrings } from '@/data/i18n';
-import { extractDomain, generateFaviconCandidates } from './url';
 
 /**
  * 提取应用名称的第一个字符
@@ -12,17 +11,17 @@ export function getFirstChar(name: string): string {
   if (!name || name.trim().length === 0) return '?';
 
   const firstChar = name.trim().charAt(0);
-  
+
   // 如果是中文，直接返回第一个汉字
   if (/[\u4e00-\u9fa5]/.test(firstChar)) {
     return firstChar;
   }
-  
+
   // 如果是英文，返回大写字母
   if (/[a-zA-Z]/.test(firstChar)) {
     return firstChar.toUpperCase();
   }
-  
+
   // 其他情况返回原字符或 ?
   return firstChar || '?';
 }
@@ -142,20 +141,4 @@ export function getSelectedBuiltinIcon(
     ...originalIcon,
     name: getIconName(builtinIcon, language)
   };
-}
-
-/**
- * 获取网站图标的预览 URL（使用多策略）
- */
-export function getWebsiteIconPreviewUrl(url: string): string {
-  if (!url) return '';
-
-  try {
-    const domain = extractDomain(url);
-    // ✅ 使用新的多策略生成候选列表，取第一个
-    const candidates = generateFaviconCandidates(domain);
-    return candidates[0] || '';
-  } catch {
-    return '';
-  }
 }
