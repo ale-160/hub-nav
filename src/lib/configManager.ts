@@ -152,7 +152,7 @@ export class ConfigManager {
     if (!config) {
       throw new Error('没有可导出的配置数据');
     }
-    
+
     // 使用新的导出模块，生成带元数据的格式
     return exportToJson(config);
   }
@@ -166,7 +166,7 @@ export class ConfigManager {
     try {
       // 使用新的导入模块，自动处理版本迁移和验证
       const result = importFromJson(json);
-      
+
       if (!result.success) {
         if (process.env.NODE_ENV === 'development') {
           console.error('导入配置失败:', result.error?.message);
@@ -350,23 +350,22 @@ export class ConfigManager {
           iconType: 'favicon'
         },
         {
-          id: 'icon-github',
-          name: 'GitHub',
-          url: 'https://github.com/ale-160/hub-nav',
-          folderId: undefined,
+          id: 'icon-web-text',
+          name: S.webText,
+          url: 'https://web-text.ale160.com',
+          folderId: 'folder-favorites',
           order: 1,
           isHidden: false,
           iconType: 'favicon'
         },
         {
-          id: 'icon-web-text',
-          name: S.webText,
-          url: 'https://web-text.ale160.com',
+          id: 'icon-web-img',
+          name: S.webImg,
+          url: 'https://web-img.ale160.com/',
           folderId: 'folder-favorites',
           order: 2,
           isHidden: false,
-          iconType: 'custom',
-          customIconUrl: 'https://ale160.com/favicon.ico'
+          iconType: 'favicon'
         }
       ],
       folders: [
@@ -381,7 +380,7 @@ export class ConfigManager {
         {
           id: 'page-1',
           name: S.newPage,
-          iconIds: ['icon-ale160', 'icon-github', 'folder-favorites']
+          iconIds: ['icon-ale160', 'folder-favorites']
         },
         {
           id: 'page-2',
@@ -389,7 +388,7 @@ export class ConfigManager {
           iconIds: []
         }
       ],
-      rootOrder: ['icon-ale160', 'icon-github', 'folder-favorites'], // 初始化根级排序数组
+      rootOrder: ['icon-ale160', 'folder-favorites'], // 初始化根级排序数组
       version: CURRENT_VERSION, // 使用语义化版本号
       searchEngine: 'https://www.bing.com/search?q=',
       operationMode: {

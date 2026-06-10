@@ -54,6 +54,7 @@ export const STRINGS_ZH = {
   folderContainsXApps_one: '包含 1 个应用',
   favorites: '收藏',
   webText: 'web-text',
+  webImg: 'web-img',
   ale160: '阿乐一百六',
   
   // 配置操作
@@ -351,6 +352,7 @@ export const STRINGS_EN = {
   folderContainsXApps_one: 'Contains 1 app',
   favorites: 'Favorites',
   webText: 'web-text',
+  webImg: 'web-img',
   ale160: 'ale160',
   
   // Config Operations

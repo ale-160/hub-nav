@@ -27,11 +27,6 @@ next.config.local.ts
 *.tsbuildinfo
 next-env.d.ts
 
-# AI assistant config
-.lingma/
-/books
-/docs
-
 # IDE
 .idea/
 .vscode/

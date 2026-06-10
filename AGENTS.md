@@ -1,5 +1,7 @@
 # hub-nav-open 项目开发指南 (AGENTS.md)
 
+[English](./AGENTS.en.md) | 中文
+
 > **欢迎参与 hub-nav-open 项目开发！** 本文档是项目的核心开发规范与架构摘要，旨在帮助 AI 助手和开发者快速理解项目逻辑并高效协作。
 
 ## 1. 项目简介

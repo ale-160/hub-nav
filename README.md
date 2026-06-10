@@ -1,5 +1,7 @@
 # hub-nav-open
 
+[English](./README.en.md) | 中文
+
 一个操作系统风格的浏览器导航起始页，支持拖拽、文件夹、主题切换和多语言。
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

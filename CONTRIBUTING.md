@@ -1,5 +1,7 @@
 # 贡献指南 (CONTRIBUTING)
 
+[English](./CONTRIBUTING.en.md) | 中文
+
 感谢您对 hub-nav-open 项目的兴趣！我们欢迎任何形式的贡献，包括但不限于代码优化、功能开发、文档完善和问题修复。
 
 ---
