@@ -4,8 +4,11 @@
  * 将用户配置导出为带有元数据的标准格式
  */
 
-import type { UserConfig, ExportedConfig, ExportMeta } from './types';
+import type { UserConfig, ExportedConfig, ExportMeta, IconItem } from './types';
 import { CURRENT_VERSION } from './version';
+import { extractDomain } from '@/utils/url';
+import { generateFaviconCandidates } from '@/utils/favicon-strategies';
+import { ConfigManager } from '@/lib/configManager';
 
 /**
  * 创建导出元数据
@@ -23,6 +26,39 @@ function createExportMeta(config: UserConfig): ExportMeta {
 }
 
 /**
+ * 为 favicon 类型的图标填充 iconUrl
+ * 
+ * 导出时，即使是 favicon 模式的图标也存储实际使用的图标 URL，
+ * 这样导入后不需要重新动态获取，避免大量网络请求
+ */
+function enrichIconsForExport(icons: IconItem[]): IconItem[] {
+  return icons.map(icon => {
+    // 只处理 favicon 类型且没有 iconUrl 的图标
+    const iconType = icon.iconType || 'favicon';
+    if (iconType !== 'favicon' || icon.iconUrl) {
+      return icon;
+    }
+
+    const domain = extractDomain(icon.url);
+    if (!domain) return icon;
+
+    // 优先从缓存获取
+    const cachedIcon = ConfigManager.getCachedIcon(domain);
+    if (cachedIcon) {
+      return { ...icon, iconUrl: cachedIcon };
+    }
+
+    // 无缓存时，使用第一个候选 URL
+    const candidates = generateFaviconCandidates(domain);
+    if (candidates.length > 0) {
+      return { ...icon, iconUrl: candidates[0] };
+    }
+
+    return icon;
+  });
+}
+
+/**
  * 导出配置为 JSON 字符串
  * 
  * 导出的格式包含：
@@ -35,12 +71,16 @@ function createExportMeta(config: UserConfig): ExportMeta {
  * @returns 格式化的 JSON 字符串
  */
 export function exportToJson(config: UserConfig): string {
+  // 为 favicon 类型的图标填充 iconUrl
+  const enrichedIcons = enrichIconsForExport(config.icons);
+
   const exportData: ExportedConfig = {
     _schema: 'hub-nav-config',
     _version: CURRENT_VERSION,
     _meta: createExportMeta(config),
     data: {
       ...config,
+      icons: enrichedIcons,
       version: CURRENT_VERSION
     }
   };
