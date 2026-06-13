@@ -149,6 +149,16 @@ If you have any questions, suggestions, or feedback, please feel free to contact
 
 ---
 
+## Support & Sponsorship 💖
+
+To support the continued development of this project, please visit our unified sponsorship page:
+
+👉 [https://ale160.com/sponsor](https://ale160.com/sponsor)
+
+(WeChat Pay, Alipay, and PayPal are supported.)
+
+---
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.

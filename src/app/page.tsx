@@ -16,7 +16,7 @@ import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { OnboardingGuide } from '@/components/ui/onboarding-guide';
 import { getStrings } from '@/data/i18n';
 import { getStructuredData } from '@/config/structuredData';
-import { HelpCircle, Globe } from 'lucide-react';
+import { HelpCircle, Globe, Heart } from 'lucide-react';
 
 
 export default function Home() {
@@ -386,20 +386,29 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-4">
               <a
-                href="https://ale160.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                {S.ale160}
-              </a>
-              <a
                 href="https://github.com/ale-160/hub-nav"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
               >
                 {S.githubRepo}
+              </a>
+              <a
+                href="https://ale160.com/sponsor"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-sm text-pink-600 dark:text-pink-400 hover:underline"
+              >
+                <Heart className="w-4 h-4" />
+                {S.sponsor}
+              </a>
+              <a
+                href="https://ale160.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {S.ale160}
               </a>
             </div>
           </div>

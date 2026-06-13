@@ -149,6 +149,16 @@ hub-nav-open/
 
 ---
 
+## 支持与赞助 💖
+
+如需支持本项目的持续开发，请前往统一赞赏页面：
+
+👉 [https://ale160.com/sponsor](https://ale160.com/sponsor)
+
+（支持微信、支付宝、PayPal）
+
+---
+
 ## 贡献
 
 欢迎贡献！请随时提交 Pull Request。

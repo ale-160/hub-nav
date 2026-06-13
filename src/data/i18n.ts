@@ -67,6 +67,8 @@ export const STRINGS_ZH = {
   poweredBy: 'Powered by',
   openSourceEdition: 'Open Source Edition',
   githubRepo: 'GitHub 仓库',
+  sponsor: '赞赏支持',
+  sponsorUrl: 'https://ale160.com/sponsor',
   
   // 错误提示
   invalidUrl: '请输入有效的网址',
@@ -361,10 +363,12 @@ export const STRINGS_EN = {
   importSuccess: 'Configuration imported successfully',
   importError: 'Failed to import configuration, please check the file format',
   
-  // Footer
+  // 页脚
   poweredBy: 'Powered by',
   openSourceEdition: 'Open Source Edition',
   githubRepo: 'GitHub Repository',
+  sponsor: 'Sponsor',
+  sponsorUrl: 'https://ale160.com/sponsor',
   
   // Error Messages
   invalidUrl: 'Please enter a valid URL',
