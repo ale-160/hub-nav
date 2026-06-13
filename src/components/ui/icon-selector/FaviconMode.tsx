@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { getStrings } from '@/data/i18n';
 import { FaviconSelector } from './FaviconSelector';
 import { extractDomain, generateFaviconCandidates } from '@/utils/url';
@@ -29,6 +29,10 @@ export const FaviconMode = React.memo(function FaviconMode({
   const [autoDetectedIcon, setAutoDetectedIcon] = useState<string | null>(null);
   const [isDetecting, setIsDetecting] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+
+  // 用 ref 存储回调，避免加入 useEffect 依赖导致循环
+  const onFaviconSelectRef = useRef(onFaviconSelect);
+  onFaviconSelectRef.current = onFaviconSelect;
 
   // 处理图标加载失败
   const handleIconLoadError = useCallback(() => {
@@ -74,6 +78,8 @@ export const FaviconMode = React.memo(function FaviconMode({
             if (!cancelled) {
               setAutoDetectedIcon(result.url);
               setIsDetecting(false);
+              // 通过 ref 回传给父组件，避免加入依赖导致循环探测
+              onFaviconSelectRef.current?.(result.url);
             }
             return;
           }

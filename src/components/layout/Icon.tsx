@@ -37,6 +37,14 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
   // 使用 ref 跟踪上一次的 src，避免在 effect 中同步调用 setState
   const prevSrcRef = React.useRef<string>('');
 
+  // 当 src 变化时重置加载失败状态，允许重试
+  React.useEffect(() => {
+    if (src && src !== prevSrcRef.current) {
+      prevSrcRef.current = src;
+      setImageLoadFailed(false);
+    }
+  }, [src]);
+
   // 当自定义图标 URL 变化时，更新时间戳以强制刷新
   React.useEffect(() => {
     if (isCustomIcon && src && src !== prevSrcRef.current) {
