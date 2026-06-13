@@ -155,7 +155,6 @@ hub-nav-open/
 
 👉 [https://ale160.com/sponsor](https://ale160.com/sponsor)
 
-（支持微信、支付宝、PayPal）
 
 ---
 
