@@ -112,6 +112,7 @@ export interface ThemeSettings {
   wallpaperUrl?: string;
   iconSize: 'small' | 'medium' | 'large';
   gridSpacing: number;
+  gridColumnSpacing: number;
   fontColor?: string;
   language: 'zh' | 'en'; // 语言设置
   extensions?: ThemeExtensions; // 扩展字段

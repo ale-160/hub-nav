@@ -6,7 +6,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { IconItem } from '@/lib/configManager';
 import { getBuiltinIconById, getDefaultIcon, type BuiltinIcon } from '@/data/icons';
 import { extractDomain, generateFaviconCandidates, getFallbackIcon } from '@/utils/url';
-import { renderSolidIcon, SOLID_COLORS } from '@/utils/icon';
+import { renderSolidIcon, renderVectorIcon, SOLID_COLORS } from '@/utils/icon';
 import { getStrings } from '@/data/i18n';
 import { useContextMenu } from '@/hooks/useContextMenu';
 import { useConfirmDialog } from '@/hooks/useConfirmDialog';
@@ -101,8 +101,9 @@ interface IconProps {
 /**
  * 图标内容类型定义
  */
-type IconContentType = 
+type IconContentType =
   | { type: 'solid'; content: string; builtinIcon: BuiltinIcon }
+  | { type: 'vector'; content: string; builtinIcon: BuiltinIcon }
   | { type: 'emoji'; content: string; builtinIcon?: BuiltinIcon }
   | { type: 'image'; content: string; isCustomIcon?: boolean };
 
@@ -159,12 +160,22 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
 
     switch (iconType) {
       case 'builtin':
-        // 处理纯色图标 (solid-color-X 格式)
+        // 矢量图标 (vector-* 格式)
+        if (item.builtinIcon && item.builtinIcon.startsWith('vector-')) {
+          const builtinIcon = getBuiltinIconById(item.builtinIcon);
+          if (builtinIcon) {
+            return {
+              type: 'vector' as const,
+              content: '',
+              builtinIcon,
+            };
+          }
+        }
+
+        // 纯色图标 (solid-color-X 格式)
         if (item.builtinIcon && item.builtinIcon.startsWith('solid-color-')) {
           const colorIndex = parseInt(item.builtinIcon.replace('solid-color-', ''));
-          // ✅ 使用共享常量，动态添加调色盘颜色
           const solidColors = [...SOLID_COLORS, item.customColor || '#ffffff'];
-
           const color = solidColors[colorIndex] || '#ffffff';
           return {
             type: 'solid' as const,
@@ -174,34 +185,40 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
               name: `颜色${colorIndex + 1}`,
               emoji: '',
               type: 'solid' as const,
-              color: color
-            }
+              color,
+            },
           };
         }
 
-        // 处理普通内置图标
+        // 处理其他内置图标（纯色/矢量/表情）
         const builtinIcon = item.builtinIcon ? getBuiltinIconById(item.builtinIcon) : getDefaultIcon();
-        
+
         if (!builtinIcon) {
-          // 如果找不到内置图标，使用默认图标
           return {
             type: 'emoji' as const,
             content: '',
-            builtinIcon: getDefaultIcon()
+            builtinIcon: getDefaultIcon(),
           };
         }
-        
+
+        // 根据实际类型选择渲染方式
+        if (builtinIcon.type === 'solid') {
+          return { type: 'solid' as const, content: '', builtinIcon };
+        }
+        if (builtinIcon.type === 'vector') {
+          return { type: 'vector' as const, content: '', builtinIcon };
+        }
         return {
-          type: builtinIcon.type === 'solid' ? 'solid' as const : 'emoji' as const,
+          type: 'emoji' as const,
           content: builtinIcon.emoji || '',
-          builtinIcon: builtinIcon
+          builtinIcon,
         };
 
       case 'custom':
         return {
           type: 'image' as const,
           content: item.customIconUrl || '',
-          isCustomIcon: true // 标记为自定义图标
+          isCustomIcon: true,
         };
 
       case 'favicon':
@@ -210,28 +227,25 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         if (item.iconUrl) {
           return {
             type: 'image' as const,
-            content: item.iconUrl
+            content: item.iconUrl,
           };
         }
 
-        // 无 iconUrl 时使用多策略获取图标，并回写 iconUrl
         const domain = extractDomain(item.url);
         const candidates = generateFaviconCandidates(domain);
 
         if (candidates.length > 0) {
-          // 异步回写 iconUrl 到配置，下次加载不再需要动态获取
           if (onUpdateIcon) {
             onUpdateIcon(item.id, { iconUrl: candidates[0] });
           }
           return {
             type: 'image' as const,
-            content: candidates[0]
+            content: candidates[0],
           };
         } else {
-          // 如果无法获取图标 URL，使用回退图标
           return {
             type: 'emoji' as const,
-            content: getFallbackIcon(item.name)
+            content: getFallbackIcon(item.name),
           };
         }
     }
@@ -312,15 +326,22 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           {(() => {
             const iconContent = getIconContent();
 
-            if (iconContent.type === 'emoji') {
+            if (iconContent.type === 'vector' && iconContent.builtinIcon) {
+              // 矢量图标（SVG 线性图标）
+              // 根据图标尺寸调整渲染
+              return renderVectorIcon(iconContent.builtinIcon, 40);
+            } else if (iconContent.type === 'solid' && iconContent.builtinIcon) {
+              // 纯色 + 首字
+              return renderSolidIcon(iconContent.builtinIcon, item.name);
+            } else if (iconContent.type === 'emoji') {
+              // Emoji / 回退字符
               return (
                 <span className="text-2xl">
                   {iconContent.content}
                 </span>
               );
-            } else if (iconContent.type === 'solid' && iconContent.builtinIcon) {
-              return renderSolidIcon(iconContent.builtinIcon, item.name);
             } else {
+              // 图片 / favicon
               return (
                 <Favicon
                   src={iconContent.content}

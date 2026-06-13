@@ -45,7 +45,7 @@ export default function Home() {
   // 当 config 存在时直接使用，否则用 defaultConfig，如果都为空则使用硬编码的最小默认配置
   const SAFE_DEFAULT_CONFIG: UserConfig = {
     layout: { columns: 5, rows: 4 },
-    theme: { mode: 'light', primaryColor: '#3b82f6', iconSize: 'medium', gridSpacing: 16, language: 'zh' },
+    theme: { mode: 'light', primaryColor: '#3b82f6', iconSize: 'medium', gridSpacing: 16, gridColumnSpacing: 16, language: 'zh' },
     icons: [],
     folders: [],
     pages: [{ id: 'page-1', name: '首页', iconIds: [] }],

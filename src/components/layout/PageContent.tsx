@@ -1,29 +1,25 @@
-import { useCallback } from 'react';
-import {
-  SortableContext,
-  rectSortingStrategy,
-} from '@dnd-kit/sortable';
+import React from 'react';
+import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
 import { IconItem, FolderItem, UserConfig, Page } from '@/lib/configManager';
 import { Icon } from './Icon';
 import { Folder } from './Folder';
-import { getStrings } from '@/data/i18n';
 
 interface PageContentProps {
   page: Page;
   icons: IconItem[];
   folders: FolderItem[];
   config: UserConfig;
-  searchedFolderIds: string[];
-  overId?: string | null; // 拖拽悬停目标
-  activeId?: string | null; // 正在拖拽的元素ID
-  readyToDropFolderId?: string | null; // 准备好放入的文件夹ID
+  searchedFolderIds?: string[];
+  overId?: string | null;
+  activeId?: string | null;
+  readyToDropFolderId?: string | null;
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
   onIconHide?: (id: string) => void;
   onUpdateIcon?: (iconId: string, updates: Partial<IconItem>) => void;
   onMoveIconToFolder?: (iconId: string, folderId: string) => void;
-  onReorderIconsInFolder?: (folderId: string, orderedIconIds: string[]) => void; // 新增：文件夹内图标排序
-  onMoveToRoot?: (iconId: string) => void; // 新增：移动到根级
+  onReorderIconsInFolder?: (folderId: string, orderedIconIds: string[]) => void;
+  onMoveToRoot?: (iconId: string) => void;
   onFolderRename?: (id: string, name: string) => void;
   onFolderDelete?: (id: string, deleteApps?: boolean) => void;
   onAddIconToFolder?: (folderId: string) => void;
@@ -33,97 +29,69 @@ interface PageContentProps {
   onRefresh?: () => void;
 }
 
-/**
- * 页面内容组件 - 渲染单个页面的图标和文件夹网格
- * @param props - 组件属性
- */
 export function PageContent({
   page,
   icons,
   folders,
   config,
-  searchedFolderIds = [], // 搜索时自动展开的文件夹ID列表（内联展开，非模态框）
+  searchedFolderIds = [],
   overId,
-  activeId, // 新增
-  readyToDropFolderId, // 新增
+  activeId,
+  readyToDropFolderId,
   onIconEdit,
   onIconDelete,
   onIconHide,
   onUpdateIcon,
   onMoveIconToFolder,
-  onReorderIconsInFolder, // 新增
-  onMoveToRoot, // 新增
+  onReorderIconsInFolder,
+  onMoveToRoot,
   onFolderRename,
   onFolderDelete,
   onAddIconToFolder,
   onDeleteAllIconsInFolder,
+  onAddIcon: _onAddIcon,
+  onAddFolder: _onAddFolder,
+  onRefresh: _onRefresh,
 }: PageContentProps) {
-
-  // 根据当前配置的语言获取文案
-  const currentLanguage = config.theme.language || 'zh';
-  const STRINGS = getStrings(currentLanguage);
-
-  /**
-   * 获取根级图标（不在文件夹中的图标）
-   */
-  const getRootIcons = useCallback(() => {
-    return icons.filter(icon => !icon.folderId);
-  }, [icons]);
-
-  /**
-   * 获取根级文件夹（没有父文件夹的文件夹）
-   */
-  const getRootFolders = useCallback(() => {
-    return folders.filter(folder => !folder.parentId);
-  }, [folders]);
-
-  const rootIcons = getRootIcons();
-  const rootFolders = getRootFolders();
-
-  // 根据 page.iconIds 决定渲染顺序
-  const iconIds = page.iconIds || [];
-
-  // 构建有序的根级元素列表（严格按 page.iconIds 过滤）
-  const orderedRootItems: Array<{ type: 'icon' | 'folder'; id: string }> = [];
-
-  // 只渲染 page.iconIds 中的元素
-  iconIds.forEach(id => {
+  // 按 page.iconIds 顺序排列根级元素（图标和文件夹）
+  const orderedRootItems = (page.iconIds || []).map(id => {
     const icon = icons.find(i => i.id === id && !i.folderId);
-    const folder = folders.find(f => f.id === id && !f.parentId);
-    
-    if (icon) {
-      orderedRootItems.push({ type: 'icon', id });
-    } else if (folder) {
-      orderedRootItems.push({ type: 'folder', id });
-    }
-  });
+    if (icon) return { type: 'icon' as const, id };
+    const folder = folders.find(f => f.id === id);
+    if (folder) return { type: 'folder' as const, id };
+    return null;
+  }).filter((item): item is { type: 'icon' | 'folder'; id: string } => item !== null);
 
-  // 所有根级项目的 ID 数组，用于 SortableContext
   const allRootItemIds = orderedRootItems.map(item => item.id);
+
+  const colPadding = config.theme.gridColumnSpacing / 2;
+  const rowPadding = config.theme.gridSpacing / 2;
+  const itemSpacingStyle = {
+    paddingLeft: `${colPadding}px`,
+    paddingRight: `${colPadding}px`,
+    paddingTop: `${rowPadding}px`,
+    paddingBottom: `${rowPadding}px`,
+  };
 
   return (
     <SortableContext items={allRootItemIds} strategy={rectSortingStrategy}>
-      <div
-        className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5"
-        style={{ gap: `${config.theme.gridSpacing}px` }}
-      >
-        {/* 根据 iconIds 渲染根级元素 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5">
         {orderedRootItems.map(item => {
           if (item.type === 'icon') {
             const icon = icons.find(i => i.id === item.id);
             if (!icon) return null;
             return (
-              <div key={icon.id} className="flex justify-center w-full" style={{ padding: `${config.theme.gridSpacing}px` }}>
+              <div key={icon.id} className="flex justify-center w-full" style={itemSpacingStyle}>
                 <Icon
                   item={icon}
                   onEdit={onIconEdit || (() => {})}
                   onDelete={onIconDelete || (() => {})}
                   onHide={onIconHide || (() => {})}
                   onUpdateIcon={onUpdateIcon}
-                  onMoveToFolder={onMoveIconToFolder} // 新增
-                  folders={folders.map(f => ({ id: f.id, name: f.name }))} // 新增：传递文件夹列表
+                  onMoveToFolder={onMoveIconToFolder}
+                  folders={folders.map(f => ({ id: f.id, name: f.name }))}
                   config={config}
-                  isDragging={icon.id === activeId} // 修复：动态判断拖拽状态
+                  isDragging={icon.id === activeId}
                 />
               </div>
             );
@@ -131,7 +99,7 @@ export function PageContent({
             const folder = folders.find(f => f.id === item.id);
             if (!folder) return null;
             return (
-              <div key={folder.id} className="flex justify-center w-full" style={{ padding: `${config.theme.gridSpacing}px` }}>
+              <div key={folder.id} className="flex justify-center w-full" style={itemSpacingStyle}>
                 <Folder
                   folder={folder}
                   icons={icons}
@@ -145,35 +113,20 @@ export function PageContent({
                   onIconEdit={onIconEdit}
                   onIconDelete={onIconDelete}
                   onIconHide={onIconHide}
-                  onReorderIcons={onReorderIconsInFolder} // 新增：传递文件夹内图标排序回调
-                  onMoveToRoot={onMoveToRoot} // 新增：传递移动到根级回调
-                  onMoveToFolder={onMoveIconToFolder} // 新增：传递移动到文件夹回调
+                  onReorderIcons={onReorderIconsInFolder}
+                  onMoveToRoot={onMoveToRoot}
+                  onMoveToFolder={onMoveIconToFolder}
                   onUpdateIcon={onUpdateIcon}
-                  isDragging={folder.id === activeId} // 修复：动态判断拖拽状态
+                  isDragging={folder.id === activeId}
                   isOver={overId === folder.id}
-                  isDropTarget={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否准备好放入
-                  isReadyToDrop={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否可松开放入
+                  isDropTarget={readyToDropFolderId === folder.id}
+                  isReadyToDrop={readyToDropFolderId === folder.id}
                   searchedFolderIds={searchedFolderIds}
                 />
               </div>
             );
           }
         })}
-
-        {/* 空状态提示：仅当两者都为空时，在网格内占满一整行 */}
-        {rootIcons.length === 0 && rootFolders.length === 0 && (
-          <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-              <span className="text-4xl">📱</span>
-            </div>
-            <h3 className="text-lg font-medium text-foreground mb-2">
-              {STRINGS.emptyTitle}
-            </h3>
-            <p className="text-muted-foreground max-w-md">
-              {STRINGS.emptyDescription}
-            </p>
-          </div>
-        )}
       </div>
     </SortableContext>
   );

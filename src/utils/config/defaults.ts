@@ -78,6 +78,7 @@ export function fillThemeDefaults(theme: Partial<ThemeSettings>): ThemeSettings 
     wallpaperUrl: theme.wallpaperUrl,
     iconSize: theme.iconSize ?? 'medium',
     gridSpacing: theme.gridSpacing ?? 16,
+    gridColumnSpacing: theme.gridColumnSpacing ?? 16,
     fontColor: theme.fontColor,
     language: theme.language ?? 'zh',
     extensions: theme.extensions

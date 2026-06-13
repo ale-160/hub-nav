@@ -1,5 +1,5 @@
 import React from 'react';
-import { BUILTIN_ICONS, BuiltinIcon } from '@/data/icons';
+import { BUILTIN_ICONS, BuiltinIcon, VECTOR_SVG_MAP } from '@/data/icons';
 import { getStrings } from '@/data/i18n';
 
 /**
@@ -27,7 +27,7 @@ export function getFirstChar(name: string): string {
 }
 
 /**
- * 渲染纯色图标（首字+背景色）
+ * 渲染纯色图标（纯色圆形背景 + 首字）
  * @param icon - 内置图标对象
  * @param appName - 应用名称（可选，如果不提供则使用图标名称）
  * @returns React 元素
@@ -46,6 +46,35 @@ export function renderSolidIcon(icon: BuiltinIcon, appName?: string): React.JSX.
 }
 
 /**
+ * 渲染矢量图标（Feather/Lucide 风格的线性 SVG）
+ * @param icon - 内置图标对象，需要有 svgKey/svgColor
+ * @param size - 尺寸，默认 24
+ * @returns React 元素
+ */
+export function renderVectorIcon(icon: BuiltinIcon, size: number = 24): React.JSX.Element {
+  const key = icon.svgKey || icon.id.replace('vector-', '');
+  const entry = VECTOR_SVG_MAP[key as keyof typeof VECTOR_SVG_MAP];
+  const color = icon.svgColor || icon.color || '#6b7280';
+
+  const paths = entry?.paths || [
+    `<circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/>`
+  ];
+
+  // 安全地渲染 SVG 子内容：通过 dangerouslySetInnerHTML 注入预设的 SVG path 字符串
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      style={{ color }}
+      dangerouslySetInnerHTML={{ __html: paths.join('') }}
+    />
+  );
+}
+
+/**
  * 获取图标名称（根据语言）
  */
 export function getIconName(
@@ -55,13 +84,12 @@ export function getIconName(
 ): string {
   const STRINGS = getStrings(language);
 
-  // 处理纯色图标 (solid-color-X 格式)
+  // 处理纯色颜色图标 (solid-color-X 格式)
   if (iconId.startsWith('solid-color-')) {
     const colorIndex = parseInt(iconId.replace('solid-color-', ''));
     if (colorIndex === 17) {
       return customColor ? STRINGS.customColor : (language === 'zh' ? '调色盘' : 'Color Palette');
     }
-    // 纯色图标没有映射，使用默认名称
     return language === 'en' ? `Color ${colorIndex + 1}` : `颜色${colorIndex + 1}`;
   }
 
@@ -71,7 +99,13 @@ export function getIconName(
     return STRINGS.iconNames[baseId as keyof typeof STRINGS.iconNames] || iconId;
   }
 
-  // 处理普通图标
+  // 处理 vector- 前缀的矢量图标
+  if (iconId.startsWith('vector-')) {
+    const key = iconId.replace('vector-', '');
+    const entry = VECTOR_SVG_MAP[key as keyof typeof VECTOR_SVG_MAP];
+    return entry?.label || key;
+  }
+
   return STRINGS.iconNames[iconId as keyof typeof STRINGS.iconNames] || iconId;
 }
 
@@ -87,24 +121,26 @@ export const SOLID_COLORS = [
 ];
 
 /**
- * 获取分类后的图标
+ * 获取分类后的图标：矢量图标 / 纯色颜色图标
  */
 export function getCategorizedIcons(customColor: string = '', language: 'zh' | 'en' = 'zh') {
-  const emojiIcons = BUILTIN_ICONS.filter(icon => icon.type === 'emoji');
+  // 矢量图标：从 BUILTIN_ICONS 中取 type === 'vector' 的图标
+  const vectorIcons = BUILTIN_ICONS.filter(icon => icon.type === 'vector');
 
-  // ✅ 使用共享常量，动态添加调色盘颜色
+  // ✅ 纯色颜色图标（颜色+首字）：使用共享常量，动态添加调色盘颜色
   const solidColors = [...SOLID_COLORS, customColor || '#ffffff'];
-
   const STRINGS = getStrings(language);
   const solidIcons = solidColors.map((color, index) => ({
     id: `solid-color-${index}`,
-    name: index === 17 ? (customColor ? STRINGS.customColor : (language === 'zh' ? '调色盘' : 'Color Palette')) : (language === 'en' ? `Color ${index + 1}` : `颜色${index + 1}`),
-    emoji: index === 17 && !customColor ? '' : '',
+    name: index === 17
+      ? (customColor ? STRINGS.customColor : (language === 'zh' ? '调色盘' : 'Color Palette'))
+      : (language === 'en' ? `Color ${index + 1}` : `颜色${index + 1}`),
+    emoji: '',
     type: 'solid' as const,
-    color: color
+    color: color,
   }));
 
-  return { emojiIcons, solidIcons };
+  return { vectorIcons, solidIcons };
 }
 
 /**
@@ -117,13 +153,10 @@ export function getSelectedBuiltinIcon(
 ) {
   if (!builtinIcon) return BUILTIN_ICONS[0];
 
-  // 如果是纯色图标，构造对应的 BuiltinIcon 对象
+  // 处理纯色颜色图标
   if (builtinIcon.startsWith('solid-color-')) {
     const colorIndex = parseInt(builtinIcon.replace('solid-color-', ''));
-    // ✅ 使用共享常量，动态添加调色盘颜色
     const solidColors = [...SOLID_COLORS, customColor || '#ffffff'];
-
-    // 关键修复：使用实际的颜色值，而不是默认白色
     const actualColor = solidColors[colorIndex];
 
     return {
@@ -131,14 +164,14 @@ export function getSelectedBuiltinIcon(
       name: getIconName(builtinIcon, language, customColor),
       emoji: '',
       type: 'solid' as const,
-      color: actualColor
+      color: actualColor,
     };
   }
 
-  // 否则从 BUILTIN_ICONS 中查找并返回国际化名称
+  // 从 BUILTIN_ICONS 中查找（矢量或纯色），并返回国际化名称
   const originalIcon = BUILTIN_ICONS.find(icon => icon.id === builtinIcon) || BUILTIN_ICONS[0];
   return {
     ...originalIcon,
-    name: getIconName(builtinIcon, language)
+    name: getIconName(builtinIcon, language),
   };
 }

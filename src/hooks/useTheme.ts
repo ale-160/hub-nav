@@ -11,6 +11,7 @@ const DEFAULT_THEME_SETTINGS: ThemeSettings = {
   primaryColor: '#3b82f6',
   iconSize: 'medium',
   gridSpacing: 16,
+  gridColumnSpacing: 16,
   language: 'zh'
 };
 

@@ -235,7 +235,7 @@ export function Folder({
   let style;
   return (
     <div
-      className={folderClassName}
+      className="relative group"
       data-folder-item
       data-id={folder.id}
       data-ready-to-drop={isReadyToDrop || undefined}
@@ -248,7 +248,7 @@ export function Folder({
         style={style}
         {...attributes}
         {...listeners}
-        className="flex flex-col items-center"
+        className={folderClassName}
         onPointerDownCapture={longPressHandlers.handlePointerDownCapture}
         onClick={handleClick}
         onDoubleClick={handleDoubleClick}
@@ -258,7 +258,7 @@ export function Folder({
         {/* 文件夹图标 */}
         <div className={`${getIconSizeClass()} mb-2 rounded-lg overflow-hidden bg-transparent flex items-center justify-center`}>
           <svg
-            className="w-2/3 h-2/3 transition-transform duration-200 text-yellow-500 dark:text-yellow-400"
+            className="w-full h-full transition-transform duration-200 text-yellow-500 dark:text-yellow-400"
             fill="currentColor"
             viewBox="0 0 20 20"
           >
@@ -267,11 +267,9 @@ export function Folder({
         </div>
 
         {/* 文件夹名称 */}
-        <div className="w-full text-center">
-          <span className="text-xs text-center text-muted-foreground font-medium truncate max-w-full px-1">
-            {folder.name}
-          </span>
-        </div>
+        <span className="text-xs text-center text-muted-foreground font-medium truncate max-w-full px-1">
+          {folder.name}
+        </span>
       </div>
 
       {/* 右键菜单 - 通过 useContextMenu 管理 */}

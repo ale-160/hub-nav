@@ -242,6 +242,9 @@ export class ConfigManager {
     if (theme.gridSpacing !== undefined && typeof theme.gridSpacing !== 'number') {
       return false;
     }
+    if (theme.gridColumnSpacing !== undefined && typeof theme.gridColumnSpacing !== 'number') {
+      return false;
+    }
 
     // 检查 icons 数组中的项，允许部分字段缺失
     const icons = configObj.icons as Array<Record<string, unknown>>;
@@ -650,28 +653,7 @@ export class ConfigManager {
       pages: [...config.pages, newPage]
     };
   }
-
-  /**
-   * 检查 localStorage 是否可用
-   * @returns localStorage 可用返回 true，否则返回 false
-   */
-  static isStorageAvailable(): boolean {
-    // 服务端环境返回 false
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    try {
-      const testKey = '__storage_test__';
-      localStorage.setItem(testKey, 'test');
-      localStorage.removeItem(testKey);
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
-  // ==================== 图标缓存管理 ====================
+// ==================== 图标缓存管理 ====================
 
   private static readonly ICON_CACHE_KEY = 'hub-nav-icon-cache';
 

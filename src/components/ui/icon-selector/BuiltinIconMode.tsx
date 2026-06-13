@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { getStrings } from '@/data/i18n';
-import { renderSolidIcon } from '@/utils/icon';
-import { getCategorizedIcons, getSelectedBuiltinIcon, getIconName } from '@/utils/icon';
+import { renderSolidIcon, renderVectorIcon } from '@/utils/icon';
+import { getCategorizedIcons, getSelectedBuiltinIcon } from '@/utils/icon';
 import { BuiltinIconPicker } from './BuiltinIconPicker';
 
 interface BuiltinIconModeProps {
@@ -9,13 +9,14 @@ interface BuiltinIconModeProps {
   appName?: string;
   language?: 'zh' | 'en';
   onIconChange: (iconId: string) => void;
-  initialCustomColor?: string; // 初始自定义颜色
-  onCustomColorChange?: (color: string) => void; // 自定义颜色变化回调
+  initialCustomColor?: string;
+  onCustomColorChange?: (color: string) => void;
 }
 
 /**
  * 内置图标模式组件
- * 包含标签页切换、搜索、图标选择器、选中预览
+ * - 矢量图标（SVG线性图标）标签页
+ * - 纯色图标（纯色圆形 + 首字）标签页
  */
 export const BuiltinIconMode = React.memo(function BuiltinIconMode({
   builtinIcon,
@@ -23,47 +24,28 @@ export const BuiltinIconMode = React.memo(function BuiltinIconMode({
   language = 'zh',
   onIconChange,
   initialCustomColor,
-  onCustomColorChange
+  onCustomColorChange,
 }: BuiltinIconModeProps) {
-  const [activeTab, setActiveTab] = useState<'solid' | 'emoji'>('solid');
-  // 如果 builtinIcon 是 solid-color-17，从 initialCustomColor 恢复颜色；否则从 initialCustomColor 初始化
+  // 默认激活标签页：纯色在前。若选中的是 vector-* 则切到矢量
+  const defaultTab: 'vector' | 'solid' = builtinIcon?.startsWith('vector-') ? 'vector' : 'solid';
+  const [activeTab, setActiveTab] = useState<'vector' | 'solid'>(defaultTab);
+
   const initialColor = builtinIcon === 'solid-color-17' ? (initialCustomColor || '') : (initialCustomColor || '');
   const [customColor, setCustomColor] = useState<string>(initialColor);
-  const [searchQuery, setSearchQuery] = useState('');
-  
+
   const STRINGS = getStrings(language);
-  
-  // 工具函数调用（原内联逻辑抽离）
-  const { emojiIcons, solidIcons } = useMemo(() => 
+
+  const { vectorIcons, solidIcons } = useMemo(() =>
     getCategorizedIcons(customColor, language),
   [customColor, language]);
-  
-  const selectedIcon = useMemo(() => 
+
+  const selectedIcon = useMemo(() =>
     getSelectedBuiltinIcon(builtinIcon, customColor, language),
   [builtinIcon, customColor, language]);
-  
-  // 搜索过滤
-  const filteredSolidIcons = useMemo(() => 
-    searchQuery 
-      ? solidIcons.filter(icon => 
-          getIconName(icon.id, language, customColor).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : solidIcons,
-  [solidIcons, searchQuery, language, customColor]);
-  
-  const filteredEmojiIcons = useMemo(() => 
-    searchQuery
-      ? emojiIcons.filter(icon => 
-          getIconName(icon.id, language).toLowerCase().includes(searchQuery.toLowerCase()) ||
-          icon.emoji?.includes(searchQuery) ||
-          icon.name?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      : emojiIcons,
-  [emojiIcons, searchQuery, language]);
 
   return (
     <div className="space-y-3">
-      {/* 标签页切换 */}
+      {/* 标签页切换：纯色在前，矢量在后 */}
       <div className="flex gap-2 mb-3">
         <button
           type="button"
@@ -78,41 +60,45 @@ export const BuiltinIconMode = React.memo(function BuiltinIconMode({
         </button>
         <button
           type="button"
-          onClick={() => setActiveTab('emoji')}
+          onClick={() => setActiveTab('vector')}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            activeTab === 'emoji'
+            activeTab === 'vector'
               ? 'bg-blue-600 text-white'
               : 'bg-muted text-muted-foreground hover:bg-accent'
           }`}
         >
-          {STRINGS.emojiIcons}
+          {language === 'en' ? 'Vector Icons' : '矢量图标'}
         </button>
       </div>
-      
-      {/* 图标选择器 */}
+
       <BuiltinIconPicker
         activeTab={activeTab}
-        solidIcons={filteredSolidIcons}
-        emojiIcons={filteredEmojiIcons}
+        solidIcons={solidIcons}
+        vectorIcons={vectorIcons}
         selectedIconId={builtinIcon}
         customColor={customColor}
-        onSelect={onIconChange}
+        onSelect={(id) => {
+          // 切换到对应标签页
+          if (id.startsWith('vector-')) setActiveTab('vector');
+          if (id.startsWith('solid-color-')) setActiveTab('solid');
+          onIconChange(id);
+        }}
         onCustomColorChange={(color) => {
           setCustomColor(color);
           onCustomColorChange?.(color);
         }}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
         language={language}
         appName={appName}
       />
-      
+
       {/* 选中预览 */}
       {selectedIcon && (
         <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
           <div className="w-12 h-12 rounded-lg bg-background flex items-center justify-center border border-border">
-            {selectedIcon.type === 'solid' ? renderSolidIcon(selectedIcon) : (
-              <span className="text-2xl">{selectedIcon.emoji}</span>
+            {selectedIcon.type === 'vector' ? (
+              renderVectorIcon(selectedIcon, 36)
+            ) : (
+              renderSolidIcon(selectedIcon, appName)
             )}
           </div>
           <div className="flex-1">
@@ -120,7 +106,9 @@ export const BuiltinIconMode = React.memo(function BuiltinIconMode({
               {selectedIcon.name}
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-400">
-              {selectedIcon.type === 'solid' ? STRINGS.solidIcons : STRINGS.emojiIcons}
+              {selectedIcon.type === 'vector'
+                ? (language === 'en' ? 'Vector Icon' : '矢量图标')
+                : STRINGS.solidIcons}
             </p>
           </div>
         </div>

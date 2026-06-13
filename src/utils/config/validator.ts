@@ -188,6 +188,10 @@ function validateTheme(
     errors.push({ path: `${path}.gridSpacing`, message: 'gridSpacing 必须是数字' });
   }
 
+  if (obj.gridColumnSpacing !== undefined && typeof obj.gridColumnSpacing !== 'number') {
+    errors.push({ path: `${path}.gridColumnSpacing`, message: 'gridColumnSpacing 必须是数字' });
+  }
+
   if (obj.language !== undefined && !['zh', 'en'].includes(obj.language as string)) {
     warnings.push({ path: `${path}.language`, message: 'language 应该是 zh 或 en' });
   }

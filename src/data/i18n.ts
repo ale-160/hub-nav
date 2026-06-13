@@ -119,6 +119,8 @@ export const STRINGS_ZH = {
   medium: '中',
   large: '大',
   gridSpacing: '图标间距',
+  verticalSpacing: '垂直间距',
+  horizontalSpacing: '水平间距',
   fontColor: '字体颜色',
   customWallpaperUrl: '自定义壁纸URL',
   apply: '应用',
@@ -140,7 +142,7 @@ export const STRINGS_ZH = {
   // 存储信息
   storageUsage: '存储使用情况',
   totalSize: '总大小',
-  iconCount: '图标数量',
+  appCount: '应用数量',
   folderCount: '文件夹数量',
   pageCount: '页面数量',
   
@@ -463,6 +465,8 @@ export const STRINGS_EN = {
   medium: 'Medium',
   large: 'Large',
   gridSpacing: 'Grid Spacing',
+  verticalSpacing: 'Vertical',
+  horizontalSpacing: 'Horizontal',
   fontColor: 'Font Color',
   customWallpaperUrl: 'Custom Wallpaper URL',
   apply: 'Apply',
@@ -484,7 +488,7 @@ export const STRINGS_EN = {
   // Storage Info
   storageUsage: 'Storage Usage',
   totalSize: 'Total Size',
-  iconCount: 'Icon Count',
+  appCount: 'App Count',
   folderCount: 'Folder Count',
   pageCount: 'Page Count',
   
