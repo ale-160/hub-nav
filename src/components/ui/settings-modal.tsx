@@ -24,7 +24,12 @@ import {
   calculateBackupSize,
   formatFileSize,
   getBackupStorageInfo,
-  type BackupEntry
+  createBackup,
+  saveBackup,
+  exportBackupAsFile,
+  importBackupFromFile,
+  updateBackup,
+  type BackupEntry,
 } from '@/utils/config/backup';
 
 interface SettingsModalProps {
@@ -82,6 +87,9 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
   }>({ totalSize: 0, maxSize: 0, usagePercent: 0, isNearLimit: false, backupCount: 0 });
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
+  const [renamingBackupId, setRenamingBackupId] = useState<string | null>(null);
+  const [renamingValue, setRenamingValue] = useState('');
+  const importBackupFileInputRef = React.createRef<HTMLInputElement>();
 
   // 服务器配置状态
   const [serverConfigUrl, setServerConfigUrl] = useState('');
@@ -282,20 +290,26 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
   }, [handleWallpaperSelect, STRINGS.imageTooLarge, STRINGS.pleaseSelectImage]);
 
   /**
-   * 恢复备份
+   * 恢复备份：与"从文件导入配置"走完全相同的路径
+   * 1) restoreBackup 返回备份数据的 JSON 字符串
+   * 2) ConfigManager.importConfig 处理版本迁移、验证、写入 localStorage
+   * 3) 刷新页面加载新配置
    */
   const handleRestoreBackup = useCallback((backupId: string) => {
-    const restoredConfig = restoreBackup(backupId);
-    if (restoredConfig) {
-      onConfigUpdate(restoredConfig);
-      toast.success(STRINGS.backupRestored);
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } else {
-      toast.error('恢复失败');
+    const backupJson = restoreBackup(backupId);
+    if (!backupJson) {
+      toast.error(STRINGS.backupRestoreFailed || '恢复失败');
+      return;
     }
-  }, [onConfigUpdate, STRINGS.backupRestored]);
+
+    const success = ConfigManager.importConfig(backupJson);
+    if (success) {
+      toast.success(STRINGS.backupRestored);
+      window.location.reload();
+    } else {
+      toast.error(STRINGS.backupRestoreFailed || '恢复失败');
+    }
+  }, [STRINGS.backupRestored, STRINGS.backupRestoreFailed]);
 
   /**
    * 删除备份
@@ -318,6 +332,74 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
     setShowClearAllConfirm(false);
     toast.success(STRINGS.backupsCleared);
   }, [STRINGS.backupsCleared]);
+
+  /**
+   * 创建新备份：将当前配置存为 JSON 写入 localStorage
+   */
+  const handleCreateBackup = useCallback(() => {
+    const backup = createBackup(config);
+    saveBackup(backup);
+    setBackups(getBackupList());
+    setBackupStorageInfo(getBackupStorageInfo());
+    toast.success(STRINGS.backupCreated);
+  }, [config, STRINGS.backupCreated]);
+
+  /**
+   * 导出备份：将某个备份以 JSON 文件下载
+   */
+  const handleExportBackup = useCallback((backup: BackupEntry) => {
+    exportBackupAsFile(backup);
+    toast.success(STRINGS.backupExported);
+  }, [STRINGS.backupExported]);
+
+  /**
+   * 导入备份：选择 JSON 文件并保存为新备份
+   */
+  const handleImportBackupClick = useCallback(() => {
+    if (importBackupFileInputRef.current) {
+      importBackupFileInputRef.current.value = '';
+      importBackupFileInputRef.current.click();
+    }
+  }, [importBackupFileInputRef]);
+
+  const handleImportBackupFile = useCallback(async (file: File) => {
+    const entry = await importBackupFromFile(file);
+    if (entry) {
+      setBackups(getBackupList());
+      setBackupStorageInfo(getBackupStorageInfo());
+      toast.success(STRINGS.backupImported);
+    } else {
+      toast.error(STRINGS.backupImportFailed);
+    }
+  }, [STRINGS.backupImported, STRINGS.backupImportFailed]);
+
+  /**
+   * 开始重命名备份
+   */
+  const handleStartRename = useCallback((backup: BackupEntry) => {
+    setRenamingBackupId(backup.id);
+    setRenamingValue(backup.name || '');
+  }, []);
+
+  /**
+   * 保存备份名称
+   */
+  const handleSaveRename = useCallback(() => {
+    if (renamingBackupId) {
+      updateBackup(renamingBackupId, { name: renamingValue.trim() });
+      setBackups(getBackupList());
+    }
+    setRenamingBackupId(null);
+    setRenamingValue('');
+  }, [renamingBackupId, renamingValue]);
+
+  /**
+   * 取消重命名
+   */
+  const handleCancelRename = useCallback(() => {
+    setRenamingBackupId(null);
+    setRenamingValue('');
+  }, []);
 
   /**
    * 处理操作模式变化
@@ -826,6 +908,26 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
               <div>
                 <h3 className="text-sm font-medium text-foreground mb-3">{STRINGS.backupManagement}</h3>
 
+                {/* 顶部操作按钮：新增备份 / 从文件导入 */}
+                <div className="flex gap-2 mb-3">
+                  <Button onClick={handleCreateBackup} size="sm" className="flex-1">
+                    {STRINGS.createBackup}
+                  </Button>
+                  <Button onClick={handleImportBackupClick} size="sm" variant="outline" className="flex-1">
+                    {STRINGS.importBackup}
+                  </Button>
+                  <input
+                    ref={importBackupFileInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleImportBackupFile(file);
+                    }}
+                  />
+                </div>
+
                 {/* 备份存储使用情况 */}
                 <div className="mb-4 p-3 bg-muted rounded-lg border border-border">
                   <div className="flex justify-between items-center mb-2">
@@ -855,27 +957,81 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                     <>
                       {backups.map((backup) => (
                         <div key={backup.id} className="p-3 bg-background border border-border rounded-lg">
-                          <div className="flex justify-between items-start mb-2">
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-foreground">{formatBackupTime(backup.timestamp)}</p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {STRINGS.backupVersion}: {backup.version} | {STRINGS.backupSize}: {formatFileSize(calculateBackupSize(backup))}
-                              </p>
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 pr-3 min-w-0">
+                              {renamingBackupId === backup.id ? (
+                                <div className="flex gap-2 items-center flex-wrap">
+                                  <input
+                                    type="text"
+                                    value={renamingValue}
+                                    onChange={(e) => setRenamingValue(e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveRename();
+                                      if (e.key === 'Escape') handleCancelRename();
+                                    }}
+                                    className="text-sm font-medium text-foreground border rounded px-2 py-1 flex-1 min-w-30"
+                                    placeholder={STRINGS.backupNamePlaceholder || '备份名称'}
+                                    autoFocus
+                                  />
+                                  <Button size="sm" onClick={handleSaveRename}>
+                                    {STRINGS.save || '保存'}
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={handleCancelRename}>
+                                    {STRINGS.cancel || '取消'}
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {backup.name || formatBackupTime(backup.timestamp, currentLanguage)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {formatBackupTime(backup.timestamp, currentLanguage)} | {STRINGS.backupVersion}: {backup.version} | {STRINGS.backupSize}: {formatFileSize(calculateBackupSize(backup))}
+                                  </p>
+                                </>
+                              )}
                             </div>
-                            <div className="flex gap-2 ml-4">
+                            {/* 操作按钮：重命名 / 导出 / 恢复 / 删除 */}
+                            <div className="flex items-center gap-1 shrink-0">
+                              {renamingBackupId !== backup.id && (
+                                <Button
+                                  size="icon-sm"
+                                  variant="outline"
+                                  onClick={() => handleStartRename(backup)}
+                                  title={STRINGS.renameBackup || '重命名'}
+                                >
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                  </svg>
+                                </Button>
+                              )}
                               <Button
-                                size="sm"
+                                size="icon-sm"
                                 variant="outline"
-                                onClick={() => handleRestoreBackup(backup.id)}
+                                onClick={() => handleExportBackup(backup)}
+                                title={STRINGS.exportBackup}
                               >
-                                {STRINGS.restoreBackup}
+                                {/* 向下箭头 - 导出 */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
                               </Button>
                               <Button
-                                size="sm"
+                                size="icon-sm"
+                                variant="outline"
+                                onClick={() => handleRestoreBackup(backup.id)}
+                                title={STRINGS.restoreBackup}
+                              >
+                                {/* 向上箭头 - 恢复/导入 */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 21V9"/><path d="M7 14l5-5 5 5"/><path d="M5 3h14"/></svg>
+                              </Button>
+                              <Button
+                                size="icon-sm"
                                 variant="destructive"
                                 onClick={() => setShowDeleteConfirm(backup.id)}
+                                title={STRINGS.deleteBackup}
                               >
-                                {STRINGS.deleteBackup}
+                                {/* 垃圾桶 - 删除 */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                               </Button>
                             </div>
                           </div>

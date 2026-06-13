@@ -163,7 +163,17 @@ export const STRINGS_ZH = {
   backupRestored: '备份已恢复，页面将刷新',
   backupDeleted: '备份已删除',
   backupsCleared: '所有备份已清空',
-  
+  createBackup: '新增备份',
+  exportBackup: '导出为文件',
+  importBackup: '从文件导入',
+  backupCreated: '已创建备份',
+  backupExported: '已导出备份',
+  backupImported: '已导入备份',
+  backupImportFailed: '导入失败，请检查文件格式',
+  backupRestoreFailed: '恢复失败，备份数据无效',
+  backupNamePlaceholder: '备份名称',
+  renameBackup: '重命名',
+
   // 服务器配置
   serverConfig: '服务器配置',
   serverConfigUrl: '服务器配置 URL',
@@ -509,7 +519,17 @@ export const STRINGS_EN = {
   backupRestored: 'Backup restored, page will refresh',
   backupDeleted: 'Backup deleted',
   backupsCleared: 'All backups cleared',
-  
+  createBackup: 'Create Backup',
+  exportBackup: 'Export to File',
+  importBackup: 'Import from File',
+  backupCreated: 'Backup created',
+  backupExported: 'Backup exported',
+  backupImported: 'Backup imported',
+  backupImportFailed: 'Import failed, please check the file format',
+  backupRestoreFailed: 'Restore failed, invalid backup data',
+  backupNamePlaceholder: 'Backup Name',
+  renameBackup: 'Rename',
+
   // Server Configuration
   serverConfig: 'Server Configuration',
   serverConfigUrl: 'Server Config URL',

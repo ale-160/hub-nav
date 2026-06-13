@@ -235,9 +235,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
         const candidates = generateFaviconCandidates(domain);
 
         if (candidates.length > 0) {
-          if (onUpdateIcon) {
-            onUpdateIcon(item.id, { iconUrl: candidates[0] });
-          }
+          // 仅返回候选用于渲染，持久化由下方 useEffect 处理，避免渲染阶段 setState
           return {
             type: 'image' as const,
             content: candidates[0],
@@ -249,7 +247,23 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           };
         }
     }
-  }, [item.id, item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.customColor, item.name, onUpdateIcon]);
+  }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.customColor, item.name]);
+
+  // 对 favicon 类型且尚未缓存 iconUrl 的图标，在渲染完成后回写一次
+  // 回写一次 iconUrl，使其持久化到配置（避免在渲染中 setState 导致 React 报错）。
+  const needsFaviconCache =
+    (item.iconType || 'favicon') === 'favicon' &&
+    !item.iconUrl &&
+    !!item.url;
+
+  React.useEffect(() => {
+    if (!needsFaviconCache || !onUpdateIcon) return;
+    const domain = extractDomain(item.url);
+    const cands = generateFaviconCandidates(domain);
+    if (cands.length > 0) {
+      onUpdateIcon(item.id, { iconUrl: cands[0] });
+    }
+  }, [needsFaviconCache, item.id, item.url, onUpdateIcon]);
 
   /**
    * 处理点击事件
