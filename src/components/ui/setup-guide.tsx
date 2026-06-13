@@ -41,7 +41,7 @@ export function SetupGuide({ isOpen, onComplete }: SetupGuideProps) {
       } else {
         toast.error('Failed to load default configuration');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to load default configuration');
     } finally {
       setLoading(false);
@@ -64,7 +64,7 @@ export function SetupGuide({ isOpen, onComplete }: SetupGuideProps) {
       } else {
         toast.error(STRINGS.importError);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(STRINGS.importError);
     } finally {
       setFileLoading(false);
@@ -103,7 +103,7 @@ export function SetupGuide({ isOpen, onComplete }: SetupGuideProps) {
         // 清除 URL
         ConfigManager.setServerConfigUrl(null);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(STRINGS.importError);
       ConfigManager.setServerConfigUrl(null);
     } finally {

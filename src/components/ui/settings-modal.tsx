@@ -344,7 +344,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
       } else {
         toast.error(STRINGS.serverConfigTestFailed);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(STRINGS.serverConfigTestFailed);
     } finally {
       setServerConfigTesting(false);
@@ -369,7 +369,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
 
     setServerConfigApplying(true);
     try {
-      const success = await ConfigManager.useServerConfigAsLocal();
+      const success = await ConfigManager.applyServerConfig();
       if (success) {
         toast.success(STRINGS.serverConfigApplied);
         // 重新加载页面以应用新配置
@@ -379,7 +379,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
       } else {
         toast.error(STRINGS.serverConfigApplyFailed);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(STRINGS.serverConfigApplyFailed);
     } finally {
       setServerConfigApplying(false);
@@ -419,7 +419,7 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
       } else {
         toast.error(STRINGS.serverConfigSyncFailed);
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error(STRINGS.serverConfigSyncFailed);
     } finally {
       setIsSyncing(false);

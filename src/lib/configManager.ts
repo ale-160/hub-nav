@@ -599,7 +599,7 @@ export class ConfigManager {
    * 使用服务器配置覆盖本地配置
    * @returns 成功返回 true，失败返回 false
    */
-  static async useServerConfigAsLocal(): Promise<boolean> {
+  static async applyServerConfig(): Promise<boolean> {
     const serverConfig = await this.loadServerConfig();
 
     if (!serverConfig) {
