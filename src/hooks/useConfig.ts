@@ -18,7 +18,7 @@ export function useConfig() {
   useEffect(() => {
     const browserLang = getBrowserLanguage();
     const loadedConfig = ConfigManager.loadConfig();
-    
+
     if (loadedConfig) {
       // 如果配置中没有语言设置，则检测浏览器语言
       if (!loadedConfig.theme.language) {
@@ -27,14 +27,13 @@ export function useConfig() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfig(loadedConfig);
       setIsMounted(true);
-      
+
       // 如果启用了同步，从服务器同步配置
       if (ConfigManager.isSyncEnabled()) {
         ConfigManager.syncFromServer().then(synced => {
           if (synced) {
             const newConfig = ConfigManager.loadConfig();
             if (newConfig) {
-              // eslint-disable-next-line react-hooks/set-state-in-effect
               setConfig(newConfig);
             }
           }

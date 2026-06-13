@@ -24,10 +24,9 @@ import type {
 // 导入新的导入导出模块
 import { exportToJson } from '@/utils/config/exporter';
 import { importFromJson } from '@/utils/config/importer';
-import { CURRENT_VERSION } from '@/utils/config/version';
 
 // 导入多语言支持
-import { getStrings, Language } from '@/data/i18n';
+import { Language } from '@/data/i18n';
 
 // 注册迁移函数（只需导入一次）
 import '@/utils/config/migration-registry';
@@ -452,7 +451,7 @@ export class ConfigManager {
     try {
       const configUrl = lang === 'en' ? '/config.en.json' : '/config.json';
       const response = await fetch(configUrl);
-      
+
       if (!response.ok) {
         if (process.env.NODE_ENV === 'development') {
           console.error(`加载默认配置失败: ${response.status} ${response.statusText}`);
@@ -461,10 +460,10 @@ export class ConfigManager {
       }
 
       const config = await response.json();
-      
+
       // 使用导入功能处理配置
       const importResult = importFromJson(JSON.stringify(config));
-      
+
       if (importResult.success && importResult.data) {
         if (process.env.NODE_ENV === 'development') {
           console.log('默认配置加载成功');
@@ -493,7 +492,7 @@ export class ConfigManager {
     try {
       const text = await file.text();
       const importResult = importFromJson(text);
-      
+
       if (importResult.success && importResult.data) {
         if (process.env.NODE_ENV === 'development') {
           console.log('本地文件配置导入成功');
@@ -520,7 +519,7 @@ export class ConfigManager {
    */
   static async loadServerConfig(timeout = 5000): Promise<UserConfig | null> {
     const url = this.getServerConfigUrl();
-    
+
     if (!url) {
       if (process.env.NODE_ENV === 'development') {
         console.log('未配置服务器配置 URL');
@@ -560,10 +559,10 @@ export class ConfigManager {
       }
 
       const text = await response.text();
-      
+
       // 使用导入功能处理配置
       const importResult = importFromJson(text);
-      
+
       if (importResult.success && importResult.data) {
         if (process.env.NODE_ENV === 'development') {
           console.log('服务器配置加载成功');
@@ -602,7 +601,7 @@ export class ConfigManager {
    */
   static async useServerConfigAsLocal(): Promise<boolean> {
     const serverConfig = await this.loadServerConfig();
-    
+
     if (!serverConfig) {
       return false;
     }
@@ -612,7 +611,7 @@ export class ConfigManager {
       // 强制立即保存，不使用防抖
       const jsonString = JSON.stringify(serverConfig);
       localStorage.setItem(this.STORAGE_KEY, jsonString);
-      
+
       if (process.env.NODE_ENV === 'development') {
         console.log('服务器配置已覆盖本地配置');
       }
@@ -635,7 +634,7 @@ export class ConfigManager {
     }
 
     const serverConfig = await this.loadServerConfig();
-    
+
     if (!serverConfig) {
       return false;
     }
@@ -644,7 +643,7 @@ export class ConfigManager {
       this.saveConfig(serverConfig);
       const jsonString = JSON.stringify(serverConfig);
       localStorage.setItem(this.STORAGE_KEY, jsonString);
-      
+
       if (process.env.NODE_ENV === 'development') {
         console.log('服务器配置已同步到本地');
       }
@@ -668,7 +667,7 @@ export class ConfigManager {
     size?: number;
   } | null> {
     const url = this.getServerConfigUrl();
-    
+
     if (!url) {
       return null;
     }
@@ -698,13 +697,13 @@ export class ConfigManager {
     } catch {
       // HEAD 请求失败，尝试 GET 请求获取基本信息
       const config = await this.loadServerConfig();
-      
+
       if (config) {
         return {
           version: config.version
         };
       }
-      
+
       return null;
     }
   }

@@ -46,11 +46,9 @@ export function Modal({
           <DialogTitle>{title}</DialogTitle>
           {description ? (
             <DialogDescription>{description}</DialogDescription>
-          ) : (
-            // 注意：不使用 sr-only 重复 title，避免无障碍阅读器重复朗读
-            // DialogTitle 已经提供了足够的语义信息
-            null
-          )}
+              // 注意：不使用 sr-only 重复 title，避免无障碍阅读器重复朗读
+              // DialogTitle 已经提供了足够的语义信息
+          ) : null}
         </DialogHeader>
         {children}
       </DialogContent>
