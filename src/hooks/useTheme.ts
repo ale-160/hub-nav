@@ -1,7 +1,18 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useTheme as useWrkszTheme } from '@wrksz/themes/client';
 import { useLocalStorage } from './useLocalStorage';
 import { ConfigManager, ThemeSettings } from '@/lib/configManager';
+
+/**
+ * 默认主题设置
+ */
+const DEFAULT_THEME_SETTINGS: ThemeSettings = {
+  mode: 'light',
+  primaryColor: '#3b82f6',
+  iconSize: 'medium',
+  gridSpacing: 16,
+  language: 'zh'
+};
 
 /**
  * 自定义 Hook：用于管理主题设置（基于 @wrksz/themes）
@@ -9,7 +20,15 @@ import { ConfigManager, ThemeSettings } from '@/lib/configManager';
  */
 export function useTheme() {
   // 从 ConfigManager 获取默认主题设置
-  const defaultTheme = ConfigManager.getDefaultConfig().theme;
+  const [defaultTheme, setDefaultTheme] = useState<ThemeSettings>(DEFAULT_THEME_SETTINGS);
+
+  useEffect(() => {
+    ConfigManager.getDefaultConfig().then(config => {
+      if (config?.theme) {
+        setDefaultTheme(config.theme);
+      }
+    });
+  }, []);
 
   // 使用 useLocalStorage Hook 管理主题配置（仅存储配置，不操作 DOM）
   const [theme, setTheme] = useLocalStorage<ThemeSettings>('hub-nav-theme', defaultTheme);

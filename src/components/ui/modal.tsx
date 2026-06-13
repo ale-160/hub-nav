@@ -16,18 +16,20 @@ interface ModalProps {
   description?: string;
   children: React.ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  hideCloseButton?: boolean;
 }
 
 /**
  * 模态框组件 - 基于 shadcn Dialog 的包装器
  */
-export function Modal({ 
-  isOpen, 
-  onClose, 
-  title, 
+export function Modal({
+  isOpen,
+  onClose,
+  title,
   description,
-  children, 
-  size = 'md' 
+  children,
+  size = 'md',
+  hideCloseButton = false
 }: ModalProps) {
   // 尺寸配置
   const sizeClasses = {
@@ -39,7 +41,7 @@ export function Modal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className={`${sizeClasses[size]} bg-card`}>
+      <DialogContent className={`${sizeClasses[size]} bg-card`} showCloseButton={!hideCloseButton}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (

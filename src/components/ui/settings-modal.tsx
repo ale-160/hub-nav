@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { toast } from 'sonner';
-import { UserConfig, OperationModeSettings } from '@/lib/configManager';
+import { UserConfig, OperationModeSettings, ConfigManager } from '@/lib/configManager';
 import { Modal } from './modal';
 import { Button } from './button';
 import { Slider } from './slider';
@@ -83,6 +83,14 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [showClearAllConfirm, setShowClearAllConfirm] = useState(false);
 
+  // 服务器配置状态
+  const [serverConfigUrl, setServerConfigUrl] = useState('');
+  const [serverConfigTesting, setServerConfigTesting] = useState(false);
+  const [serverConfigApplying, setServerConfigApplying] = useState(false);
+  const [hasLocalConfig, setHasLocalConfig] = useState(false);
+  const [syncEnabled, setSyncEnabled] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
   // 加载备份列表
   useEffect(() => {
     if (isOpen && activeTab === 'data') {
@@ -90,10 +98,22 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
         const backupList = getBackupList();
         setBackups(backupList);
         setBackupStorageInfo(getBackupStorageInfo());
+        // 加载服务器配置 URL 和本地配置状态
+        setServerConfigUrl(ConfigManager.getServerConfigUrl() || '');
+        setHasLocalConfig(ConfigManager.hasLocalConfig());
+        setSyncEnabled(ConfigManager.isSyncEnabled());
       };
       loadBackups();
     }
   }, [isOpen, activeTab]);
+
+  // 保存服务器配置 URL
+  useEffect(() => {
+    if (isOpen && activeTab === 'data' && serverConfigUrl !== (ConfigManager.getServerConfigUrl() || '')) {
+      // 保存到 localStorage
+      ConfigManager.setServerConfigUrl(serverConfigUrl || null);
+    }
+  }, [isOpen, activeTab, serverConfigUrl]);
 
   // 根据当前配置的语言获取文案（优先使用传入的 language，其次使用 config 中的）
   const currentLanguage = language || config.theme.language || 'zh';
@@ -307,6 +327,104 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
       }
     });
   }, [config.theme, onConfigUpdate]);
+
+  /**
+   * 测试服务器配置连接
+   */
+  const handleTestServerConfig = useCallback(async () => {
+    if (!serverConfigUrl.trim()) {
+      return;
+    }
+
+    setServerConfigTesting(true);
+    try {
+      const config = await ConfigManager.loadServerConfig();
+      if (config) {
+        toast.success(STRINGS.serverConfigTestSuccess);
+      } else {
+        toast.error(STRINGS.serverConfigTestFailed);
+      }
+    } catch (error) {
+      toast.error(STRINGS.serverConfigTestFailed);
+    } finally {
+      setServerConfigTesting(false);
+    }
+  }, [serverConfigUrl, STRINGS]);
+
+  /**
+   * 应用服务器配置
+   */
+  const handleApplyServerConfig = useCallback(async () => {
+    if (!serverConfigUrl.trim()) {
+      return;
+    }
+
+    // 如果存在本地配置，显示警告
+    if (hasLocalConfig) {
+      const confirmed = window.confirm(STRINGS.serverConfigOverwriteConfirm);
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    setServerConfigApplying(true);
+    try {
+      const success = await ConfigManager.useServerConfigAsLocal();
+      if (success) {
+        toast.success(STRINGS.serverConfigApplied);
+        // 重新加载页面以应用新配置
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        toast.error(STRINGS.serverConfigApplyFailed);
+      }
+    } catch (error) {
+      toast.error(STRINGS.serverConfigApplyFailed);
+    } finally {
+      setServerConfigApplying(false);
+    }
+  }, [serverConfigUrl, hasLocalConfig, STRINGS]);
+
+  /**
+   * 切换云端同步
+   */
+  const handleToggleSync = useCallback((enabled: boolean) => {
+    ConfigManager.setSyncEnabled(enabled);
+    setSyncEnabled(enabled);
+    if (enabled) {
+      toast.success(STRINGS.serverConfigSyncEnabled);
+    } else {
+      toast.success(STRINGS.serverConfigSyncDisabled);
+    }
+  }, [STRINGS]);
+
+  /**
+   * 手动同步
+   */
+  const handleManualSync = useCallback(async () => {
+    if (!serverConfigUrl.trim()) {
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const success = await ConfigManager.syncFromServer();
+      if (success) {
+        toast.success(STRINGS.serverConfigSyncSuccess);
+        // 重新加载页面以应用新配置
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        toast.error(STRINGS.serverConfigSyncFailed);
+      }
+    } catch (error) {
+      toast.error(STRINGS.serverConfigSyncFailed);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [serverConfigUrl, STRINGS]);
 
   /**
    * 重置所有数据
@@ -730,6 +848,111 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                   >
                     {STRINGS.resetAllData}
                   </Button>
+                </div>
+              </div>
+
+              {/* 服务器配置 */}
+              <div className="pt-4 border-t border-border">
+                <h3 className="text-sm font-medium text-foreground mb-3">{STRINGS.serverConfig}</h3>
+                <div className="space-y-3">
+                  {/* 服务器配置 URL */}
+                  <div className="space-y-2">
+                    <label className="text-xs text-muted-foreground">{STRINGS.serverConfigUrl}</label>
+                    <input
+                      type="text"
+                      value={serverConfigUrl}
+                      onChange={(e) => setServerConfigUrl(e.target.value)}
+                      placeholder={STRINGS.serverConfigUrlPlaceholder}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-sm"
+                    />
+                    <p className="text-xs text-muted-foreground">{STRINGS.serverConfigUrlDesc}</p>
+                  </div>
+
+                  {/* 配置按钮 */}
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleTestServerConfig}
+                      disabled={!serverConfigUrl.trim() || serverConfigTesting}
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      {serverConfigTesting ? STRINGS.serverConfigTesting : STRINGS.serverConfigTestConnection}
+                    </Button>
+                    {serverConfigUrl && (
+                      <Button
+                        onClick={() => setServerConfigUrl('')}
+                        variant="ghost"
+                        size="sm"
+                      >
+                        {STRINGS.serverConfigClearUrl}
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* 状态信息 */}
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-muted-foreground">{STRINGS.serverConfigStatus}:</span>
+                    {serverConfigUrl ? (
+                      <>
+                        <span className="text-green-600">{STRINGS.serverConfigConfigured}</span>
+                        {hasLocalConfig && (
+                          <span className="text-amber-600">({STRINGS.serverConfigHasLocal})</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">{STRINGS.serverConfigNotConfigured}</span>
+                    )}
+                  </div>
+
+                  {/* 云端同步开关 */}
+                  {serverConfigUrl && (
+                    <div className="flex items-center justify-between p-3 bg-muted rounded-lg border border-border">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-foreground">{STRINGS.serverConfigSync}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{STRINGS.serverConfigSyncDesc}</p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={syncEnabled}
+                        onClick={() => handleToggleSync(!syncEnabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                          syncEnabled ? 'bg-primary' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                            syncEnabled ? 'translate-x-6' : 'translate-x-1'
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 手动同步按钮 */}
+                  {serverConfigUrl && (
+                    <Button
+                      onClick={handleManualSync}
+                      disabled={isSyncing}
+                      variant="secondary"
+                      className="w-full justify-center"
+                    >
+                      {isSyncing ? '🔄 Syncing...' : '🔄 ' + (STRINGS.serverConfigSyncSuccess || 'Sync Now')}
+                    </Button>
+                  )}
+
+                  {/* 应用服务器配置按钮 */}
+                  {serverConfigUrl && (
+                    <Button
+                      onClick={handleApplyServerConfig}
+                      disabled={serverConfigApplying}
+                      variant="outline"
+                      className="w-full justify-center"
+                    >
+                      🔄 {STRINGS.serverConfigApply}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

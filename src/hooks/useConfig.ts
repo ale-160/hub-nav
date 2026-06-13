@@ -10,13 +10,15 @@ import {getBrowserLanguage} from '@/data/i18n';
  * 负责配置的加载、保存和更新
  */
 export function useConfig() {
-  const [config, setConfig] = useState<UserConfig>(ConfigManager.getDefaultConfig());
+  const [config, setConfig] = useState<UserConfig | null>(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [needsSetup, setNeedsSetup] = useState(false);
 
   // 客户端挂载后从 localStorage 加载配置
   useEffect(() => {
     const browserLang = getBrowserLanguage();
     const loadedConfig = ConfigManager.loadConfig();
+    
     if (loadedConfig) {
       // 如果配置中没有语言设置，则检测浏览器语言
       if (!loadedConfig.theme.language) {
@@ -24,12 +26,34 @@ export function useConfig() {
       }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfig(loadedConfig);
+      setIsMounted(true);
+      
+      // 如果启用了同步，从服务器同步配置
+      if (ConfigManager.isSyncEnabled()) {
+        ConfigManager.syncFromServer().then(synced => {
+          if (synced) {
+            const newConfig = ConfigManager.loadConfig();
+            if (newConfig) {
+              // eslint-disable-next-line react-hooks/set-state-in-effect
+              setConfig(newConfig);
+            }
+          }
+        });
+      }
     } else {
-      // 没有配置时，使用默认配置并检测浏览器语言
-      const defaultConfig = ConfigManager.getDefaultConfig(browserLang);
-      setConfig(defaultConfig);
+      // 没有配置，显示首次使用引导
+      setNeedsSetup(true);
+      setIsMounted(true);
     }
-    setIsMounted(true);
+  }, []);
+
+  /**
+   * 完成首次使用引导
+   */
+  const completeSetup = useCallback((newConfig: UserConfig) => {
+    ConfigManager.saveConfig(newConfig);
+    setConfig(newConfig);
+    setNeedsSetup(false);
   }, []);
 
   // 清理过期缓存
@@ -49,6 +73,7 @@ export function useConfig() {
    * 处理配置更新（部分更新）
    */
   const updateConfig = useCallback((partialConfig: Partial<UserConfig>) => {
+    if (!config) return;
     const newConfig = { ...config, ...partialConfig };
     saveConfig(newConfig);
   }, [config, saveConfig]);
@@ -57,6 +82,7 @@ export function useConfig() {
    * 添加图标（基础版，不包含页面关联）
    */
   const addIcon = useCallback((icon: Omit<IconItem, 'id' | 'order'> & { folderId?: string }) => {
+    if (!config) return;
     const newIcon: IconItem = {
       ...icon,
       id: crypto.randomUUID(),
@@ -79,6 +105,7 @@ export function useConfig() {
     iconData: Omit<IconItem, 'id' | 'order' | 'isHidden'> & { folderId?: string },
     currentPageIndex: number
   ) => {
+    if (!config) return null;
     const newIcon: IconItem = {
       ...iconData,
       id: crypto.randomUUID(),
@@ -124,6 +151,7 @@ export function useConfig() {
     name: string,
     currentPageIndex: number
   ) => {
+    if (!config) return;
     const newFolder: FolderItem = {
       id: crypto.randomUUID(),
       name,
@@ -155,16 +183,18 @@ export function useConfig() {
    * 从所有页面中移除指定的 ID
    */
   const removeIdsFromAllPages = useCallback((idsToRemove: string[]) => {
+    if (!config) return [];
     return config.pages.map(page => ({
       ...page,
       iconIds: page.iconIds.filter(id => !idsToRemove.includes(id))
     }));
-  }, [config.pages]);
+  }, [config]);
 
   /**
    * 将 IDs 添加到指定页面的 iconIds
    */
   const addIdsToPage = useCallback((pageIndex: number, idsToAdd: string[]) => {
+    if (!config) return [];
     // 如果没有页面，创建默认页面
     if (config.pages.length === 0) {
       return [{
@@ -186,7 +216,7 @@ export function useConfig() {
       }
       return page;
     });
-  }, [config.pages]);
+  }, [config]);
 
   /**
    * 通用更新函数：根据 ID 更新数组中的项
@@ -205,6 +235,7 @@ export function useConfig() {
    * 更新图标
    */
   const updateIcon = useCallback((iconId: string, updates: Partial<IconItem>) => {
+    if (!config) return;
     const newIcons = updateItemInArray(config.icons, iconId, updates);
     saveConfig({ ...config, icons: newIcons });
   }, [config, saveConfig, updateItemInArray]);
@@ -213,6 +244,7 @@ export function useConfig() {
    * 删除图标
    */
   const deleteIcon = useCallback((iconId: string) => {
+    if (!config) return;
     const newConfig = deleteIconFromConfig(config, iconId);
     saveConfig(newConfig);
   }, [config, saveConfig]);
@@ -221,6 +253,7 @@ export function useConfig() {
    * 添加文件夹
    */
   const addFolder = useCallback((name: string) => {
+    if (!config) return;
     const newFolder: FolderItem = {
       id: crypto.randomUUID(),
       name,
@@ -239,6 +272,7 @@ export function useConfig() {
    * 更新文件夹
    */
   const updateFolder = useCallback((folderId: string, updates: Partial<FolderItem>) => {
+    if (!config) return;
     const newFolders = updateItemInArray(config.folders, folderId, updates);
     saveConfig({ ...config, folders: newFolders });
   }, [config, saveConfig, updateItemInArray]);
@@ -247,6 +281,7 @@ export function useConfig() {
    * 删除文件夹
    */
   const deleteFolder = useCallback((folderId: string, deleteApps: boolean = false) => {
+    if (!config) return;
     const newFolders = config.folders.filter(folder => folder.id !== folderId);
 
     // 获取文件夹内的所有图标 ID
@@ -304,6 +339,8 @@ export function useConfig() {
   return {
     config,
     isMounted,
+    needsSetup,
+    completeSetup,
     updateConfig,
     saveConfig,
     // 基础操作（不包含页面关联）

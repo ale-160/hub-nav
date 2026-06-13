@@ -321,83 +321,10 @@ export class ConfigManager {
    * 获取默认配置
    * 用于初始化或重置配置
    * @param lang - 语言代码 ('zh' | 'en')
-   * @returns 默认的用户配置对象
+   * @returns 默认的用户配置对象（从 config.json 加载）
    */
-  static getDefaultConfig(lang: Language = 'en'): UserConfig {
-    const S = getStrings(lang);
-    return {
-      layout: {
-        columns: 5,
-        rows: 4,
-        extensions: undefined
-      },
-      theme: {
-        mode: 'light',
-        primaryColor: '#3b82f6',
-        iconSize: 'medium',
-        gridSpacing: 16,
-        language: lang, // 使用传入的语言
-        extensions: undefined
-      },
-      icons: [
-        {
-          id: 'icon-ale160',
-          name: S.ale160,
-          url: 'https://ale160.com',
-          folderId: undefined,
-          order: 0,
-          isHidden: false,
-          iconType: 'favicon'
-        },
-        {
-          id: 'icon-web-text',
-          name: S.webText,
-          url: 'https://web-text.ale160.com',
-          folderId: 'folder-favorites',
-          order: 1,
-          isHidden: false,
-          iconType: 'favicon'
-        },
-        {
-          id: 'icon-web-img',
-          name: S.webImg,
-          url: 'https://web-img.ale160.com/',
-          folderId: 'folder-favorites',
-          order: 2,
-          isHidden: false,
-          iconType: 'favicon'
-        }
-      ],
-      folders: [
-        {
-          id: 'folder-favorites',
-          name: S.favorites,
-          parentId: undefined,
-          order: 0
-        }
-      ],
-      pages: [
-        {
-          id: 'page-1',
-          name: S.newPage,
-          iconIds: ['icon-ale160', 'folder-favorites']
-        },
-        {
-          id: 'page-2',
-          name: S.newPage,
-          iconIds: []
-        }
-      ],
-      rootOrder: ['icon-ale160', 'folder-favorites'], // 初始化根级排序数组
-      version: CURRENT_VERSION, // 使用语义化版本号
-      searchEngine: 'https://www.bing.com/search?q=',
-      operationMode: {
-        mode: 'hybrid',
-        openMethod: 'click',
-        menuTrigger: 'rightClick',
-        showAddButton: true
-      }
-    };
+  static async getDefaultConfig(lang: Language = 'en'): Promise<UserConfig | null> {
+    return this.loadDefaultConfig(lang);
   }
 
   /**
@@ -415,6 +342,370 @@ export class ConfigManager {
       if (process.env.NODE_ENV === 'development') {
         console.error('清除配置失败:', error);
       }
+    }
+  }
+
+  // ==================== 远程配置管理 ====================
+
+  private static readonly SERVER_CONFIG_URL_KEY = 'hub-nav-server-config-url';
+  private static readonly SYNC_ENABLED_KEY = 'hub-nav-sync-enabled';
+
+  /**
+   * 检查是否存在本地配置
+   * @returns 存在本地配置返回 true，否则返回 false
+   */
+  static hasLocalConfig(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    try {
+      const stored = localStorage.getItem(this.STORAGE_KEY);
+      return stored !== null && stored.length > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 获取服务器配置 URL
+   * @returns 服务器配置 URL，不存在则返回 null
+   */
+  static getServerConfigUrl(): string | null {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
+    try {
+      return localStorage.getItem(this.SERVER_CONFIG_URL_KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * 设置服务器配置 URL
+   * @param url - 服务器配置 URL，为 null 则清除
+   */
+  static setServerConfigUrl(url: string | null): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      if (url === null) {
+        localStorage.removeItem(this.SERVER_CONFIG_URL_KEY);
+      } else {
+        localStorage.setItem(this.SERVER_CONFIG_URL_KEY, url);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('设置服务器配置 URL 失败:', error);
+      }
+    }
+  }
+
+  /**
+   * 检查是否启用同步
+   * @returns 是否启用同步
+   */
+  static isSyncEnabled(): boolean {
+    if (typeof window === 'undefined') {
+      return false;
+    }
+
+    try {
+      return localStorage.getItem(this.SYNC_ENABLED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 设置同步启用状态
+   * @param enabled - 是否启用同步
+   */
+  static setSyncEnabled(enabled: boolean): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      if (enabled) {
+        localStorage.setItem(this.SYNC_ENABLED_KEY, 'true');
+      } else {
+        localStorage.removeItem(this.SYNC_ENABLED_KEY);
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('设置同步状态失败:', error);
+      }
+    }
+  }
+
+  /**
+   * 从内置 JSON 文件加载默认配置
+   * @param lang - 语言代码
+   * @returns 默认配置
+   */
+  static async loadDefaultConfig(lang: 'zh' | 'en' = 'zh'): Promise<UserConfig | null> {
+    try {
+      const configUrl = lang === 'en' ? '/config.en.json' : '/config.json';
+      const response = await fetch(configUrl);
+      
+      if (!response.ok) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`加载默认配置失败: ${response.status} ${response.statusText}`);
+        }
+        return null;
+      }
+
+      const config = await response.json();
+      
+      // 使用导入功能处理配置
+      const importResult = importFromJson(JSON.stringify(config));
+      
+      if (importResult.success && importResult.data) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('默认配置加载成功');
+        }
+        return importResult.data;
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('默认配置验证失败');
+        }
+        return null;
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('加载默认配置失败:', error);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * 从本地 JSON 文件导入配置
+   * @param file - JSON 文件
+   * @returns 导入结果
+   */
+  static async importFromFile(file: File): Promise<UserConfig | null> {
+    try {
+      const text = await file.text();
+      const importResult = importFromJson(text);
+      
+      if (importResult.success && importResult.data) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('本地文件配置导入成功');
+        }
+        return importResult.data;
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('本地文件配置验证失败:', importResult.error);
+        }
+        return null;
+      }
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('导入本地文件失败:', error);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * 从服务器加载配置
+   * @param timeout - 超时时间（毫秒），默认 5000
+   * @returns 成功返回配置对象，失败返回 null
+   */
+  static async loadServerConfig(timeout = 5000): Promise<UserConfig | null> {
+    const url = this.getServerConfigUrl();
+    
+    if (!url) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('未配置服务器配置 URL');
+      }
+      return null;
+    }
+
+    // 验证 URL 格式
+    try {
+      new URL(url);
+    } catch {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('服务器配置 URL 格式无效');
+      }
+      return null;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        },
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error(`服务器配置加载失败: ${response.status} ${response.statusText}`);
+        }
+        return null;
+      }
+
+      const text = await response.text();
+      
+      // 使用导入功能处理配置
+      const importResult = importFromJson(text);
+      
+      if (importResult.success && importResult.data) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('服务器配置加载成功');
+        }
+        return importResult.data;
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('服务器配置验证失败:', importResult.error);
+        }
+        return null;
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('服务器配置加载超时');
+          }
+        } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          // CORS 或网络错误
+          if (process.env.NODE_ENV === 'development') {
+            console.error('服务器配置加载失败: 网络错误或 CORS 跨域问题。请确保服务器允许跨域请求。');
+          }
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('加载服务器配置失败:', error.message);
+          }
+        }
+      }
+      return null;
+    }
+  }
+
+  /**
+   * 使用服务器配置覆盖本地配置
+   * @returns 成功返回 true，失败返回 false
+   */
+  static async useServerConfigAsLocal(): Promise<boolean> {
+    const serverConfig = await this.loadServerConfig();
+    
+    if (!serverConfig) {
+      return false;
+    }
+
+    try {
+      this.saveConfig(serverConfig);
+      // 强制立即保存，不使用防抖
+      const jsonString = JSON.stringify(serverConfig);
+      localStorage.setItem(this.STORAGE_KEY, jsonString);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('服务器配置已覆盖本地配置');
+      }
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('覆盖本地配置失败:', error);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * 同步服务器配置到本地（如果启用同步）
+   * @returns 同步成功返回 true，失败或未启用返回 false
+   */
+  static async syncFromServer(): Promise<boolean> {
+    if (!this.isSyncEnabled()) {
+      return false;
+    }
+
+    const serverConfig = await this.loadServerConfig();
+    
+    if (!serverConfig) {
+      return false;
+    }
+
+    try {
+      this.saveConfig(serverConfig);
+      const jsonString = JSON.stringify(serverConfig);
+      localStorage.setItem(this.STORAGE_KEY, jsonString);
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('服务器配置已同步到本地');
+      }
+      return true;
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('同步服务器配置失败:', error);
+      }
+      return false;
+    }
+  }
+
+  /**
+   * 获取服务器配置信息（不保存）
+   * @returns 配置信息，包含版本、更新时间等
+   */
+  static async getServerConfigInfo(): Promise<{
+    version?: string;
+    updatedAt?: string;
+    description?: string;
+    size?: number;
+  } | null> {
+    const url = this.getServerConfigUrl();
+    
+    if (!url) {
+      return null;
+    }
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(url, {
+        method: 'HEAD',
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      // 获取文件大小
+      const contentLength = response.headers.get('Content-Length');
+      const size = contentLength ? parseInt(contentLength) : undefined;
+
+      return {
+        size
+      };
+    } catch {
+      // HEAD 请求失败，尝试 GET 请求获取基本信息
+      const config = await this.loadServerConfig();
+      
+      if (config) {
+        return {
+          version: config.version
+        };
+      }
+      
+      return null;
     }
   }
 

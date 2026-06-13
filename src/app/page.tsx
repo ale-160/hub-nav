@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ConfigManager, UserConfig, IconItem, ThemeSettings } from '@/lib/configManager';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useTheme } from '@/hooks/useTheme';
@@ -14,6 +14,7 @@ import { EditItemModal } from '@/components/ui/modals/EditItemModal';
 import { Button } from '@/components/ui/button';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { OnboardingGuide } from '@/components/ui/onboarding-guide';
+import { SetupGuide } from '@/components/ui/setup-guide';
 import { getStrings } from '@/data/i18n';
 import { getStructuredData } from '@/config/structuredData';
 import { HelpCircle, Globe, Heart } from 'lucide-react';
@@ -24,15 +25,40 @@ export default function Home() {
   const {
     config,
     isMounted,
+    needsSetup,
+    completeSetup,
     updateConfig: updateConfigBase,
     addIconWithPage,
     addFolderWithPage,
   } = useConfig();
 
-  const S = getStrings(config.theme.language);
+  // 在首次使用引导期间，使用默认配置
+  const [defaultConfig, setDefaultConfig] = useState<UserConfig | null>(null);
+  
+  useEffect(() => {
+    if (!config) {
+      ConfigManager.getDefaultConfig().then(setDefaultConfig);
+    }
+  }, [config]);
+  
+  // 当 config 存在时直接使用，否则用 defaultConfig，如果都为空则使用硬编码的最小默认配置
+  const SAFE_DEFAULT_CONFIG: UserConfig = {
+    layout: { columns: 5, rows: 4 },
+    theme: { mode: 'light', primaryColor: '#3b82f6', iconSize: 'medium', gridSpacing: 16, language: 'zh' },
+    icons: [],
+    folders: [],
+    pages: [{ id: 'page-1', name: '首页', iconIds: [] }],
+    rootOrder: [],
+    version: '0.1.0',
+    searchEngine: 'https://www.bing.com/search?q=',
+    operationMode: { mode: 'hybrid', openMethod: 'click', menuTrigger: 'rightClick', showAddButton: true }
+  };
+  
+  const activeConfig = config || defaultConfig || SAFE_DEFAULT_CONFIG;
+  const S = getStrings(activeConfig.theme.language);
   
   // 获取结构化数据
-  const structuredDataList = getStructuredData(config.theme.language);
+  const structuredDataList = getStructuredData(activeConfig.theme.language);
 
   // UI 状态
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
@@ -41,7 +67,7 @@ export default function Home() {
   const { toggleMode, setTheme } = useTheme();
 
   // 使用导入导出 Hook
-  const { exportConfig, importConfig } = useImportExport({ language: config.theme.language });
+  const { exportConfig, importConfig } = useImportExport({ language: activeConfig.theme.language });
 
   /**
    * 处理配置更新（包含主题同步）
@@ -60,14 +86,14 @@ export default function Home() {
    * 切换语言
    */
   const handleToggleLanguage = useCallback(() => {
-    const newLanguage = config.theme.language === 'zh' ? 'en' : 'zh';
+    const newLanguage = activeConfig.theme.language === 'zh' ? 'en' : 'zh';
     handleConfigUpdate({
       theme: {
-        ...config.theme,
+        ...activeConfig.theme,
         language: newLanguage
       }
     });
-  }, [config.theme, handleConfigUpdate]);
+  }, [activeConfig.theme, handleConfigUpdate]);
 
   // 使用图标和文件夹管理 Hook（Service 层）
   const {
@@ -79,7 +105,7 @@ export default function Home() {
     moveIconToRoot: handleMoveToRoot,
     reorderIconsInFolder: handleReorderIconsInFolder,
     clearFolderIcons: handleDeleteAllIconsInFolder
-  } = useIconFolderManager({ config, saveConfig: handleConfigUpdate });
+  } = useIconFolderManager({ config: activeConfig, saveConfig: handleConfigUpdate });
 
   // UI 状态
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -97,7 +123,7 @@ export default function Home() {
     debouncedSearchQuery,
     searchedFolderIds,
     filteredPageIconIds
-  } = useSearch({ config, currentPageIndex });
+  } = useSearch({ config: activeConfig, currentPageIndex });
 
   /**
    * 处理添加项目提交（由 AddItemModal 调用）
@@ -115,7 +141,7 @@ export default function Home() {
     if (formData.type === 'icon') {
       // 如果在文件夹内添加，验证文件夹是否存在
       if (formData.folderId) {
-        const targetFolder = config.folders.find(f => f.id === formData.folderId);
+        const targetFolder = activeConfig.folders.find(f => f.id === formData.folderId);
         if (!targetFolder) {
           if (process.env.NODE_ENV === 'development') {
             console.error('[handleAddItemSubmit] 目标文件夹不存在:', formData.folderId);
@@ -138,7 +164,7 @@ export default function Home() {
       // 使用高级方法，自动处理页面关联
       addFolderWithPage(formData.name.trim(), currentPageIndex);
     }
-  }, [config.folders, currentPageIndex, addIconWithPage, addFolderWithPage]);
+  }, [activeConfig.folders, currentPageIndex, addIconWithPage, addFolderWithPage]);
 
   /**
    * 处理搜索框回车键
@@ -146,19 +172,19 @@ export default function Home() {
   const handleSearchKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && searchQuery.trim()) {
       // 如果配置了搜索引擎，则跳转搜索
-      if (config.searchEngine) {
-        const searchUrl = config.searchEngine + encodeURIComponent(searchQuery.trim());
+      if (activeConfig.searchEngine) {
+        const searchUrl = activeConfig.searchEngine + encodeURIComponent(searchQuery.trim());
         window.open(searchUrl, '_blank');
         setSearchQuery(''); // 清空搜索框
       }
     }
-  }, [searchQuery, config.searchEngine, setSearchQuery]);
+  }, [searchQuery, activeConfig.searchEngine, setSearchQuery]);
 
   /**
    * 处理图标编辑
    */
   const handleIconEdit = (iconId: string) => {
-    const icon = config.icons.find(i => i.id === iconId);
+    const icon = activeConfig.icons.find(i => i.id === iconId);
     if (icon) {
       setEditItem(icon);
       setIsEditModalOpen(true);
@@ -196,11 +222,11 @@ export default function Home() {
    * 处理编辑项目提交（由 EditItemModal 调用）
    */
   const handleEditItemSubmit = useCallback(async (updatedItem: IconItem) => {
-    const updatedIcons = config.icons.map(icon =>
+    const updatedIcons = activeConfig.icons.map(icon =>
       icon.id === updatedItem.id ? updatedItem : icon
     );
     handleConfigUpdate({ icons: updatedIcons });
-  }, [config.icons, handleConfigUpdate]);
+  }, [activeConfig.icons, handleConfigUpdate]);
 
   /**
    * 包装文件夹重命名（适配 PageContainer 接口）
@@ -211,6 +237,14 @@ export default function Home() {
 
   return (
     <>
+      {/* 首次使用引导 */}
+      {needsSetup && (
+        <SetupGuide
+          isOpen={needsSetup}
+          onComplete={completeSetup}
+        />
+      )}
+
       {/* 结构化数据 */}
       {structuredDataList.map((data, index) => (
         <script
@@ -223,15 +257,15 @@ export default function Home() {
       <div
         className="min-h-screen"
         style={{
-          background: config.theme.wallpaperUrl
-            ? config.theme.wallpaperUrl.startsWith('linear-gradient')
-              ? config.theme.wallpaperUrl
-              : `url(${config.theme.wallpaperUrl}) center/cover fixed`
+          background: activeConfig.theme.wallpaperUrl
+            ? activeConfig.theme.wallpaperUrl.startsWith('linear-gradient')
+              ? activeConfig.theme.wallpaperUrl
+              : `url(${activeConfig.theme.wallpaperUrl}) center/cover fixed`
             : 'var(--bg-primary)'
         }}
       >
       {/* 顶部栏 */}
-            <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 ${config.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-(--bg-secondary)'}`}>
+            <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 ${activeConfig.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-(--bg-secondary)'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between h-16 gap-4">
             {/* 左侧：Logo */}
@@ -314,16 +348,16 @@ export default function Home() {
       <main className="flex-1">
         {isMounted ? (
           <PageContainer
-              icons={config.icons}
-              folders={config.folders}
-              pages={config.pages.map((page, index) => ({
+              icons={activeConfig.icons}
+              folders={activeConfig.folders}
+              pages={activeConfig.pages.map((page, index) => ({
                 ...page,
                 // 仅在搜索时过滤当前页面的图标 ID
                 iconIds: index === currentPageIndex && debouncedSearchQuery.trim()
                   ? filteredPageIconIds
                   : page.iconIds
               }))}
-              config={config}
+              config={activeConfig}
               onUpdate={handleConfigUpdate}
               searchedFolderIds={searchedFolderIds}
               onIconEdit={handleIconEdit}
@@ -359,7 +393,7 @@ export default function Home() {
           setAddModalFolderId(undefined);
         }}
         onSubmit={handleAddItemSubmit}
-        language={config.theme.language || 'zh'}
+        language={activeConfig.theme.language || 'zh'}
         initialType={addModalType}
         initialFolderId={addModalFolderId}
       />
@@ -374,7 +408,7 @@ export default function Home() {
         }}
         onSubmit={handleEditItemSubmit}
         item={editItem}
-        language={config.theme.language || 'zh'}
+        language={activeConfig.theme.language || 'zh'}
       />
 
       {/* 页脚 */}
@@ -419,18 +453,18 @@ export default function Home() {
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
-        config={config}
+        config={activeConfig}
         onConfigUpdate={handleConfigUpdate}
         onImport={importConfig}
         onExport={exportConfig}
-        language={config.theme.language}
+        language={activeConfig.theme.language}
       />
 
       {/* 帮助模态框 */}
       <OnboardingGuide
         isOpen={isHelpModalOpen}
         onClose={() => setIsHelpModalOpen(false)}
-        language={config.theme.language}
+        language={activeConfig.theme.language}
       />
       </div>
     </>
