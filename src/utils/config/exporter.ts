@@ -8,7 +8,6 @@ import type { UserConfig, ExportedConfig, ExportMeta, IconItem } from './types';
 import { CURRENT_VERSION } from './version';
 import { extractDomain } from '@/utils/url';
 import { generateFaviconCandidates } from '@/utils/favicon-strategies';
-import { ConfigManager } from '@/lib/configManager';
 
 /**
  * 创建导出元数据
@@ -42,13 +41,7 @@ function enrichIconsForExport(icons: IconItem[]): IconItem[] {
     const domain = extractDomain(icon.url);
     if (!domain) return icon;
 
-    // 优先从缓存获取
-    const cachedIcon = ConfigManager.getCachedIcon(domain);
-    if (cachedIcon) {
-      return { ...icon, iconUrl: cachedIcon };
-    }
-
-    // 无缓存时，使用第一个候选 URL
+    // 使用第一个候选 URL
     const candidates = generateFaviconCandidates(domain);
     if (candidates.length > 0) {
       return { ...icon, iconUrl: candidates[0] };

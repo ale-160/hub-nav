@@ -29,23 +29,6 @@ export interface ExportedConfig {
 }
 
 /**
- * 图标缓存项接口定义
- */
-export interface IconCacheItem {
-  dataUrl: string;
-  addedAt: number;      // 添加时间
-  updatedAt: number;    // 更新时间
-  lastAccessedAt: number; // 最后访问时间
-}
-
-/**
- * 图标缓存对象接口定义
- */
-export interface IconCache {
-  [domain: string]: IconCacheItem;
-}
-
-/**
  * 图标扩展字段
  */
 export interface IconExtensions {

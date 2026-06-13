@@ -20,6 +20,7 @@ interface PageContentProps {
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
   onIconHide?: (id: string) => void;
+  onUpdateIcon?: (iconId: string, updates: Partial<IconItem>) => void;
   onMoveIconToFolder?: (iconId: string, folderId: string) => void;
   onReorderIconsInFolder?: (folderId: string, orderedIconIds: string[]) => void; // 新增：文件夹内图标排序
   onMoveToRoot?: (iconId: string) => void; // 新增：移动到根级
@@ -48,6 +49,7 @@ export function PageContent({
   onIconEdit,
   onIconDelete,
   onIconHide,
+  onUpdateIcon,
   onMoveIconToFolder,
   onReorderIconsInFolder, // 新增
   onMoveToRoot, // 新增
@@ -117,6 +119,7 @@ export function PageContent({
                   onEdit={onIconEdit || (() => {})}
                   onDelete={onIconDelete || (() => {})}
                   onHide={onIconHide || (() => {})}
+                  onUpdateIcon={onUpdateIcon}
                   onMoveToFolder={onMoveIconToFolder} // 新增
                   folders={folders.map(f => ({ id: f.id, name: f.name }))} // 新增：传递文件夹列表
                   config={config}
@@ -145,6 +148,7 @@ export function PageContent({
                   onReorderIcons={onReorderIconsInFolder} // 新增：传递文件夹内图标排序回调
                   onMoveToRoot={onMoveToRoot} // 新增：传递移动到根级回调
                   onMoveToFolder={onMoveIconToFolder} // 新增：传递移动到文件夹回调
+                  onUpdateIcon={onUpdateIcon}
                   isDragging={folder.id === activeId} // 修复：动态判断拖拽状态
                   isOver={overId === folder.id}
                   isDropTarget={readyToDropFolderId === folder.id} // 使用 readyToDropFolderId 判断是否准备好放入

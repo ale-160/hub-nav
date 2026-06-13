@@ -3,7 +3,6 @@ import { getStrings } from '@/data/i18n';
 import { FaviconSelector } from './FaviconSelector';
 import { extractDomain, generateFaviconCandidates } from '@/utils/url';
 import { testSingleUrl } from '@/utils/favicon-preloader';
-import { ConfigManager } from '@/lib/configManager';
 
 interface FaviconModeProps {
   websiteUrl?: string;
@@ -56,11 +55,6 @@ export const FaviconMode = React.memo(function FaviconMode({
         const domain = extractDomain(websiteUrl);
         if (!domain) return;
 
-        // 先清除旧缓存
-        if (ConfigManager.hasDomainCache(domain)) {
-          ConfigManager.clearDomainCache(domain);
-        }
-
         const candidates = generateFaviconCandidates(domain);
         if (candidates.length === 0) {
           if (!cancelled) {
@@ -80,9 +74,6 @@ export const FaviconMode = React.memo(function FaviconMode({
             if (!cancelled) {
               setAutoDetectedIcon(result.url);
               setIsDetecting(false);
-              if (domain) {
-                ConfigManager.setIconCache(domain, result.url);
-              }
             }
             return;
           }

@@ -4,8 +4,6 @@
 
 // 重新导出类型定义（保持向后兼容）
 export type {
-  IconCacheItem,
-  IconCache,
   IconItem,
   FolderItem,
   OperationModeSettings,
@@ -16,7 +14,6 @@ export type {
 
 // 从新位置导入类型
 import type {
-  IconCache,
   Page,
   UserConfig
 } from '@/utils/config/types';
@@ -325,26 +322,7 @@ export class ConfigManager {
   static async getDefaultConfig(lang: Language = 'en'): Promise<UserConfig | null> {
     return this.loadDefaultConfig(lang);
   }
-
-  /**
-   * 清除所有配置数据
-   */
-  static clearConfig(): void {
-    // 服务端环境不执行
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      localStorage.removeItem(this.STORAGE_KEY);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('清除配置失败:', error);
-      }
-    }
-  }
-
-  // ==================== 远程配置管理 ====================
+// ==================== 远程配置管理 ====================
 
   private static readonly SERVER_CONFIG_URL_KEY = 'hub-nav-server-config-url';
   private static readonly SYNC_ENABLED_KEY = 'hub-nav-sync-enabled';
@@ -655,59 +633,6 @@ export class ConfigManager {
       return false;
     }
   }
-
-  /**
-   * 获取服务器配置信息（不保存）
-   * @returns 配置信息，包含版本、更新时间等
-   */
-  static async getServerConfigInfo(): Promise<{
-    version?: string;
-    updatedAt?: string;
-    description?: string;
-    size?: number;
-  } | null> {
-    const url = this.getServerConfigUrl();
-
-    if (!url) {
-      return null;
-    }
-
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(url, {
-        method: 'HEAD',
-        signal: controller.signal
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        return null;
-      }
-
-      // 获取文件大小
-      const contentLength = response.headers.get('Content-Length');
-      const size = contentLength ? parseInt(contentLength) : undefined;
-
-      return {
-        size
-      };
-    } catch {
-      // HEAD 请求失败，尝试 GET 请求获取基本信息
-      const config = await this.loadServerConfig();
-
-      if (config) {
-        return {
-          version: config.version
-        };
-      }
-
-      return null;
-    }
-  }
-
   /**
    * 创建新页面
    * @param config - 当前配置
@@ -749,180 +674,9 @@ export class ConfigManager {
   // ==================== 图标缓存管理 ====================
 
   private static readonly ICON_CACHE_KEY = 'hub-nav-icon-cache';
-  private static readonly CACHE_EXPIRY_DAYS = 7; // 缓存有效期7天
-  private static readonly MAX_CACHE_SIZE = 5 * 1024 * 1024; // 最大缓存大小5MB
 
   /**
-   * 读取整个图标缓存对象
-   * @returns 图标缓存对象，服务端返回空对象
-   */
-  static getIconCache(): IconCache {
-    // 服务端环境返回空对象
-    if (typeof window === 'undefined') {
-      return {};
-    }
-
-    try {
-      const cached = localStorage.getItem(this.ICON_CACHE_KEY);
-      if (!cached) {
-        return {};
-      }
-      return JSON.parse(cached) as IconCache;
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('读取图标缓存失败:', error);
-      }
-      return {};
-    }
-  }
-
-  /**
-   * 检查某个域名是否有有效缓存
-   * @param domain - 域名
-   * @returns 有有效缓存返回 dataUrl，无则返回 null
-   */
-  static getCachedIcon(domain: string): string | null {
-    if (!domain || typeof window === 'undefined') {
-      return null;
-    }
-
-    try {
-      const cache = this.getIconCache();
-      const cachedItem = cache[domain];
-
-      if (!cachedItem) {
-        return null;
-      }
-
-      // 检查缓存是否过期（7天）
-      const now = Date.now();
-      const expiryTime = cachedItem.lastAccessedAt + (this.CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-
-      if (now > expiryTime) {
-        // 缓存过期，删除该条目
-        delete cache[domain];
-        localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
-        return null;
-      }
-
-      // 更新最后访问时间
-      cachedItem.lastAccessedAt = now;
-      localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
-
-      return cachedItem.dataUrl;
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('获取缓存图标失败:', error);
-      }
-      return null;
-    }
-  }
-
-
-
-  /**
-   * 设置图标缓存
-   * @param domain - 域名
-   * @param url - 图标URL
-   */
-  static setIconCache(domain: string, url: string): void {
-    if (!domain || !url || typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      // 清理过期缓存
-      this.cleanExpiredCache();
-
-      const cache = this.getIconCache();
-      const now = Date.now();
-
-      // 检查缓存大小是否超限
-      if (this.isCacheSizeExceeded(cache, url)) {
-        this.cleanOldestCache(cache);
-      }
-
-      // 写入新缓存或更新现有缓存
-      if (cache[domain]) {
-        // 更新现有缓存
-        cache[domain] = {
-          ...cache[domain],
-          dataUrl: url,
-          updatedAt: now,
-          lastAccessedAt: now
-        };
-      } else {
-        // 添加新缓存
-        cache[domain] = {
-          dataUrl: url,
-          addedAt: now,
-          updatedAt: now,
-          lastAccessedAt: now
-        };
-      }
-
-      localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('写入图标缓存失败:', error);
-      }
-    }
-  }
-
-  /**
-   * 清理过期缓存（超过7天的条目）
-   */
-  static cleanExpiredCache(): void {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const cache = this.getIconCache();
-      const now = Date.now();
-      let hasChanges = false;
-
-      for (const domain in cache) {
-        const cachedItem = cache[domain];
-        const expiryTime = cachedItem.lastAccessedAt + (this.CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
-
-        if (now > expiryTime) {
-          delete cache[domain];
-          hasChanges = true;
-        }
-      }
-
-      if (hasChanges) {
-        localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
-      }
-    } catch (_error) {
-    }
-  }
-
-  /**
-   * 清除特定域名的缓存
-   * @param domain - 域名
-   */
-  static clearDomainCache(domain: string): void {
-    if (!domain || typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const cache = this.getIconCache();
-      if (cache[domain]) {
-        delete cache[domain];
-        localStorage.setItem(this.ICON_CACHE_KEY, JSON.stringify(cache));
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('清除域名缓存失败:', error);
-      }
-    }
-  }
-
-  /**
-   * 清除所有图标缓存
+   * 清除所有图标缓存（旧缓存键，用于清理遗留数据）
    */
   static clearAllIconCache(): void {
     if (typeof window === 'undefined') {
@@ -931,84 +685,8 @@ export class ConfigManager {
 
     try {
       localStorage.removeItem(this.ICON_CACHE_KEY);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('清除所有缓存失败:', error);
-      }
-    }
-  }
-
-  /**
-   * 检查是否有特定域名的缓存
-   * @param domain - 域名
-   * @returns 是否有缓存
-   */
-  static hasDomainCache(domain: string): boolean {
-    if (!domain || typeof window === 'undefined') {
-      return false;
-    }
-
-    try {
-      const cache = this.getIconCache();
-      return !!cache[domain];
-    } catch {
-      return false;
-    }
-  }
-
-  /**
-   * 检查缓存大小是否超限
-   * @param cache - 当前缓存对象
-   * @param newDataUrl - 要添加的新数据URL
-   * @returns 是否超限
-   */
-  private static isCacheSizeExceeded(cache: IconCache, newDataUrl: string): boolean {
-    try {
-      // 计算当前缓存大小
-      const cacheString = JSON.stringify(cache);
-      const currentSize = new Blob([cacheString]).size;
-
-      // 计算新缓存项的大小
-      const newItemSize = new Blob([newDataUrl]).size;
-      const newSize = currentSize + newItemSize;
-
-      return newSize > this.MAX_CACHE_SIZE;
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('检查缓存大小失败:', error);
-      }
-      return false;
-    }
-  }
-
-  /**
-   * 清理最旧的缓存条目（基于最后访问时间）
-   * @param cache - 缓存对象
-   */
-  private static cleanOldestCache(cache: IconCache): void {
-    try {
-      // 将缓存条目按最后访问时间排序
-      const entries = Object.entries(cache);
-      entries.sort((a, b) => a[1].lastAccessedAt - b[1].lastAccessedAt);
-
-      // 删除最旧的条目直到总大小低于3MB
-      const TARGET_SIZE = 3 * 1024 * 1024; // 3MB
-
-      for (const [domain] of entries) {
-        delete cache[domain];
-
-        // 重新检查大小
-        const cacheString = JSON.stringify(cache);
-        const currentSize = new Blob([cacheString]).size;
-
-        if (currentSize <= TARGET_SIZE) {
-          break;
-        }
-      }
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('清理最旧缓存失败:', error);
-      }
+    } catch (_error) {
+      // 忽略
     }
   }
 }

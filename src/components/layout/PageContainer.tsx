@@ -33,6 +33,7 @@ interface PageContainerProps {
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
   onIconHide?: (id: string) => void;
+  onUpdateIcon?: (iconId: string, updates: Partial<IconItem>) => void;
   onMoveIconToFolder?: (iconId: string, folderId: string) => void;
   onReorderIconsInFolder?: (folderId: string, orderedIconIds: string[]) => void; // 新增：文件夹内图标排序
   onMoveToRoot?: (iconId: string) => void; // 新增：移动到根级
@@ -60,6 +61,7 @@ export function PageContainer({
   onIconEdit,
   onIconDelete,
   onIconHide,
+  onUpdateIcon,
   onMoveIconToFolder,
   onReorderIconsInFolder, // 新增
   onMoveToRoot, // 新增
@@ -582,6 +584,7 @@ export function PageContainer({
           onIconEdit={() => {}}
           onIconDelete={() => {}}
           onIconHide={() => {}}
+          onUpdateIcon={() => {}}
           isDragging={true}
           isOver={false}
         />
@@ -643,6 +646,7 @@ export function PageContainer({
             onIconEdit={onIconEdit}
             onIconDelete={onIconDelete}
             onIconHide={onIconHide}
+            onUpdateIcon={onUpdateIcon}
             onMoveIconToFolder={onMoveIconToFolder}
             onReorderIconsInFolder={onReorderIconsInFolder}
             onMoveToRoot={onMoveToRoot}

@@ -150,9 +150,10 @@ export function EditItemModal({
           onWebsiteUrlChange={(url) => handleFieldChange('url', url)}
           onCustomColorChange={handleCustomColorChange}
           onFaviconSelect={(url) => {
-            // ✅ 用户选择了 favicon，更新 customIconUrl
-            handleFieldChange('customIconUrl', url);
-            handleFieldChange('iconType', 'custom');
+            // 用户选择了 favicon，更新 iconUrl 并保持 favicon 类型
+            handleFieldChange('iconUrl', url);
+            handleFieldChange('iconType', 'favicon');
+            handleFieldChange('customIconUrl', undefined);
           }}
         />
 

@@ -1,9 +1,9 @@
 'use client';
 
-import React, {useState, useCallback, useMemo} from 'react';
+import React, {useState, useCallback} from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { IconItem, ConfigManager } from '@/lib/configManager';
+import { IconItem } from '@/lib/configManager';
 import { getBuiltinIconById, getDefaultIcon, type BuiltinIcon } from '@/data/icons';
 import { extractDomain, generateFaviconCandidates, getFallbackIcon } from '@/utils/url';
 import { renderSolidIcon, SOLID_COLORS } from '@/utils/icon';
@@ -37,20 +37,6 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
   // 使用 ref 跟踪上一次的 src，避免在 effect 中同步调用 setState
   const prevSrcRef = React.useRef<string>('');
 
-  // 直接从缓存读取（仅对非自定义图标使用缓存）
-  const cachedSrc = useMemo(() => {
-    if (!src || isCustomIcon) return null; // 自定义图标不使用缓存
-    try {
-      const domain = extractDomain(src);
-      return ConfigManager.getCachedIcon(domain);
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error('检查缓存失败:', error);
-      }
-      return null;
-    }
-  }, [src, isCustomIcon]);
-
   // 当自定义图标 URL 变化时，更新时间戳以强制刷新
   React.useEffect(() => {
     if (isCustomIcon && src && src !== prevSrcRef.current) {
@@ -58,20 +44,6 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
       setCustomIconTimestamp(Date.now());
     }
   }, [src, isCustomIcon]);
-
-  // 处理图片加载成功 - 仅对非自定义图标写入缓存
-  const handleImageLoad = useCallback(() => {
-    if (src && !cachedSrc && !isCustomIcon) {
-      try {
-        const domain = extractDomain(src);
-        ConfigManager.setIconCache(domain, src);
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error('写入缓存失败:', error);
-        }
-      }
-    }
-  }, [src, cachedSrc, isCustomIcon]);
 
   // 处理图片加载失败
   const handleImageError = useCallback(() => {
@@ -87,10 +59,8 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
     );
   }
 
-  // 显示图片（自定义图标直接使用src，不使用缓存）
-  // 同时添加key确保图片更新时重新渲染
-  // 对于自定义图标，添加时间戳参数以绕过浏览器缓存
-  const displaySrc = isCustomIcon ? `${src}?t=${customIconTimestamp}` : (cachedSrc || src);
+  // 自定义图标添加时间戳绕过浏览器缓存，favicon 直接使用 URL
+  const displaySrc = isCustomIcon ? `${src}?t=${customIconTimestamp}` : src;
   
   return (
     <img
@@ -98,7 +68,6 @@ function Favicon({ src, alt, className = '', appName = '', isCustomIcon = false 
       src={displaySrc}
       alt={alt}
       className={`w-full h-full object-cover ${className}`}
-      onLoad={handleImageLoad}
       onError={handleImageError}
     />
   );
@@ -114,6 +83,7 @@ interface IconProps {
   folders?: Array<{ id: string; name: string }>; // 新增：文件夹列表
   onDragStart?: (e: React.DragEvent, iconId: string) => void;
   isDragging?: boolean; // 全局拖拽状态
+  onUpdateIcon?: (iconId: string, updates: Partial<IconItem>) => void; // 回写图标字段
   config?: {
     theme: {
       iconSize: 'small' | 'medium' | 'large';
@@ -140,7 +110,7 @@ type IconContentType =
  * 图标组件 - 渲染单个图标项
  * @param props - 组件属性
  */
-export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, folders, config }: IconProps) {
+export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, folders, onUpdateIcon, config }: IconProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: item.id,
   });
@@ -244,21 +214,15 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           };
         }
 
-        // ✅ 优先使用缓存：用户在 FaviconSelector 中选择并保存的图标
+        // 无 iconUrl 时使用多策略获取图标，并回写 iconUrl
         const domain = extractDomain(item.url);
-        const cachedIcon = ConfigManager.getCachedIcon(domain);
-        
-        if (cachedIcon) {
-          return {
-            type: 'image' as const,
-            content: cachedIcon
-          };
-        }
-
-        // 无缓存时使用多策略获取图标
         const candidates = generateFaviconCandidates(domain);
 
         if (candidates.length > 0) {
+          // 异步回写 iconUrl 到配置，下次加载不再需要动态获取
+          if (onUpdateIcon) {
+            onUpdateIcon(item.id, { iconUrl: candidates[0] });
+          }
           return {
             type: 'image' as const,
             content: candidates[0]
@@ -271,7 +235,7 @@ export function Icon({ item, onEdit, onDelete, onMoveToFolder, onMoveToRoot, fol
           };
         }
     }
-  }, [item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.customColor, item.name]);
+  }, [item.id, item.iconType, item.builtinIcon, item.customIconUrl, item.iconUrl, item.url, item.customColor, item.name, onUpdateIcon]);
 
   /**
    * 处理点击事件

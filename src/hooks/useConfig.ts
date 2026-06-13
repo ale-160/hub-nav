@@ -55,9 +55,9 @@ export function useConfig() {
     setNeedsSetup(false);
   }, []);
 
-  // 清理过期缓存
+  // 清理旧版图标缓存数据
   useEffect(() => {
-    ConfigManager.cleanExpiredCache();
+    ConfigManager.clearAllIconCache();
   }, []);
 
   /**

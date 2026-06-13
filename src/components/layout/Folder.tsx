@@ -47,6 +47,7 @@ interface FolderProps {
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
   onIconHide?: (id: string) => void;
+  onUpdateIcon?: (iconId: string, updates: Partial<IconItem>) => void;
   onReorderIcons?: (folderId: string, orderedIconIds: string[]) => void; // 新增：重新排序图标
   onMoveToRoot?: (iconId: string) => void; // 新增：移动到根级
   onMoveToFolder?: (iconId: string, folderId: string) => void; // 新增：移动到文件夹
@@ -71,6 +72,7 @@ export function Folder({
   onIconEdit,
   onIconDelete,
   onIconHide,
+  onUpdateIcon,
   onReorderIcons,
   onMoveToRoot,
   onMoveToFolder
@@ -437,6 +439,7 @@ export function Folder({
                           }
                         }}
                         folders={folders.filter(f => f.id !== folder.id).map(f => ({ id: f.id, name: f.name }))}
+                        onUpdateIcon={onUpdateIcon}
                         config={config}
                       />
                     ))}

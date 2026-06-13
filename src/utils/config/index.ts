@@ -9,8 +9,6 @@ export type {
   Version,
   ExportMeta,
   ExportedConfig,
-  IconCacheItem,
-  IconCache,
   IconExtensions,
   IconItem,
   FolderExtensions,

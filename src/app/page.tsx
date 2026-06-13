@@ -13,6 +13,7 @@ import { AddItemModal } from '@/components/ui/modals/AddItemModal';
 import { EditItemModal } from '@/components/ui/modals/EditItemModal';
 import { Button } from '@/components/ui/button';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
+import { extractDomain, generateFaviconCandidates } from '@/utils/url';
 import { OnboardingGuide } from '@/components/ui/onboarding-guide';
 import { SetupGuide } from '@/components/ui/setup-guide';
 import { getStrings } from '@/data/i18n';
@@ -134,6 +135,7 @@ export default function Home() {
     url: string;
     folderId?: string;
     iconType?: 'favicon' | 'builtin' | 'custom';
+    iconUrl?: string;
     builtinIcon?: string;
     customIconUrl?: string;
     customColor?: string;
@@ -150,15 +152,29 @@ export default function Home() {
         }
       }
 
+      // 为 favicon 类型的图标设置 iconUrl，避免每次打开页面都重新获取
+      const iconType = formData.iconType || 'favicon';
+      let iconUrl = formData.iconUrl; // 优先使用 FaviconMode 探测到的 URL
+      if (iconType === 'favicon' && !iconUrl) {
+        const domain = extractDomain(formData.url.trim());
+        if (domain) {
+          const candidates = generateFaviconCandidates(domain);
+          if (candidates.length > 0) {
+            iconUrl = candidates[0];
+          }
+        }
+      }
+
       // 使用高级方法，自动处理页面关联
       addIconWithPage({
         name: formData.name.trim(),
         url: formData.url.trim(),
         folderId: formData.folderId,
-        iconType: formData.iconType || 'favicon',
+        iconType,
         builtinIcon: formData.builtinIcon,
         customIconUrl: formData.customIconUrl,
-        customColor: formData.customColor
+        customColor: formData.customColor,
+        iconUrl
       }, currentPageIndex);
     } else {
       // 使用高级方法，自动处理页面关联
@@ -208,6 +224,16 @@ export default function Home() {
     setAddModalFolderId(undefined);
     setIsAddModalOpen(true);
   };
+
+  /**
+   * 处理图标字段更新（如回写 iconUrl）
+   */
+  const handleUpdateIcon = useCallback((iconId: string, updates: Partial<IconItem>) => {
+    const updatedIcons = activeConfig.icons.map(icon =>
+      icon.id === iconId ? { ...icon, ...updates } : icon
+    );
+    handleConfigUpdate({ icons: updatedIcons });
+  }, [activeConfig.icons, handleConfigUpdate]);
 
   /**
    * 打开添加文件夹模态框
@@ -363,6 +389,7 @@ export default function Home() {
               onIconEdit={handleIconEdit}
               onIconDelete={deleteIcon}
               onIconHide={handleIconHide}
+              onUpdateIcon={handleUpdateIcon}
               onMoveIconToFolder={handleMoveIconToFolder}
               onReorderIconsInFolder={handleReorderIconsInFolder} // 新增：文件夹内图标排序
               onMoveToRoot={handleMoveToRoot} // 新增：移动到根级

@@ -16,6 +16,7 @@ interface PageDroppableProps {
   onIconEdit?: (id: string) => void;
   onIconDelete?: (id: string) => void;
   onIconHide?: (id: string) => void;
+  onUpdateIcon?: (iconId: string, updates: Partial<IconItem>) => void;
   onMoveIconToFolder?: (iconId: string, folderId: string) => void;
   onReorderIconsInFolder?: (folderId: string, orderedIconIds: string[]) => void;
   onMoveToRoot?: (iconId: string) => void;
@@ -47,6 +48,7 @@ export function PageDroppable({
   onIconEdit,
   onIconDelete,
   onIconHide,
+  onUpdateIcon,
   onMoveIconToFolder,
   onReorderIconsInFolder,
   onMoveToRoot,
@@ -104,6 +106,7 @@ export function PageDroppable({
           onIconEdit={onIconEdit}
           onIconDelete={onIconDelete}
           onIconHide={onIconHide}
+          onUpdateIcon={onUpdateIcon}
           onMoveIconToFolder={onMoveIconToFolder}
           onReorderIconsInFolder={onReorderIconsInFolder}
           onMoveToRoot={onMoveToRoot}

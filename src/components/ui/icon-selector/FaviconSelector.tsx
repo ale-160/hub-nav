@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { generateFaviconCandidates } from '@/utils/favicon-strategies';
 import { testSingleUrl } from '@/utils/favicon-preloader';
 import { extractDomain } from '@/utils/url';
-import { ConfigManager } from '@/lib/configManager';
 import { getStrings } from '@/data/i18n';
 
 interface FaviconSelectorProps {
@@ -190,10 +189,6 @@ export function FaviconSelector({
   }, [websiteUrl, language]);
 
   const handleSelect = (url: string) => {
-    const domain = extractDomain(websiteUrl);
-    if (domain) {
-      ConfigManager.setIconCache(domain, url);
-    }
     onSelect(url);
   };
 

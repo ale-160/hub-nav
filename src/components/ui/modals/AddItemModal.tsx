@@ -20,6 +20,7 @@ interface AddItemForm {
   url: string;
   folderId?: string;
   iconType?: 'favicon' | 'builtin' | 'custom';
+  iconUrl?: string; // favicon 图标 URL
   builtinIcon?: string;
   customIconUrl?: string; // 自定义图标 URL（仅用于图片）
   customColor?: string;   // 自定义颜色值（仅用于纯色图标）
@@ -57,6 +58,7 @@ export function AddItemModal({
     url: '',
     folderId: initialFolderId,
     iconType: 'favicon',
+    iconUrl: undefined,
     builtinIcon: undefined,
     customIconUrl: undefined,
     customColor: undefined
@@ -75,6 +77,7 @@ export function AddItemModal({
         url: '',
         folderId: initialFolderId,
         iconType: 'favicon',
+        iconUrl: undefined,
         builtinIcon: undefined,
         customIconUrl: undefined,
         customColor: undefined
@@ -99,6 +102,7 @@ export function AddItemModal({
       url: '',
       folderId: initialFolderId,
       iconType: 'favicon',
+      iconUrl: undefined,
       builtinIcon: undefined,
       customIconUrl: undefined,
       customColor: undefined
@@ -270,9 +274,10 @@ export function AddItemModal({
             onWebsiteUrlChange={(url) => handleFieldChange('url', url)}
             onCustomColorChange={handleCustomColorChange}
             onFaviconSelect={(url) => {
-              // ✅ 用户选择了 favicon，更新 customIconUrl
-              handleFieldChange('customIconUrl', url);
-              handleFieldChange('iconType', 'custom');
+              // 用户选择了 favicon，更新 iconUrl 并保持 favicon 类型
+              handleFieldChange('iconUrl', url);
+              handleFieldChange('iconType', 'favicon');
+              handleFieldChange('customIconUrl', undefined);
             }}
           />
         )}
