@@ -8,21 +8,21 @@ import {getBrowserLanguage} from '@/data/i18n';
 /**
  * 配置管理 Hook
  * 负责配置的加载、保存和更新
+ * @param defaultLang - 路由传入的默认语言，优先级高于浏览器语言检测
  */
-export function useConfig() {
+export function useConfig(defaultLang?: 'en' | 'zh') {
   const [config, setConfig] = useState<UserConfig | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [needsSetup, setNeedsSetup] = useState(false);
 
   // 客户端挂载后从 localStorage 加载配置
   useEffect(() => {
-    const browserLang = getBrowserLanguage();
     const loadedConfig = ConfigManager.loadConfig();
 
     if (loadedConfig) {
-      // 如果配置中没有语言设置，则检测浏览器语言
+      // 语言优先级：1. 用户手动设置的语言 2. 路由传入的 defaultLang 3. 浏览器语言检测
       if (!loadedConfig.theme.language) {
-        loadedConfig.theme.language = browserLang;
+        loadedConfig.theme.language = defaultLang || getBrowserLanguage();
       }
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfig(loadedConfig);
@@ -44,7 +44,7 @@ export function useConfig() {
       setNeedsSetup(true);
       setIsMounted(true);
     }
-  }, []);
+  }, [defaultLang]);
 
   /**
    * 完成首次使用引导

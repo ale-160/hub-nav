@@ -22,7 +22,7 @@ export const METADATA_ZH = {
   openGraph: {
     title: "hub-nav · 美观的浏览器主页和起始页",
     description: "一个美观的操作系统风格浏览器主页，支持拖拽、文件夹、暗色模式、自定义壁纸和多页管理。",
-    url: "https://hub-nav.ale160.com",
+    url: "https://hub-nav.ale160.com/zh",
     siteName: "hub-nav",
     locale: "zh_CN",
     type: "website" as const,
@@ -43,10 +43,10 @@ export const METADATA_ZH = {
     creator: "@ale160"
   },
   alternates: {
-    canonical: "https://hub-nav.ale160.com",
+    canonical: "https://hub-nav.ale160.com/zh/",
     languages: {
-      "en": "https://hub-nav.ale160.com",
-      "zh-CN": "https://hub-nav.ale160.com"
+      "en": "https://hub-nav.ale160.com/",
+      "zh-CN": "https://hub-nav.ale160.com/zh/"
     }
   }
 };
@@ -73,7 +73,7 @@ export const METADATA_EN = {
   openGraph: {
     title: "hub-nav · Beautiful Browser Homepage & Start Page",
     description: "A beautiful OS-style browser homepage with drag-and-drop, folders, dark mode, custom wallpapers, and multi-page management.",
-    url: "https://hub-nav.ale160.com",
+    url: "https://hub-nav.ale160.com/",
     siteName: "hub-nav",
     locale: "en_US",
     type: "website" as const,
@@ -94,10 +94,10 @@ export const METADATA_EN = {
     creator: "@ale160"
   },
   alternates: {
-    canonical: "https://hub-nav.ale160.com",
+    canonical: "https://hub-nav.ale160.com/",
     languages: {
-      "en": "https://hub-nav.ale160.com",
-      "zh-CN": "https://hub-nav.ale160.com"
+      "en": "https://hub-nav.ale160.com/",
+      "zh-CN": "https://hub-nav.ale160.com/zh/"
     }
   }
 };

@@ -31,15 +31,17 @@
 ## 技术栈
 
 - **核心框架**：Next.js 16.2.4 + React 19.2.4 (App Router)
-- **UI/样式**：Tailwind CSS 4.2.4 + shadcn/ui（基于 Radix UI 1.4.3）
+- **UI/样式**：Tailwind CSS 4 + @tailwindcss/postcss 4 + shadcn/ui（基于 Radix UI 1.4.3）
 - **主题管理**：@wrksz/themes 0.9.2（替代 next-themes，提供更丰富的主题定制能力）
 - **关键库**：
-  - @dnd-kit/core 6.3.1（拖拽系统）
+  - @dnd-kit/core 6.3.1 + @dnd-kit/sortable 10.0.0 + @dnd-kit/modifiers 9.0.0（拖拽系统）
   - lucide-react 1.14.0（图标库）
   - cmdk 1.1.1（命令面板）
   - sonner 2.0.7（Toast 通知）
   - class-variance-authority 0.7.1
   - tailwind-merge 3.5.0
+  - clsx 2.1.1
+  - tw-animate-css 1.4.0
 - **工具链**：TypeScript 5.x, ESLint 9.x
 
 ## 快速开始
@@ -81,6 +83,9 @@ hub-nav-open/
 │   ├── components/
 │   │   ├── layout/            # 核心业务组件
 │   │   │   ├── Page/          # 页面相关组件
+│   │   │   │   ├── BlankContextMenu.tsx
+│   │   │   │   ├── PageDroppable.tsx
+│   │   │   │   └── PageNavigation.tsx
 │   │   │   ├── PageContainer.tsx  # 多页容器
 │   │   │   ├── PageContent.tsx    # 单页内容
 │   │   │   ├── PageIndicator.tsx  # 页面指示器
@@ -96,16 +101,21 @@ hub-nav-open/
 │   │   │   └── ...
 │   │   └── providers/         # 全局 Provider
 │   │       └── ErrorBoundary.tsx
+│   ├── config/                # 站点配置
+│   │   ├── metadata.ts       # 页面元数据
+│   │   ├── sitemap.ts        # 站点地图生成
+│   │   └── structuredData.ts # 结构化数据（JSON-LD）
 │   ├── hooks/                 # 自定义 Hooks
 │   │   ├── useConfig.ts       # 配置管理
 │   │   ├── useTheme.ts        # 主题管理
 │   │   ├── useLocalStorage.ts # 本地存储
 │   │   ├── useImportExport.ts # 导入导出
 │   │   ├── useIconFolderManager.ts # 图标和文件夹管理
+│   │   ├── useSearch.ts       # 搜索功能
+│   │   ├── useContextMenu.ts  # 右键菜单
 │   │   └── ...
 │   ├── lib/                   # 工具库
-│   │   ├── configManager.ts   # 配置管理器
-│   │   └── builtinIcons.ts    # 内置图标库
+│   │   └── configManager.ts   # 配置管理器
 │   ├── utils/                 # 通用工具函数
 │   │   ├── config/            # 配置相关工具
 │   │   │   ├── types.ts       # 类型定义
@@ -113,15 +123,21 @@ hub-nav-open/
 │   │   │   ├── backup.ts      # 备份管理
 │   │   │   ├── exporter.ts    # 配置导出
 │   │   │   ├── importer.ts    # 配置导入
+│   │   │   ├── defaults.ts    # 默认配置值
+│   │   │   ├── validator.ts   # 配置校验
+│   │   │   ├── migrations.ts  # 版本迁移实现
 │   │   │   └── migration-registry.ts # 迁移注册表
+│   │   ├── favicon-preloader.ts  # Favicon 预加载器
+│   │   ├── favicon-strategies.ts # Favicon URL 生成策略
 │   │   ├── configExport.ts    # 配置导出工具
 │   │   ├── iconOperations.ts  # 图标操作工具
+│   │   ├── icon.tsx           # 图标渲染工具
+│   │   ├── ui.ts              # UI 工具函数
 │   │   └── url.ts             # URL 工具函数
 │   └── data/                  # 数据文件
 │       ├── i18n.ts            # 国际化文案
 │       └── icons.ts           # 图标数据
 ├── public/                    # 静态资源
-├── books/                     # 文档与测试报告
 ├── package.json
 ├── tsconfig.json
 └── next.config.ts
