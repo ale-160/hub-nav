@@ -28,7 +28,7 @@ export const METADATA_ZH = {
     type: "website" as const,
     images: [
       {
-        url: "https://ale160.com/images/logo-icon.ico",
+        url: "https://ale160.com/images/logo-icon.png",
         width: 1200,
         height: 630,
         alt: "hub-nav 预览图"
@@ -39,7 +39,7 @@ export const METADATA_ZH = {
     card: "summary_large_image",
     title: "hub-nav · 美观的浏览器主页和起始页",
     description: "一个美观的操作系统风格浏览器主页，支持拖拽、文件夹、暗色模式、自定义壁纸和多页管理。",
-    images: ["https://ale160.com/images/logo-icon.ico"],
+    images: ["https://ale160.com/images/logo-icon.png"],
     creator: "@ale160"
   },
   alternates: {
@@ -79,7 +79,7 @@ export const METADATA_EN = {
     type: "website" as const,
     images: [
       {
-        url: "https://ale160.com/images/logo-icon.ico",
+        url: "https://ale160.com/images/logo-icon.png",
         width: 1200,
         height: 630,
         alt: "hub-nav Preview"
@@ -90,7 +90,7 @@ export const METADATA_EN = {
     card: "summary_large_image",
     title: "hub-nav · Beautiful Browser Homepage & Start Page",
     description: "A beautiful OS-style browser homepage with drag-and-drop, folders, dark mode, custom wallpapers, and multi-page management.",
-    images: ["https://ale160.com/images/logo-icon.ico"],
+    images: ["https://ale160.com/images/logo-icon.png"],
     creator: "@ale160"
   },
   alternates: {
@@ -113,7 +113,7 @@ export function getMetadata(lang: string = "en"): Metadata {
     creator: metadata.creator,
     publisher: metadata.publisher,
     icons: {
-      icon: "https://ale160.com/favicon.ico"
+      icon: "https://ale160.com/favicon.png"
     },
     formatDetection: {
       email: false,

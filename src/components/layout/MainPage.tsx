@@ -299,7 +299,7 @@ export default function MainPage({ lang }: MainPageProps) {
           <div className="flex items-center h-16 gap-2 md:gap-4">
             {/* 左侧：Logo */}
             <a href="https://ale160.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
-              <img src="https://ale160.com/images/logo-icon.ico" alt="Logo" className="w-8 h-8 rounded" />
+              <img src="https://ale160.com/images/logo-icon.png" alt="Logo" className="w-8 h-8 rounded" />
               <h1 className="text-xl font-bold text-foreground hidden sm:block">
                 {S.systemName}
                 <span className="text-sm text-muted-foreground ml-2">
@@ -487,7 +487,7 @@ export default function MainPage({ lang }: MainPageProps) {
           rel="noopener noreferrer"
           className="flex items-center gap-1.5 hover:text-foreground transition-colors"
         >
-          <img src="https://ale160.com/images/Avatar.svg" alt="" className="w-3.5 h-3.5" />
+          <img src="https://ale160.com/images/Avatar-SVG.png" alt="" className="w-3.5 h-3.5" />
           <span>{S.ale160}</span>
         </a>
       </footer>
