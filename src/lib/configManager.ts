@@ -430,7 +430,8 @@ export class ConfigManager {
    */
   static async loadDefaultConfig(lang: 'zh' | 'en' = 'zh'): Promise<UserConfig | null> {
     try {
-      const configUrl = lang === 'en' ? '/config.en.json' : '/config.json';
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+      const configUrl = lang === 'en' ? `${basePath}/config.en.json` : `${basePath}/config.json`;
       const response = await fetch(configUrl);
 
       if (!response.ok) {

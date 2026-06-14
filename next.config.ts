@@ -2,14 +2,19 @@ import type { NextConfig } from "next";
 import fs from 'fs';
 import path from 'path';
 
+const BASE_PATH = process.env.BASE_PATH || ''; // 部署子路径，通过环境变量 BASE_PATH 设置
+
 const baseConfig: NextConfig = {
     output: 'export',
-    basePath: '', // 使用自定义域名时不需要 basePath
+    basePath: BASE_PATH,
     trailingSlash: true,
     images: {
         unoptimized: true,
     },
 };
+
+// 将 basePath 暴露给客户端代码
+process.env.NEXT_PUBLIC_BASE_PATH = BASE_PATH;
 
 // 尝试加载本地私有配置文件
 let finalConfig = baseConfig;
