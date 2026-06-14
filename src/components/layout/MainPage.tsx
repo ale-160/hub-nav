@@ -284,7 +284,7 @@ export default function MainPage({ lang }: MainPageProps) {
       ))}
 
       <div
-        className="min-h-screen"
+        className="h-screen overflow-hidden flex flex-col"
         style={{
           background: activeConfig.theme.wallpaperUrl
             ? activeConfig.theme.wallpaperUrl.startsWith('linear-gradient')
@@ -294,13 +294,13 @@ export default function MainPage({ lang }: MainPageProps) {
         }}
       >
       {/* 顶部栏 */}
-            <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 ${activeConfig.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-(--bg-secondary)'}`}>
+            <header className={`border-b border-gray-200 dark:border-border sticky top-0 z-40 shrink-0 ${activeConfig.theme.wallpaperUrl ? 'bg-background/80 backdrop-blur-sm' : 'bg-(--bg-secondary)'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between h-16 gap-4">
+          <div className="flex items-center h-16 gap-2 md:gap-4">
             {/* 左侧：Logo */}
-            <a href="https://ale160.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+            <a href="https://ale160.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0">
               <img src="https://ale160.com/images/logo-icon.ico" alt="Logo" className="w-8 h-8 rounded" />
-              <h1 className="text-xl font-bold text-foreground">
+              <h1 className="text-xl font-bold text-foreground hidden sm:block">
                 {S.systemName}
                 <span className="text-sm text-muted-foreground ml-2">
                   {S.appVersion}
@@ -309,48 +309,48 @@ export default function MainPage({ lang }: MainPageProps) {
             </a>
 
             {/* 右侧：搜索和操作按钮 */}
-            <div className="flex items-center gap-2 flex-1 md:flex-none">
+            <div className="flex items-center gap-1.5 sm:gap-2 ml-auto">
               {/* 搜索框 */}
-              <div className="flex-1 md:flex-none">
+              <div className="min-w-0 flex-1 max-w-md">
                 <input
                 type="text"
                 placeholder={S.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                className="w-full md:w-64 px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
               />
               </div>
 
               {/* 帮助按钮 */}
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={() => setIsHelpModalOpen(true)}
                 title={S.help}
-                className="p-2"
+                className="shrink-0 w-8 h-8 sm:w-9 sm:h-9"
               >
-                <HelpCircle className="w-5 h-5" />
+                <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
 
               {/* 语言切换按钮 */}
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={handleToggleLanguage}
                 title={S.language}
-                className="p-2"
+                className="shrink-0 w-8 h-8 sm:w-9 sm:h-9"
               >
-                <Globe className="w-5 h-5" />
+                <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
 
               {/* 主题切换按钮 */}
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={toggleMode}
                 title={S.themeToggle}
-                className="p-2"
+                className="shrink-0 w-8 h-8 sm:w-9 sm:h-9"
               >
                 <ThemeToggleIcon />
               </Button>
@@ -358,12 +358,12 @@ export default function MainPage({ lang }: MainPageProps) {
               {/* 设置按钮 */}
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={() => setIsSettingsModalOpen(true)}
                 title={S.settings}
-                className="p-2"
+                className="shrink-0 w-8 h-8 sm:w-9 sm:h-9"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -373,8 +373,8 @@ export default function MainPage({ lang }: MainPageProps) {
         </div>
       </header>
 
-      {/* 主体区域 */}
-      <main className="flex-1">
+      {/* 主体区域 - 内部滚动 */}
+      <main className="flex-1 overflow-y-auto">
         {isMounted ? (
           <PageContainer
               icons={activeConfig.icons}
