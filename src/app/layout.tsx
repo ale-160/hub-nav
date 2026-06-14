@@ -14,8 +14,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
-      <body className="h-full font-sans">
+    <html lang="en" className="h-full overflow-hidden antialiased" suppressHydrationWarning>
+      <body className="h-full overflow-hidden font-sans">
         <ErrorBoundary>
           <ThemeProvider
             attribute="class"

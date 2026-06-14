@@ -616,7 +616,7 @@ export function PageContainer({
       <div
         ref={scrollContainerRef}
         data-scroll-container
-        className="flex overflow-x-auto snap-x snap-mandatory min-h-screen"
+        className="flex overflow-x-auto snap-x snap-mandatory h-full"
         style={{
           scrollbarWidth: 'none', // Firefox
           msOverflowStyle: 'none', // IE/Edge

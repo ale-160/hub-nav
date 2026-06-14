@@ -458,7 +458,7 @@ export default function MainPage({ lang }: MainPageProps) {
       />
 
       {/* 页脚 */}
-      <footer className="flex items-center justify-center gap-4 px-4 py-2 border-t border-gray-200 dark:border-border bg-background/50 text-xs text-muted-foreground">
+      <footer className="shrink-0 flex items-center justify-center gap-4 px-4 py-2 border-t border-gray-200 dark:border-border bg-background/50 text-xs text-muted-foreground">
         <a
           href="https://github.com/ale-160/hub-nav"
           target="_blank"
