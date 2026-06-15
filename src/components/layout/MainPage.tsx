@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { ConfigManager, UserConfig, IconItem, ThemeSettings } from '@/lib/configManager';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useTheme } from '@/hooks/useTheme';
@@ -8,17 +9,38 @@ import { useConfig } from '@/hooks/useConfig';
 import { useSearch } from '@/hooks/useSearch';
 import { useIconFolderManager } from '@/hooks/useIconFolderManager';
 import { useImportExport } from '@/hooks/useImportExport';
-import { SettingsModal } from '@/components/ui/settings-modal';
-import { AddItemModal } from '@/components/ui/modals/AddItemModal';
-import { EditItemModal } from '@/components/ui/modals/EditItemModal';
 import { Button } from '@/components/ui/button';
 import { ThemeToggleIcon } from '@/components/ui/theme-toggle-icon';
 import { extractDomain, generateFaviconCandidates } from '@/utils/url';
-import { OnboardingGuide } from '@/components/ui/onboarding-guide';
-import { SetupGuide } from '@/components/ui/setup-guide';
 import { getStrings } from '@/data/i18n';
 import { getStructuredData } from '@/config/structuredData';
 import { HelpCircle, Globe, Heart } from 'lucide-react';
+
+// 懒加载模态框组件（仅在需要时加载）
+const SettingsModal = dynamic(
+  () => import('@/components/ui/settings-modal').then(mod => ({ default: mod.SettingsModal })),
+  { loading: () => null }
+);
+
+const AddItemModal = dynamic(
+  () => import('@/components/ui/modals/AddItemModal').then(mod => ({ default: mod.AddItemModal })),
+  { loading: () => null }
+);
+
+const EditItemModal = dynamic(
+  () => import('@/components/ui/modals/EditItemModal').then(mod => ({ default: mod.EditItemModal })),
+  { loading: () => null }
+);
+
+const OnboardingGuide = dynamic(
+  () => import('@/components/ui/onboarding-guide').then(mod => ({ default: mod.OnboardingGuide })),
+  { loading: () => null }
+);
+
+const SetupGuide = dynamic(
+  () => import('@/components/ui/setup-guide').then(mod => ({ default: mod.SetupGuide })),
+  { loading: () => null }
+);
 
 interface MainPageProps {
   lang: 'en' | 'zh';
