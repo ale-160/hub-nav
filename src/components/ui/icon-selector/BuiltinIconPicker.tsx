@@ -59,8 +59,8 @@ export const BuiltinIconPicker = React.memo(function BuiltinIconPicker({
           }}
           className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl transition-all cursor-pointer ${
             selectedIconId === icon.id
-              ? 'ring-2 ring-blue-500 bg-gray-100 dark:bg-[#1c2541]'
-              : 'bg-gray-100 hover:bg-gray-200 dark:bg-[#141b2d] dark:hover:bg-[#1c2541]'
+              ? 'ring-2 ring-primary bg-muted'
+              : 'bg-muted hover:bg-accent'
           }`}
           title={
             isCustomColor

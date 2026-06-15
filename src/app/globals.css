@@ -39,12 +39,6 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* 无需重复定义，Tailwind CSS 4 自动处理 */
-  }
-}
-
 /* 暗色主题自定义颜色覆盖 - 深空蓝黑色调 */
 .dark {
   /* 背景色覆盖：使用深空蓝黑作为全站主背景 */
@@ -86,55 +80,6 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
-.dark .bg-gray-950 {
-  background-color: #000510 !important;
-}
-
-.dark .bg-gray-900 {
-  background-color: #0a0f1a !important;
-}
-
-.dark .bg-gray-800 {
-  background-color: #141b2d !important;
-}
-
-.dark .bg-gray-700 {
-  background-color: #1c2541 !important;
-}
-
-/* 文本颜色覆盖 */
-.dark .text-white {
-  color: #e6edf3 !important;
-}
-
-.dark .text-gray-500 {
-  color: #8b949e !important;
-}
-
-.dark .text-gray-400 {
-  color: #8b949e !important;
-}
-
-.dark .text-gray-300 {
-  color: #e6edf3 !important;
-}
-
-.dark .text-gray-600 {
-  color: #8b949e !important;
-}
-
-.dark .text-gray-700 {
-  color: #c9d1d9 !important;
-}
-
-.dark .text-gray-900 {
-  color: #e6edf3 !important;
-}
-
-.dark .text-blue-600 {
-  color: #58a6ff !important;
-}
-
 /* 滚动条样式 - 暗色模式 */
 .dark ::-webkit-scrollbar {
   width: 8px;
@@ -152,54 +97,6 @@
 
 .dark ::-webkit-scrollbar-thumb:hover {
   background: #484f58;
-}
-
-/* placeholder 颜色覆盖 */
-.dark .placeholder-gray-500::placeholder {
-  color: #8b949e !important;
-}
-
-.dark .placeholder-gray-400::placeholder {
-  color: #8b949e !important;
-}
-
-/* 边框颜色覆盖 */
-.dark .border-gray-800 {
-  border-color: #30363d !important;
-}
-
-.dark .border-gray-700 {
-  border-color: #30363d !important;
-}
-
-.dark .border-gray-600 {
-  border-color: #30363d !important;
-}
-
-/* hover 状态覆盖 */
-.dark .hover\:bg-gray-700:hover {
-  background-color: #1c2541 !important;
-}
-
-.dark .hover\:text-gray-300:hover {
-  color: #e6edf3 !important;
-}
-
-/* Modal 暗色主题样式 - 统一背景色（深空蓝黑风格） */
-.dark [role="dialog"].bg-white {
-  background-color: #0a0a0f !important;
-}
-
-.dark [role="dialog"] .bg-white {
-  background-color: #0a0a0f !important;
-}
-
-.dark [role="dialog"] .bg-gray-50 {
-  background-color: #141b2d !important;
-}
-
-.dark [role="dialog"] .bg-gray-100 {
-  background-color: #1c2541 !important;
 }
 
 body {

@@ -52,10 +52,10 @@ export const CustomIconMode = React.memo(function CustomIconMode({
 
       {/* 预览 */}
       {customIconUrl && (
-        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-          <div className="w-12 h-12 rounded-lg bg-white dark:bg-gray-700 flex items-center justify-center border border-gray-200 dark:border-gray-600 overflow-hidden">
+        <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+          <div className="w-12 h-12 rounded-lg bg-background flex items-center justify-center border border-border overflow-hidden">
             {customIconError ? (
-              <span className="text-sm text-red-500">{STRINGS.imageLoadFailed}</span>
+              <span className="text-sm text-destructive">{STRINGS.imageLoadFailed}</span>
             ) : (
               <img
                 src={customIconUrl}
@@ -66,10 +66,10 @@ export const CustomIconMode = React.memo(function CustomIconMode({
             )}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {STRINGS.customIconPreview}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               {customIconError ? STRINGS.imageLoadFailed : STRINGS.customIconSuccess}
             </p>
           </div>

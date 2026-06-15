@@ -52,7 +52,7 @@ export const BuiltinIconMode = React.memo(function BuiltinIconMode({
           onClick={() => setActiveTab('solid')}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
             activeTab === 'solid'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-accent'
           }`}
         >
@@ -63,7 +63,7 @@ export const BuiltinIconMode = React.memo(function BuiltinIconMode({
           onClick={() => setActiveTab('vector')}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
             activeTab === 'vector'
-              ? 'bg-blue-600 text-white'
+              ? 'bg-primary text-primary-foreground'
               : 'bg-muted text-muted-foreground hover:bg-accent'
           }`}
         >
@@ -102,10 +102,10 @@ export const BuiltinIconMode = React.memo(function BuiltinIconMode({
             )}
           </div>
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <p className="text-sm font-medium text-foreground">
               {selectedIcon.name}
             </p>
-            <p className="text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-xs text-muted-foreground">
               {selectedIcon.type === 'vector'
                 ? (language === 'en' ? 'Vector Icon' : '矢量图标')
                 : STRINGS.solidIcons}

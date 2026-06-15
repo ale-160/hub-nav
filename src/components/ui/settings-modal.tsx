@@ -936,10 +936,10 @@ export function SettingsModal({ isOpen, onClose, config, onConfigUpdate, onImpor
                       {formatFileSize(backupStorageInfo.totalSize)} / {formatFileSize(backupStorageInfo.maxSize)}
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className={`h-2 rounded-full transition-all ${
-                        backupStorageInfo.isNearLimit ? 'bg-red-500' : 'bg-blue-500'
+                        backupStorageInfo.isNearLimit ? 'bg-destructive' : 'bg-primary'
                       }`}
                       style={{ width: `${Math.min(backupStorageInfo.usagePercent, 100)}%` }}
                     />
