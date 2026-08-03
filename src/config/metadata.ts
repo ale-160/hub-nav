@@ -135,5 +135,6 @@ export function getMetadata(lang: string = "en"): Metadata {
 // Viewport 配置
 export const viewport = {
   width: "device-width",
-  initialScale: 1
+  initialScale: 1,
+  themeColor: "#3b82f6"
 };
