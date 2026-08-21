@@ -42,3 +42,9 @@ jobs:
         env:
           NEXT_TELEMETRY_DISABLED: 1
         run: npx next build --webpack
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E smoke test
+        run: npx playwright test

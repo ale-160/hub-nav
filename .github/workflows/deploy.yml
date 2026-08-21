@@ -6,9 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: "pages"
@@ -27,9 +25,6 @@ jobs:
           node-version: "24"
           cache: npm
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-
       - name: Install dependencies
         run: npm ci
 
@@ -41,18 +36,19 @@ jobs:
           NEXT_TELEMETRY_DISABLED: 1
         run: npx next build --webpack
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./out
+      - name: Add CNAME for custom domain
+        run: echo "hub-nav.ale160.com" > out/CNAME
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
+      # 防止 Jekyll 过滤 _next/ 等以下划线开头的目录（GitHub Pages 分支部署必需）
+      - name: Add .nojekyll
+        run: echo "" > out/.nojekyll
+
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: out
+          clean: true
+          # 保留各 PR 的预览目录，生产部署只更新根目录
+          clean-exclude: |
+            pr-preview/
