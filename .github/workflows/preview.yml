@@ -1,0 +1,48 @@
+name: PR Preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency: preview-${{ github.ref }}
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build preview
+        if: github.event.action != 'closed'
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
+          # 站点挂在自定义域名根目录，预览目录为 gh-pages/pr-preview/pr-N
+          BASE_PATH: /pr-preview/pr-${{ github.event.number }}
+        run: npx next build --webpack
+
+      - name: Add CNAME and .nojekyll to preview
+        if: github.event.action != 'closed'
+        run: |
+          echo "hub-nav.ale160.com" > out/CNAME
+          echo "" > out/.nojekyll
+
+      - name: Deploy / update / tear down preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: out
+          # 显式指定 Pages 基址，确保 PR 评论中的预览链接指向自定义域名
+          pages-base-url: hub-nav.ale160.com
