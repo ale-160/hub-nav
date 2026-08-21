@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://hub-nav.ale160.com/sitemap.xml
