@@ -1,7 +1,0 @@
-1:"$Sreact.fragment"
-2:I[1057,["149","static/chunks/149-43a85a26d9d685c0.js","715","static/chunks/715-f897ee29b0d06d5e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","456","static/chunks/456-4c5d14333a64cfc5.js","974","static/chunks/app/page-38e2301cbc860afe.js"],"default"]
-3:I[1456,["149","static/chunks/149-43a85a26d9d685c0.js","715","static/chunks/715-f897ee29b0d06d5e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","456","static/chunks/456-4c5d14333a64cfc5.js","974","static/chunks/app/page-38e2301cbc860afe.js"],"default"]
-4:I[484,[],"OutletBoundary"]
-5:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"SoftwareApplication\",\"name\":\"hub-nav\",\"url\":\"https://hub-nav.ale160.com/\",\"description\":\"A beautiful OS-style browser homepage with drag-and-drop, folders, dark mode, custom wallpapers, and multi-page management. 100% local, privacy-focused.\",\"applicationCategory\":\"BrowserApplication\",\"operatingSystem\":\"Any\",\"inLanguage\":\"en\",\"offers\":{\"@type\":\"Offer\",\"price\":\"0\",\"priceCurrency\":\"USD\"},\"author\":{\"@type\":\"Person\",\"name\":\"Ale\",\"url\":\"https://ale160.com\"}}"}}],["$","$L2",null,{}],["$","$L3",null,{"lang":"en"}]],null,["$","$L4",null,{"children":["$","$5",null,{"name":"Next.MetadataOutlet","children":"$@6"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"i7KGXvPfM5YHaRAG55eJE"}
-6:null

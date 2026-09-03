@@ -1,6 +1,0 @@
-1:"$Sreact.fragment"
-2:I[1456,["149","static/chunks/149-43a85a26d9d685c0.js","715","static/chunks/715-f897ee29b0d06d5e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","456","static/chunks/456-4c5d14333a64cfc5.js","445","static/chunks/app/zh/page-e3a08fdd15bdd78b.js"],"default"]
-3:I[484,[],"OutletBoundary"]
-4:"$Sreact.suspense"
-0:{"rsc":["$","$1","c",{"children":[[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"SoftwareApplication\",\"name\":\"hub-nav\",\"url\":\"https://hub-nav.ale160.com/zh/\",\"description\":\"一个美观的操作系统风格浏览器主页，支持拖拽、文件夹、暗色模式、自定义壁纸和多页管理。完全本地存储，注重隐私。\",\"applicationCategory\":\"BrowserApplication\",\"operatingSystem\":\"Any\",\"inLanguage\":\"zh-CN\",\"offers\":{\"@type\":\"Offer\",\"price\":\"0\",\"priceCurrency\":\"USD\"},\"author\":{\"@type\":\"Person\",\"name\":\"Ale\",\"url\":\"https://ale160.com\"}}"}}],["$","$L2",null,{"lang":"zh"}]],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":false,"staleTime":300,"varyParams":null,"buildId":"i7KGXvPfM5YHaRAG55eJE"}
-5:null
