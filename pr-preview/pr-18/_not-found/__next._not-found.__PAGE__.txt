@@ -1,0 +1,26 @@
+1:"$Sreact.fragment"
+2:I[8500,["345","static/chunks/app/not-found-800a6ab31ab8a5e0.js"],""]
+3:I[484,[],"OutletBoundary"]
+4:"$Sreact.suspense"
+8:I[484,[],"ViewportBoundary"]
+9:I[484,[],"MetadataBoundary"]
+b:I[7121,[],""]
+c:I[4581,[],""]
+f:I[4021,["710","static/chunks/710-648299eb179b0d57.js","966","static/chunks/966-36034e747375764e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","177","static/chunks/app/layout-23edc47643ddbab3.js"],"ErrorBoundary"]
+10:I[3188,["710","static/chunks/710-648299eb179b0d57.js","966","static/chunks/966-36034e747375764e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","177","static/chunks/app/layout-23edc47643ddbab3.js"],"ClientNextThemeProvider"]
+11:I[872,["710","static/chunks/710-648299eb179b0d57.js","966","static/chunks/966-36034e747375764e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","177","static/chunks/app/layout-23edc47643ddbab3.js"],"TooltipProvider"]
+12:I[6609,["710","static/chunks/710-648299eb179b0d57.js","966","static/chunks/966-36034e747375764e.js","956","static/chunks/956-40b4dc6ab3364f6e.js","177","static/chunks/app/layout-23edc47643ddbab3.js"],"Toaster"]
+:HL["/pr-preview/pr-18/_next/static/css/85bba61ca6d27ae8.css","style"]
+7:X
+e:X
+e:C
+0:{"buildId":"kVeSGAPd7skMLcqeTjZUn","data":[{"rsc":["$","$1","c",{"children":[["$","main",null,{"className":"flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 text-foreground","children":[["$","div",null,{"className":"flex items-baseline gap-3","children":[["$","h1",null,{"className":"text-6xl font-bold","children":"404"}],["$","span",null,{"className":"text-muted-foreground","children":"Page Not Found"}]]}],["$","$L2",null,{"href":"/","className":"rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90","children":"Go Home"}]]}],null,["$","$L3",null,{"children":["$","$4",null,{"name":"Next.MetadataOutlet","children":"$@5"}]}]]}],"isPartial":"$@6","staleTime":"$7","varyParams":null},{"rsc":["$","$1","h",{"children":[["$","meta",null,{"name":"robots","content":"noindex"}],["$","$L8",null,{"children":[["$","meta","0",{"charSet":"utf-8"}],["$","meta","1",{"name":"viewport","content":"width=device-width, initial-scale=1"}],["$","meta","2",{"name":"theme-color","content":"#3b82f6"}]]}],["$","div",null,{"hidden":true,"children":["$","$L9",null,{"children":["$","$4",null,{"name":"Next.Metadata","children":[["$","title","0",{"children":"404 · Page Not Found"}]]}]}]}],null]}],"isPartial":"$@a","staleTime":"$7","varyParams":null},{"rsc":["$","$1","c",{"children":[null,["$","$Lb",null,{"parallelRouterKey":"children","template":["$","$Lc",null,{}]}]]}],"isPartial":"$@d","staleTime":"$7","varyParams":"$e"},{"rsc":["$","$1","c",{"children":[[["$","link","0",{"rel":"stylesheet","href":"/pr-preview/pr-18/_next/static/css/85bba61ca6d27ae8.css","precedence":"next"}]],["$","html",null,{"lang":"en","className":"h-full overflow-hidden antialiased","suppressHydrationWarning":true,"children":[["$","head",null,{"children":["$","link",null,{"rel":"preconnect","href":"https://ale160.com"}]}],["$","body",null,{"className":"h-full overflow-hidden font-sans","children":[["$","script",null,{"type":"application/ld+json","dangerouslySetInnerHTML":{"__html":"{\"@context\":\"https://schema.org\",\"@type\":\"WebSite\",\"name\":\"hub-nav\",\"alternateName\":[\"hub-nav 浏览器导航\",\"hub-nav start page\"],\"url\":\"https://hub-nav.ale160.com/\",\"inLanguage\":[\"en\",\"zh-CN\"],\"description\":\"A beautiful OS-style browser homepage with drag-and-drop, folders, dark mode, custom wallpapers, and multi-page management. 100% local, privacy-focused.\"}"}}],["$","$Lf",null,{"children":["$","$L10",null,{"attribute":"class","defaultTheme":"system","enableSystem":true,"disableTransitionOnChange":true,"storageKey":"hub-nav-theme","children":["$","$L11",null,{"children":["$","$Lb",null,{"parallelRouterKey":"children","template":["$","$Lc",null,{}],"notFound":[["$","main",null,{"className":"flex min-h-screen flex-col items-center justify-center gap-6 bg-background p-8 text-foreground","children":[["$","div",null,{"className":"flex items-baseline gap-3","children":[["$","h1",null,{"className":"text-6xl font-bold","children":"404"}],["$","span",null,{"className":"text-muted-foreground","children":"Page Not Found"}]]}],["$","$L2",null,{"href":"/","className":"rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90","children":"Go Home"}]]}],[]]}]}]}]}],["$","$L12",null,{"position":"top-center","richColors":true}]]}]]}]]}],"isPartial":"$@13","staleTime":"$7","varyParams":null}],"isUpgradeableISRFallback":false,"a":"$@14","rootVaryParams":null,"needsRuntimeRequest":"$@15"}
+5:null
+7:300
+15:true
+7:C
+14:0
+a:"$undefined"
+d:"$undefined"
+13:"$undefined"
+6:"$undefined"
