@@ -37,3 +37,48 @@ test('中文路径可访问', async ({ page }) => {
   // 页面能正常渲染出主导航区域
   await expect(page.getByRole('banner')).toBeVisible();
 });
+
+test('搜索框可输入并清空', async ({ page }) => {
+  await page.goto('/');
+  await dismissWelcome(page);
+
+  const searchInput = page.getByPlaceholder(/search icons or urls/i);
+  await searchInput.fill('github');
+  await expect(searchInput).toHaveValue('github');
+
+  await searchInput.clear();
+  await expect(searchInput).toHaveValue('');
+  // 清空后主导航区域仍正常渲染（无崩溃）
+  await expect(page.getByRole('banner')).toBeVisible();
+});
+
+test('主题切换按钮可切换明暗模式', async ({ page }) => {
+  await page.goto('/');
+  await dismissWelcome(page);
+  await expect(page.getByRole('banner')).toBeVisible();
+
+  const htmlClass = () => page.evaluate(() => document.documentElement.className);
+  const before = await htmlClass();
+
+  await page.getByTitle(/toggle theme/i).click();
+  // @wrksz/themes 以 class 形式挂载明暗模式，点击后 html class 应变化
+  await expect.poll(htmlClass, { timeout: 5_000 }).not.toBe(before);
+});
+
+test('设置面板可打开', async ({ page }) => {
+  await page.goto('/');
+  await dismissWelcome(page);
+  await expect(page.getByRole('banner')).toBeVisible();
+
+  await page.getByTitle('Settings').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
+
+test('帮助面板可打开', async ({ page }) => {
+  await page.goto('/');
+  await dismissWelcome(page);
+  await expect(page.getByRole('banner')).toBeVisible();
+
+  await page.getByTitle('Help').click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+});
