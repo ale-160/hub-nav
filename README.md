@@ -1,3 +1,5 @@
+> **⚠️ 本项目已停止维护**：hub-nav 已融合进 [Ale OS](https://github.com/ale-160/os-open)（https://os.ale160.com ）。本站将服务至 **2026-11-03**，之后下线；桌面配置可在 https://os.ale160.com/migrate 一键迁移。
+
 # hub-nav-open
 
 [English](./README.en.md) | 中文
