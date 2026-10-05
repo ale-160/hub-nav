@@ -407,7 +407,7 @@ export default function MainPage({ lang }: MainPageProps) {
       {!migrationNoticeDismissed && (
         <div className="flex items-center gap-2 px-4 py-2 text-sm border-b border-border bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
           <span className="flex-1 min-w-0 truncate">
-            📦 hub-nav 已全面升级为 Ale OS——你的导航配置可一键迁移到新家
+            📦 hub-nav 已全面升级为 Ale OS——你的导航配置可一键迁移；旧站将于 2026-11-03 停止服务
           </span>
           <a
             href="https://os.ale160.com/migrate"
