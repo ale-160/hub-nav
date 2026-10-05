@@ -64,6 +64,15 @@ export default function MainPage({ lang }: MainPageProps) {
   } = useConfig(lang);
 
   // 在首次使用引导期间，使用默认配置
+  // Ale OS 迁移公告（默认隐藏，挂载后读取，避免 SSR 闪烁）
+  const [migrationNoticeDismissed, setMigrationNoticeDismissed] = useState(true);
+  useEffect(() => {
+    setMigrationNoticeDismissed(localStorage.getItem('ale-migration-notice-dismissed') === '1');
+  }, []);
+  const dismissMigrationNotice = useCallback(() => {
+    setMigrationNoticeDismissed(true);
+    try { localStorage.setItem('ale-migration-notice-dismissed', '1'); } catch {}
+  }, []);
   const [defaultConfig, setDefaultConfig] = useState<UserConfig | null>(null);
 
   useEffect(() => {
@@ -394,6 +403,29 @@ export default function MainPage({ lang }: MainPageProps) {
           </div>
         </div>
       </header>
+      {/* Ale OS 迁移公告 */}
+      {!migrationNoticeDismissed && (
+        <div className="flex items-center gap-2 px-4 py-2 text-sm border-b border-border bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+          <span className="flex-1 min-w-0 truncate">
+            📦 hub-nav 已全面升级为 Ale OS——你的导航配置可一键迁移到新家
+          </span>
+          <a
+            href="https://os.ale160.com/migrate"
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 underline underline-offset-2 hover:opacity-80 font-medium"
+          >
+            立即迁移 →
+          </a>
+          <button
+            onClick={dismissMigrationNotice}
+            aria-label="关闭公告"
+            className="shrink-0 w-6 h-6 rounded hover:bg-amber-100 dark:hover:bg-amber-900/40 flex items-center justify-center"
+          >
+            ✕
+          </button>
+        </div>)}
+
 
       {/* 主体区域 - 内部滚动 */}
       <main className="flex-1 overflow-y-auto">
